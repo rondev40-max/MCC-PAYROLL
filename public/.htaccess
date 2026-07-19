@@ -1,0 +1,61 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+   
+    # 1. Prevent access to hidden & sensitive files
+    # -------------------------------------------------------------
+    RewriteRule ^(\.env|\.htaccess|\.htpasswd|composer\.json|artisan|server\.php|package\.json|webpack\.mix\.js)$ - [F,L,NC]
+
+    # 2. Block direct access to non-public directories
+    # -------------------------------------------------------------
+    RewriteRule ^(storage|vendor|resources|routes|database|tests|config)/ - [F,L,NC]
+
+    # 3. Protect against common XSS / tampering via query strings
+    # -------------------------------------------------------------
+    RewriteCond %{QUERY_STRING} (\<|%3C|\b(alert|script|onerror|onload|eval|javascript|base64|data:)\b) [NC]
+    RewriteRule .* - [F,L]
+    
+
+    # Prevent direct access to /public or /public/index.php
+    RewriteCond %{THE_REQUEST} \s/public/index\.php [NC]
+    RewriteRule ^ - [R=404,L]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# -------------------------------------------------------------
+# 8. Block scanning bots / known tamper tools
+# -------------------------------------------------------------
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase User-Agent "sqlmap" bad_bot
+    SetEnvIfNoCase User-Agent "acunetix" bad_bot
+    SetEnvIfNoCase User-Agent "nikto" bad_bot
+    SetEnvIfNoCase User-Agent "curl" bad_bot
+</IfModule>
+
+<IfModule mod_authz_core.c>
+    <RequireAll>
+        Require all granted
+        Require not env bad_bot
+    </RequireAll>
+</IfModule>
+

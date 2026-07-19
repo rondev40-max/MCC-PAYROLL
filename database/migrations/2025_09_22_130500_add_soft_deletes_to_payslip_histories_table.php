@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('payslip_histories', function (Blueprint $table) {
+            if (!Schema::hasColumn('payslip_histories', 'deleted_at')) {
+                $table->softDeletes(); // adds nullable deleted_at TIMESTAMP
+            }
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('payslip_histories', function (Blueprint $table) {
+            if (Schema::hasColumn('payslip_histories', 'deleted_at')) {
+                $table->dropSoftDeletes();
+            }
+        });
+    }
+};
