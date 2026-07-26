@@ -31,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // Force Laravel to compile views in Vercel's writable /tmp folder
+        if (config('app.env') === 'production' || isset($_ENV['VERCEL_URL'])) {
+            config(['view.compiled' => '/tmp/views']);
+        }
+
         Event::listen(Login::class, function (Login $event) {
             /** @var User $user */
             $user = $event->user;
