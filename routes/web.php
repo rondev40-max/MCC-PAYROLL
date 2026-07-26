@@ -299,3 +299,75 @@ Route::get('/education', [EducationController::class, 'index'])->name('education
 Route::get('/terms', function () {
     return view('terms');
 })->name('terms');
+
+// Database Migration Route (Securely protected and session-exempt for Vercel/Railway)
+Route::get('/deploy/migrate', function () {
+    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+        abort(403, 'Unauthorized');
+    }
+    
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return response()->json([
+            'status' => 'success',
+            'output' => \Illuminate\Support\Facades\Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+})->withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \App\Http\Middleware\UpdateLastSeenAt::class,
+    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
+]);
+
+// Database Seed Route (Securely protected and session-exempt for Vercel/Railway)
+Route::get('/deploy/seed', function () {
+    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+        abort(403, 'Unauthorized');
+    }
+    
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        return response()->json([
+            'status' => 'success',
+            'output' => \Illuminate\Support\Facades\Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+})->withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \App\Http\Middleware\UpdateLastSeenAt::class,
+    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
+]);
+
+// Database Fresh Migrate Route (Securely protected and session-exempt for Vercel/Railway)
+Route::get('/deploy/fresh', function () {
+    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+        abort(403, 'Unauthorized');
+    }
+    
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true]);
+        return response()->json([
+            'status' => 'success',
+            'output' => \Illuminate\Support\Facades\Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+})->withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \App\Http\Middleware\UpdateLastSeenAt::class,
+    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
+]);
