@@ -89,11 +89,7 @@
       <i class="bi bi-bar-chart"></i><span>Evaluation Results</span>
     </a>
 
-    <div class="nav-label">Configuration</div>
-
-    <a href="{{ route('admin.settings.index') }}" class="sidebar-btn text-decoration-none {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-      <i class="bi bi-gear"></i><span>System Settings</span>
-    </a>
+    
 
     <div class="nav-label">Payslips</div>
 
