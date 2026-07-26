@@ -173,6 +173,10 @@
   .sidebar-shift {
     margin-left: var(--sidebar-w);
     min-width: 0;
+    flex-grow: 1;
+    flex-shrink: 0;
+    width: calc(100% - var(--sidebar-w));
+    display: block !important;
     transition: margin-left .25s ease-in-out;
   }
 
