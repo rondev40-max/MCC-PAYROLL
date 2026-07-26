@@ -223,21 +223,26 @@
       }
 
       /* Para sa headers */
-      .college-header { 
-        font-size: 9px; 
+      .college-header {
+        font-size: 9px;
         line-height: 1.1;
       }
       .college-header span {
         font-size: 14px !important;
       }
       img[alt="Logo"] {
-        height: 30px !important; 
+        height: 30px !important;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="app d-flex">
+      .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
+      .sidebar-shift { margin-left: 0 !important; }
+      }
+      </style>
+      @include('layouts.sidebar-styles')
+      </head>
+      <body>
+      @include('layouts.sidebar')
+      <div class="sidebar-shift">
+      <div class="app d-flex">
     <div class="content w-100">
       <div class="topbar d-flex align-items-center justify-content-between no-print">
         <div class="d-flex align-items-center">
@@ -1106,5 +1111,6 @@ devtools.detect(function(status){
   }
 });
 </script>
+</div>
 </body>
 </html>

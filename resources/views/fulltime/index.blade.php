@@ -554,11 +554,15 @@
         margin-top: 20px;
         font-size: 8px;
       }
+      .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
+      .sidebar-shift { margin-left: 0 !important; }
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
 <body>
-
+  @include('layouts.sidebar')
+  <div class="sidebar-shift">
   <div class="container-fluid">
     <div class="timesheet-card">
       
@@ -1020,5 +1024,6 @@
     }
   });
   </script>
+</div>
 </body>
 </html>

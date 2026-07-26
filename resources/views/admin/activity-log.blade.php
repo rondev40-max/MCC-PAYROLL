@@ -49,15 +49,17 @@
             .sidebar{ position:fixed; transform:translateX(-100%); transition:.25s; z-index:1030; }
             .sidebar.show{ transform:none; }
             .content{ margin-left:0!important; }
-        }
-    </style>
-</head>
-<body>
-    <div class="app d-flex">
-        {{-- You can include your sidebar here if it's a separate component --}}
-        {{-- @include('partials.sidebar') --}}
-        
-        <div class="content w-100">
+            }
+            .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
+            .sidebar-shift { margin-left: 0 !important; }
+            </style>
+            @include('layouts.sidebar-styles')
+            </head>
+            <body>
+            @include('layouts.sidebar')
+            <div class="sidebar-shift w-100">
+            <div class="app d-flex">
+            <div class="content w-100">
             {{-- TOPBAR --}}
             <div class="topbar d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
@@ -146,5 +148,6 @@
             </div>
         </div>
     </div>
+</div>
 </body>
 </html>
