@@ -774,7 +774,7 @@
 <body>
 
 <!-- Mobile overlay -->
-@include('layouts.sidebar')
+@extends('layouts.admin')
 
 <div class="app">
 
