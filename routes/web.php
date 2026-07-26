@@ -318,11 +318,7 @@ Route::get('/deploy/migrate', function () {
             'message' => $e->getMessage()
         ], 500);
     }
-})->withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \App\Http\Middleware\UpdateLastSeenAt::class,
-    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
-]);
+})->withoutMiddleware('web');
 
 // Database Seed Route (Securely protected and session-exempt for Vercel/Railway)
 Route::get('/deploy/seed', function () {
@@ -342,11 +338,7 @@ Route::get('/deploy/seed', function () {
             'message' => $e->getMessage()
         ], 500);
     }
-})->withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \App\Http\Middleware\UpdateLastSeenAt::class,
-    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
-]);
+})->withoutMiddleware('web');
 
 // Database Fresh Migrate Route (Securely protected and session-exempt for Vercel/Railway)
 Route::get('/deploy/fresh', function () {
@@ -366,8 +358,4 @@ Route::get('/deploy/fresh', function () {
             'message' => $e->getMessage()
         ], 500);
     }
-})->withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \App\Http\Middleware\UpdateLastSeenAt::class,
-    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
-]);
+})->withoutMiddleware('web');
