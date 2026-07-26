@@ -12,6 +12,7 @@ use App\Models\ParttimeTimesheet;
 use App\Models\StaffTimesheet;
 use App\Models\UtilityTimesheet;
 use App\Models\User;
+use App\Models\Department;
 
 
 class DashboardController extends Controller
@@ -23,6 +24,7 @@ class DashboardController extends Controller
         $userName = $request->session()->get('user_name', 'Guest');
         
         $stats = $this->getEmployeeStatistics();
+        $departmentAnalysis = $this->getDepartmentAnalytics();
 
         $userDepartment = null;
         $user = Auth::user();
@@ -41,6 +43,8 @@ class DashboardController extends Controller
             'totalParttimeInstructors'  => $stats['totalParttimeInstructors'],
             'totalStaff'                => $stats['totalStaff'],
             'totalUtility'              => $stats['totalUtility'],
+            'departmentAnalysis'        => $departmentAnalysis,
+            'departmentCount'           => $departmentAnalysis->count(),
             'userDepartment'            => $userDepartment,
             'attendanceUsers'           => $attendanceUsers,
         ]);
@@ -184,6 +188,38 @@ class DashboardController extends Controller
             'totalStaff',
             'totalUtility'
         );
+    }
+
+    /**
+     * Get department-level analytics for active departments.
+     */
+    private function getDepartmentAnalytics()
+    {
+        try {
+            return Department::active()->orderBy('name')->get()->map(function ($department) {
+                $fulltime = FulltimeTimesheet::where('department', $department->code)
+                    ->whereNotNull('employee_name')
+                    ->where('employee_name', '!=', '')
+                    ->distinct()
+                    ->count('employee_name');
+
+                $parttime = ParttimeTimesheet::where('department', $department->code)
+                    ->whereNotNull('employee_name')
+                    ->where('employee_name', '!=', '')
+                    ->distinct()
+                    ->count('employee_name');
+
+                return [
+                    'name' => $department->name,
+                    'code' => $department->code,
+                    'fulltime' => $fulltime,
+                    'parttime' => $parttime,
+                    'total' => $fulltime + $parttime,
+                ];
+            });
+        } catch (\Exception $e) {
+            return collect();
+        }
     }
 
     /**

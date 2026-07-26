@@ -17,6 +17,8 @@ class AttendanceController extends Controller
 {
     private const DEFAULT_TIME_IN  = '08:00:00';
     private const DEFAULT_TIME_OUT = '17:00:00';
+    private const DEFAULT_AM_OUT   = '12:00:00';
+    private const DEFAULT_PM_IN    = '13:00:00';
     private const DEFAULT_HOURS    = 8;
     private const WEEK_DAYS        = [
         'monday'    => 0,
@@ -389,6 +391,16 @@ class AttendanceController extends Controller
                 return response()->json(['error' => 'Unauthorized access to this department.'], 403);
             }
 
+            // Determine the week_start from request (for merging saved times)
+            $weekStart = null;
+            if ($request->has('week_start')) {
+                try {
+                    $weekStart = Carbon::parse($request->query('week_start'))->startOfDay();
+                } catch (\Exception $e) {
+                    Log::warning('Invalid week_start param: ' . $e->getMessage());
+                }
+            }
+
             // Safe mapper that handles missing columns
             $mapper = fn(string $prefix) => fn($e) => [
                 'id'            => "{$prefix}-{$e->id}",
@@ -397,6 +409,7 @@ class AttendanceController extends Controller
                 'designation'   => $e->designation ?? '',
                 'employee_type' => $this->getEmployeeType($e, $prefix),
                 'days'          => $this->safeDecode($e->days ?? '{}'),
+                'raw_id'        => $e->id,
             ];
 
             $data = collect();
@@ -412,13 +425,18 @@ class AttendanceController extends Controller
                 ->concat($staff)
                 ->concat($utility);
 
+            // Merge saved CSC attendance times if week_start is provided
+            if ($weekStart) {
+                $data = $this->mergeSavedTimes($data, $course, $weekStart);
+            }
+
             Log::info('getAttendanceData retrieved', [
-                'course' => $course,
-                'count' => $data->count(),
+                'course'   => $course,
+                'count'    => $data->count(),
                 'fulltime' => $fulltime->count(),
                 'parttime' => $parttime->count(),
-                'staff' => $staff->count(),
-                'utility' => $utility->count(),
+                'staff'    => $staff->count(),
+                'utility'  => $utility->count(),
             ]);
 
             return response()->json($data);
@@ -445,7 +463,7 @@ class AttendanceController extends Controller
 
             // Get available columns
             $columns = ['id', 'email', 'employee_name', 'designation', 'days'];
-            
+
             // Add employee_type only if it exists
             if (Schema::hasColumn($table, 'employee_type')) {
                 $columns[] = 'employee_type';
@@ -455,6 +473,80 @@ class AttendanceController extends Controller
         } catch (\Exception $e) {
             Log::warning("safeQuery failed for {$table}: " . $e->getMessage());
             return collect();
+        }
+    }
+
+    /**
+     * Helper: Merge saved per-day CSC times from attendances table.
+     * Adds a 'saved_times' key to each employee entry, keyed by weekday name.
+     */
+    private function mergeSavedTimes($data, string $course, Carbon $weekStart): \Illuminate\Support\Collection
+    {
+        try {
+            // Build list of dates for the week (Mon–Sat)
+            $weekDates = [];
+            foreach (self::WEEK_DAYS as $day => $offset) {
+                $weekDates[$day] = $weekStart->copy()->addDays($offset)->toDateString();
+            }
+
+            // Gather all raw employee IDs from the data
+            $rawIds = $data->pluck('raw_id')->filter()->values()->toArray();
+
+            if (empty($rawIds)) {
+                return $data;
+            }
+
+            // Fetch all saved attendance rows for this week/course
+            $savedRows = DB::table('attendances')
+                ->where('course', $course)
+                ->whereIn('employee_id', $rawIds)
+                ->whereBetween('date', [
+                    $weekStart->toDateString(),
+                    $weekStart->copy()->addDays(5)->toDateString(),
+                ])
+                ->select([
+                    'employee_id', 'date',
+                    'am_in_time', 'am_out_time', 'pm_in_time', 'pm_out_time',
+                    'lateness_minutes', 'undertime_minutes', 'overtime_minutes', 'total_hours',
+                    'status',
+                ])
+                ->get();
+
+            // Index by employee_id -> date
+            $indexed = [];
+            foreach ($savedRows as $row) {
+                $indexed[$row->employee_id][$row->date] = $row;
+            }
+
+            return $data->map(function ($emp) use ($indexed, $weekDates) {
+                $rawId = $emp['raw_id'];
+                $savedTimes = [];
+
+                foreach ($weekDates as $dayName => $dateStr) {
+                    if (isset($indexed[$rawId][$dateStr])) {
+                        $r = $indexed[$rawId][$dateStr];
+                        $savedTimes[$dayName] = [
+                            'am_in'              => $r->am_in_time   ? substr($r->am_in_time, 0, 5)   : '',
+                            'am_out'             => $r->am_out_time  ? substr($r->am_out_time, 0, 5)  : '',
+                            'pm_in'              => $r->pm_in_time   ? substr($r->pm_in_time, 0, 5)   : '',
+                            'pm_out'             => $r->pm_out_time  ? substr($r->pm_out_time, 0, 5)  : '',
+                            'lateness_minutes'   => $r->lateness_minutes   ?? 0,
+                            'undertime_minutes'  => $r->undertime_minutes  ?? 0,
+                            'overtime_minutes'   => $r->overtime_minutes   ?? 0,
+                            'total_hours'        => $r->total_hours        ?? 0,
+                            'status'             => $r->status ?? 'absent',
+                        ];
+                    } else {
+                        $savedTimes[$dayName] = null;
+                    }
+                }
+
+                $emp['saved_times'] = $savedTimes;
+                return $emp;
+            });
+        } catch (\Exception $e) {
+            Log::warning('mergeSavedTimes failed: ' . $e->getMessage());
+            return $data;
         }
     }
 
@@ -494,6 +586,59 @@ class AttendanceController extends Controller
             Log::warning('JSON decode failed: ' . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Helper: Calculate CSC attendance metrics for a single day.
+     * Returns [lateness, undertime, overtime, totalHours].
+     */
+    private function calculateDayMetrics(?string $amIn, ?string $amOut, ?string $pmIn, ?string $pmOut): array
+    {
+        $lateness  = 0;
+        $undertime = 0;
+        $overtime  = 0;
+        $totalMins = 0;
+
+        try {
+            // Lateness: arrived after 08:00
+            if ($amIn) {
+                $official = Carbon::createFromTimeString(self::DEFAULT_TIME_IN);
+                $actual   = Carbon::createFromTimeString($amIn);
+                if ($actual->gt($official)) {
+                    $lateness = $actual->diffInMinutes($official);
+                }
+            }
+
+            // Undertime: left before 17:00
+            if ($pmOut) {
+                $official = Carbon::createFromTimeString(self::DEFAULT_TIME_OUT);
+                $actual   = Carbon::createFromTimeString($pmOut);
+                if ($actual->lt($official)) {
+                    $undertime = $official->diffInMinutes($actual);
+                }
+                // Overtime: stayed past 17:00
+                if ($actual->gt($official)) {
+                    $overtime = $actual->diffInMinutes($official);
+                }
+            }
+
+            // Total worked minutes
+            if ($amIn && $amOut) {
+                $totalMins += Carbon::createFromTimeString($amOut)->diffInMinutes(Carbon::createFromTimeString($amIn));
+            }
+            if ($pmIn && $pmOut) {
+                $totalMins += Carbon::createFromTimeString($pmOut)->diffInMinutes(Carbon::createFromTimeString($pmIn));
+            }
+        } catch (\Exception $e) {
+            Log::warning('calculateDayMetrics error: ' . $e->getMessage());
+        }
+
+        return [
+            'lateness'    => $lateness,
+            'undertime'   => $undertime,
+            'overtime'    => $overtime,
+            'total_hours' => round($totalMins / 60, 2),
+        ];
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -554,7 +699,27 @@ class AttendanceController extends Controller
                         continue;
                     }
 
-                    $isPresent = (bool) $employeeDays[$dayKey];
+                    $dayData = $employeeDays[$dayKey];
+
+                    // Support both time-object format and legacy boolean
+                    if (is_array($dayData)) {
+                        $amIn  = !empty($dayData['am_in'])  ? $dayData['am_in']  : null;
+                        $amOut = !empty($dayData['am_out']) ? $dayData['am_out'] : null;
+                        $pmIn  = !empty($dayData['pm_in'])  ? $dayData['pm_in']  : null;
+                        $pmOut = !empty($dayData['pm_out']) ? $dayData['pm_out'] : null;
+                    } else {
+                        // Legacy boolean present/absent
+                        $isPresent = (bool) $dayData;
+                        $amIn  = $isPresent ? self::DEFAULT_TIME_IN  : null;
+                        $amOut = $isPresent ? self::DEFAULT_AM_OUT   : null;
+                        $pmIn  = $isPresent ? self::DEFAULT_PM_IN    : null;
+                        $pmOut = $isPresent ? self::DEFAULT_TIME_OUT : null;
+                    }
+
+                    $hasTimes = $amIn || $amOut || $pmIn || $pmOut;
+
+                    // Calculate metrics
+                    $metrics   = $this->calculateDayMetrics($amIn, $amOut, $pmIn, $pmOut);
                     $date      = $weekStartDate->copy()->addDays($offset)->toDateString();
 
                     try {
@@ -566,15 +731,23 @@ class AttendanceController extends Controller
                                 'course'      => $course,
                             ],
                             [
-                                'time_in'        => $isPresent ? self::DEFAULT_TIME_IN : null,
-                                'time_out'       => $isPresent ? self::DEFAULT_TIME_OUT : null,
-                                'hours_rendered' => $isPresent ? self::DEFAULT_HOURS : 0,
-                                'status'         => $isPresent ? 'present' : 'absent',
-                                'remarks'        => null,
-                                'employee_name'  => $empName,
-                                'employee_type'  => $empType,
-                                'updated_at'     => now(),
-                                'created_at'     => now(),
+                                'time_in'            => $amIn,
+                                'time_out'           => $pmOut,
+                                'am_in_time'         => $amIn,
+                                'am_out_time'        => $amOut,
+                                'pm_in_time'         => $pmIn,
+                                'pm_out_time'        => $pmOut,
+                                'hours_rendered'     => $metrics['total_hours'],
+                                'lateness_minutes'   => $metrics['lateness'],
+                                'undertime_minutes'  => $metrics['undertime'],
+                                'overtime_minutes'   => $metrics['overtime'],
+                                'total_hours'        => $metrics['total_hours'],
+                                'status'             => $hasTimes ? 'present' : 'absent',
+                                'remarks'            => null,
+                                'employee_name'      => $empName,
+                                'employee_type'      => $empType,
+                                'updated_at'         => now(),
+                                'created_at'         => now(),
                             ]
                         );
                         $saved++;
@@ -678,8 +851,18 @@ class AttendanceController extends Controller
                         continue;
                     }
 
-                    $isPresent = (bool) $employeeDays[$dayKey];
-                    $date      = $weekStartDate->copy()->addDays($offset)->toDateString();
+                    $dayData = $employeeDays[$dayKey];
+                    if (is_array($dayData)) {
+                        $amIn  = !empty($dayData['am_in'])  ? $dayData['am_in']  : null;
+                        $pmOut = !empty($dayData['pm_out']) ? $dayData['pm_out'] : null;
+                        $hasTimes = $amIn || !empty($dayData['am_out']) || !empty($dayData['pm_in']) || $pmOut;
+                    } else {
+                        $hasTimes = (bool) $dayData;
+                        $amIn  = $hasTimes ? self::DEFAULT_TIME_IN  : null;
+                        $pmOut = $hasTimes ? self::DEFAULT_TIME_OUT : null;
+                    }
+
+                    $date = $weekStartDate->copy()->addDays($offset)->toDateString();
 
                     try {
                         DB::table('attendance_histories')->updateOrInsert(
@@ -694,11 +877,11 @@ class AttendanceController extends Controller
                                 'employee_type' => $empType,
                                 'designation'   => $employee['designation'] ?? null,
                                 'department'    => $course,
-                                'is_present'    => $isPresent,
-                                'hours_worked'  => $isPresent ? self::DEFAULT_HOURS : 0,
-                                'time_in'       => $isPresent ? self::DEFAULT_TIME_IN : null,
-                                'time_out'      => $isPresent ? self::DEFAULT_TIME_OUT : null,
-                                'status'        => $isPresent ? 'present' : 'absent',
+                                'is_present'    => $hasTimes,
+                                'hours_worked'  => $hasTimes ? self::DEFAULT_HOURS : 0,
+                                'time_in'       => $amIn,
+                                'time_out'      => $pmOut,
+                                'status'        => $hasTimes ? 'present' : 'absent',
                                 'remarks'       => null,
                                 'location'      => null,
                                 'user_id'       => $userId,

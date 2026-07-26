@@ -30,7 +30,13 @@ class FulltimeTimesheet extends Model
         'total_hour',
         'rate_per_hour',
         'deduction',
-        'total_honorarium'
+        'total_honorarium',
+        // Government Deductions
+        'withholding_tax',
+        'gsis',
+        'philhealth',
+        'pag_ibig',
+        'sss',
     ];
 
     protected $casts = [

@@ -46,12 +46,13 @@ Route::post('/register', [RegisterController::class, 'store'])->middleware(app()
 
 // Email Verification Route
 Route::get('/email/verify/{token}', [App\Http\Controllers\VerificationController::class, 'verify'])->name('user.verify');
+Route::post('/email/resend', [App\Http\Controllers\VerificationController::class, 'resend'])->name('verification.resend');
 
-// Admin Login Routes (Separate View)
-Route::get('/admin/login', function () {
+// Admin Login Routes (Separate View) — Obscured path for security
+Route::get('/portal/management-login', function () {
     return view('admin.login');
 })->name('admin.login.form');
-Route::post('/admin/login', [LoginController::class, 'authenticate'])->name('admin.login')->middleware(app()->environment('production') ? 'throttle:15,1' : []);
+Route::post('/portal/management-login', [LoginController::class, 'authenticate'])->name('admin.login')->middleware(app()->environment('production') ? 'throttle:15,1' : []);
 
 // Employee Login Routes (Separate View)
 Route::get('/employee/login', function () {
@@ -211,6 +212,16 @@ Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationControl
     // Salary Adjustment route
     Route::get('/salary-adjustment', [SalaryController::class, 'adjustmentForm'])
         ->name('salary.adjustment');
+
+    // Tax & Government Deductions Routes
+    Route::get('/deductions', [\App\Http\Controllers\Admin\DeductionController::class, 'index'])
+        ->name('deductions.index');
+    Route::post('/deductions/update-settings', [\App\Http\Controllers\Admin\DeductionController::class, 'updateSettings'])
+        ->name('deductions.update-settings');
+    Route::post('/deductions/apply', [\App\Http\Controllers\Admin\DeductionController::class, 'applyDeductions'])
+        ->name('deductions.apply');
+    Route::get('/deductions/summary', [\App\Http\Controllers\Admin\DeductionController::class, 'summary'])
+        ->name('deductions.summary');
 
     // ✅ Evaluation Results - ADMIN ONLY
     Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationController::class, 'evaluationResults'])->name('evaluation.results');

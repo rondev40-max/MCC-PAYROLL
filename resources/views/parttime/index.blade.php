@@ -2,1249 +2,1033 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Instructor Part-time Timesheet</title><script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
+  <title>Instructor Part-time Timesheet — MCC Payroll</title>
+  <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<style>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --bg-app: #f4f6fa;
+      --bg-card: #ffffff;
+
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-soft: rgba(37, 99, 235, 0.06);
+      --accent-glow: rgba(37, 99, 235, 0.15);
+
+      --border-color: #e2e8f0;
+      --border-focus: #2563eb;
+
+      --sunday-bg: #f8fafc;
+      --sunday-text: #94a3b8;
+      --holiday-bg: #fff1f2;
+      --holiday-text: #f43f5e;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 999px;
+
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.08);
+
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: var(--font);
+      background-color: var(--bg-app);
+      color: var(--text-main);
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #e6f2ff 0%, #cde9ff 100%);
       min-height: 100vh;
       display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      position: relative;
+      flex-direction: column;
     }
 
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
+    /* ===================== LAYOUT CONTAINER ===================== */
+    .container-fluid {
+      padding: 24px clamp(16px, 4vw, 40px);
+      max-width: 1600px;
+      margin: 0 auto;
       width: 100%;
-      height: 100%;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="20" cy="80" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-      pointer-events: none;
-      z-index: 1;
     }
 
-    .main-content {
-      margin: 30px auto;
-      padding: 30px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
-      width: 95%;
-      max-width: 1400px;
+    /* ===================== CARD WRAPPER ===================== */
+    .timesheet-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-md);
+      padding: 32px;
       position: relative;
-      z-index: 2;
-      border: 1px solid rgba(255,255,255,0.3);
+      overflow: hidden;
     }
 
-    .main-content::before {
+    .timesheet-card::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      border-radius: 20px 20px 0 0;
+      background: var(--accent);
     }
 
-    .main-content h2 {
-      font-size: 28px;
-      color: #2d3748;
-      font-weight: 700;
-      margin-bottom: 25px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    /* Icon Buttons */
-    .icon-btn {
-      display: inline-flex;
+    /* ===================== HEADER SECTION ===================== */
+    .header-section {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      width: 45px;
-      height: 45px;
-      border-radius: 15px;
-      font-size: 18px;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      margin-right: 10px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      position: relative;
-      overflow: hidden;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
-    .icon-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s;
-    }
-
-    .icon-btn:hover::before {
-      left: 100%;
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .btn-back {
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-pill);
+      color: var(--text-secondary);
+      background: var(--bg-app);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
     }
     .btn-back:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: var(--accent-glow);
     }
 
-    .add-btn {
-      background: linear-gradient(135deg, #11998e, #38ef7d);
-    }
-    .add-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
-    }
-
-    .print-btn {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      border: 2px solid rgba(255,255,255,0.3);
-    }
-    .print-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    .header-section h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      margin: 0;
     }
 
-    /* Auto-Save Status Icon Style */
-    .btn-auto-status {
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-action-primary {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      font-size: 16px;
-      margin: 2px;
-      color: #fff;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      background-color: #6c757d; /* Default Grey */
-      cursor: default; 
-    }
-
-    .btn-auto-status.saving {
-      background-color: #ffc107 !important; /* Yellow */
-      animation: pulsate 1.5s infinite;
-    }
-
-    .btn-auto-status.saved {
-      background-color: #198754 !important; /* Green */
-    }
-    
-    .btn-auto-status.error {
-      background-color: #dc3545 !important; /* Red */
-    }
-
-    /* Animation for saving state */
-    @keyframes pulsate {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.1); opacity: 0.7; }
-        100% { transform: scale(1); opacity: 1; }
-    }
-
-    /* Action Buttons (Edit/Delete) */
-    .action-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      font-size: 16px;
-      margin: 2px;
-      color: #fff;
+      gap: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #ffffff;
+      background: var(--accent);
       border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.15);
+    }
+    .btn-action-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      color: #fff;
+    }
+
+    .btn-action-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
       text-decoration: none;
     }
-
-    .btn-edit {
-      background-color: #0d6efd;
-    }
-    .btn-edit:hover {
-      background-color: #084298;
+    .btn-action-secondary:hover {
+      background: var(--bg-app);
+      color: var(--text-main);
+      border-color: var(--text-secondary);
     }
 
-    .btn-delete {
-      background-color: #dc3545;
-    }
-    .btn-delete:hover {
-      background-color: #a71d2a;
+    /* ===================== CONTROLS BAR ===================== */
+    .controls-bar {
+      background: var(--bg-app);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border: 1px solid var(--border-color);
     }
 
-    /* Table Styling */
-    .table-container {
+    .filter-form {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .filter-select {
+      font-size: 0.84rem;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      background-color: var(--bg-card);
+      outline: none;
+      transition: border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .filter-select:focus {
+      border-color: var(--border-focus);
+    }
+
+    .btn-update {
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-holiday-manage {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #92400e;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      padding: 6px 16px;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-holiday-manage:hover {
+      background: #fef3c7;
+      border-color: #fcd34d;
+    }
+
+    /* ===================== TABLE CONTAINER ===================== */
+    .table-responsive-container {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
       overflow-x: auto;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      background: white;
-      border: 1px solid rgba(102, 126, 234, 0.1);
-      margin-top: 20px;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .main-content {
-        margin: 15px;
-        padding: 15px;
-        width: calc(100% - 30px);
-      }
-      
-      .d-flex.justify-content-between {
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .d-flex.align-items-center:first-child {
-        justify-content: center;
-      }
-      
-      .d-flex.align-items-center:last-child {
-        justify-content: center;
-      }
-      
-      th, td {
-        padding: 6px 4px;
-        font-size: 11px;
-      }
-      
-      .day-column {
-        width: 50px;
-        min-width: 50px;
-        max-width: 50px;
-      }
-      
-      .day-input {
-        height: 28px;
-        font-size: 10px;
-        padding: 1px 2px;
-      }
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
     }
 
-    table {
+    table.timesheet-table {
       width: 100%;
-      border-collapse: collapse;
-      background: white;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.76rem;
     }
 
-    table thead {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
+    table.timesheet-table thead {
+      background: var(--bg-app);
     }
 
-    th, td {
-      padding: 8px 6px;
+    table.timesheet-table th {
+      padding: 10px 6px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.03em;
+      border-right: 1px solid var(--border-color);
+      border-bottom: 2px solid var(--border-color);
       text-align: center;
-      border: 1px solid #ddd;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-    
-    /* Day columns styling */
-    .day-column {
-      width: 60px;
-      min-width: 60px;
-      max-width: 60px;
-      padding: 4px 2px;
     }
 
-    /* Sunday styling */
-    .sunday-column {
-      background-color: #555555 !important;
-    }
-    
-    .sunday-input {
-      background-color: #666666 !important;
-      border-color: #777777 !important;
-      color: #ffffff !important;
-      cursor: not-allowed;
-      font-weight: bold;
+    table.timesheet-table th:last-child {
+      border-right: none;
     }
 
-    /* Holiday styling */
-    .holiday-column {
-        background-color: #f8d7da !important; /* Light Red */
-    }
-    .holiday-input {
-        background-color: #dc3545 !important; /* Red */
-        color: #ffffff !important;
-    }
-    
-    .sunday-column {
-      background-color: #f8f9fa !important;
-    }
-    
-    .day-input.readonly {
-      background-color: #f8f9fa;
-      cursor: not-allowed;
-    }
-    
-    .day-input {
-      width: 100%;
-      height: 32px;
-      padding: 2px 4px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+    table.timesheet-table tbody td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      vertical-align: middle;
       text-align: center;
-      font-size: 11px;
-      background: white;
-      transition: all 0.2s ease;
+      color: var(--text-main);
+      background-color: var(--bg-card);
     }
-    
-    .day-input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-      outline: none;
+
+    table.timesheet-table tbody td:last-child {
+      border-right: none;
     }
-    
-    .day-input:hover {
-      border-color: #667eea;
+
+    table.timesheet-table tbody tr {
+      transition: background-color 0.15s ease;
     }
-    
-    .day-input.saving {
-      background-color: #fff3cd;
-      border-color: #ffc107;
+
+    table.timesheet-table tbody tr:hover td {
+      background-color: var(--sunday-bg) !important;
     }
-    
-    .day-input.saved {
-      background-color: #d1edff;
-      border-color: #0dcaf0;
+
+    /* Columns custom widths & layouts */
+    .col-name-sticky {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background-color: var(--bg-card) !important;
+      border-right: 2px solid var(--border-color) !important;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.04);
+      min-width: 140px;
+      max-width: 160px;
+      text-align: left !important;
+      font-weight: 600;
     }
-    
-    .day-input.error {
-      background-color: #f8d7da;
-      border-color: #dc3545;
+    table.timesheet-table thead th.col-name-sticky {
+      z-index: 11;
+      background-color: var(--bg-app) !important;
     }
-    
-    /* Field input styling */
-    .field-input {
-      width: 100%;
-      padding: 4px 6px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 12px;
-      background: white;
-      transition: all 0.2s ease;
+
+    .col-dept {
+      min-width: 70px;
+      font-weight: 500;
+      color: var(--text-secondary);
     }
-    
-    .field-input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-      outline: none;
+    .col-details {
+      min-width: 100px;
     }
-    
-    .field-input:hover {
-      border-color: #667eea;
-    }
-    
-    .field-input.saving {
-      background-color: #fff3cd;
-      border-color: #ffc107;
-    }
-    
-    .field-input.saved {
-      background-color: #d1edff;
-      border-color: #0dcaf0;
-    }
-    
-    .field-input.error {
-      background-color: #f8d7da;
-      border-color: #dc3545;
-    }
-    
+
+    /* Day headers styling */
     .day-header {
-      width: 60px;
-      min-width: 60px;
-      max-width: 60px;
-      font-size: 12px; /* reduced size for day number */
-      line-height: 1.2;
-      font-weight: 700;
+      min-width: 38px;
+      width: 38px;
+      padding: 4px 2px !important;
     }
-    
-    .day-header small {
-      font-size: 12px; /* reduced size for weekday letter */
-      color: #333333;
-      font-weight: 700;
-      letter-spacing: 0.3px;
+    .day-column {
+      min-width: 38px;
+      width: 38px;
+      padding: 4px 2px !important;
+    }
+    .day-number {
+      font-size: 0.85rem;
+      font-weight: 800;
+      display: block;
+      line-height: 1.1;
+    }
+    .day-abbr {
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: var(--text-secondary);
     }
 
-    .days-input {
-      width: 60px;
+    /* Sunday and Holiday classes */
+    .sunday-column { background-color: var(--sunday-bg) !important; }
+    .sunday-input {
+      background-color: #f1f5f9 !important;
+      color: var(--sunday-text) !important;
+      cursor: not-allowed;
+      font-weight: 600;
+    }
+
+    .holiday-column { background-color: var(--holiday-bg) !important; }
+    .holiday-input {
+      background-color: #ffe4e6 !important;
+      color: var(--holiday-text) !important;
+      border-color: #fecdd3 !important;
+      cursor: not-allowed;
+      font-weight: 700;
+    }
+
+    /* Inputs in table */
+    .table-input {
+      width: 100%;
+      height: 26px;
+      font-size: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
       text-align: center;
-      padding: 4px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      padding: 2px 2px;
+      transition: all 0.2s ease;
+      background-color: var(--bg-card);
+      outline: none;
+    }
+    .table-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px var(--accent-glow);
       background-color: #fff;
+    }
+
+    .field-input-details {
+      text-align: left;
+      font-size: 0.78rem;
+    }
+
+    /* Auto-save status states (inputs) */
+    .table-input.saving { background-color: #fef3c7; border-color: #fcd34d; }
+    .table-input.saved { background-color: #ecfdf5; border-color: #a7f3d0; }
+    .table-input.error { background-color: #fef2f2; border-color: #fecaca; }
+
+    /* ===================== ACTION BUTTONS ===================== */
+    .action-btn-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-circle:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: var(--accent-glow);
+    }
+
+    .btn-circle-delete {
+      color: var(--holiday-text);
+      border-color: rgba(244, 63, 94, 0.2);
+    }
+    .btn-circle-delete:hover {
+      color: #ffffff;
+      background: var(--holiday-text);
+      border-color: var(--holiday-text);
+    }
+
+    /* Auto save status indicator */
+    .save-status-indicator {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-app);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      font-size: 0.85rem;
       transition: all 0.3s ease;
     }
 
-    .days-input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-      outline: none;
+    .save-status-indicator.saving {
+      background-color: #fffbeb !important;
+      border-color: #fde68a !important;
+      color: #d97706 !important;
+      animation: pulsate 1.5s infinite;
     }
 
-    .days-input[readonly] {
-      background-color: #f8f9fa;
-      cursor: not-allowed;
+    .save-status-indicator.saved {
+      background-color: #f0fdf4 !important;
+      border-color: #bbf7d0 !important;
+      color: #16a34a !important;
     }
 
-    .days-input.saving {
-      background-color: #fff3cd;
-      border-color: #ffc107;
+    .save-status-indicator.error {
+      background-color: #fef2f2 !important;
+      border-color: #fecaca !important;
+      color: #dc2626 !important;
     }
 
-    .days-input.saved {
-      background-color: #d1edff;
-      border-color: #0dcaf0;
+    @keyframes pulsate {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
-    .days-input.error {
-      background-color: #f8d7da;
-      border-color: #dc3545;
+    /* ===================== EMPTY STATE ===================== */
+    .empty-wrapper {
+      padding: 48px 24px;
+      text-align: center;
     }
-    
-    /* Empty state styling */
-    .empty-state {
-      padding: 2rem;
+    .empty-wrapper svg {
+      width: 48px;
+      height: 48px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
     }
-    
-    .empty-state i {
-      display: block;
-      margin: 0 auto 1rem;
+    .empty-wrapper h5 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
     }
-
-    th {
-      font-weight: 600;
-      font-size: 14px;
-      color: white;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    tr:hover td {
-      background-color: rgba(102, 126, 234, 0.1) !important;
-      transition: background-color 0.3s ease;
+    .empty-wrapper p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
     }
 
-    td.left {
-      text-align: left;
-    }
-
-    tr:nth-child(even) td {
-      background-color: #f9f9f9;
-    }
-
-    tr:hover td {
-      background-color: #ffe6e6; /* light red hover */
-    }
-    
-    /* Custom style for the new Holiday button */
-    .btn-warning {
-        background: linear-gradient(135deg, #ffc107, #ff9800);
-        border-color: #ffc107;
-        color: #333;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
-    }
-    .btn-warning:hover {
-        background: linear-gradient(135deg, #ff9800, #e68900);
-        border-color: #e68900;
-        color: #333;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
-    }
-    .btn-warning:focus, .btn-warning:active {
-        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.5) !important;
-    }
-    
-
-    /* Print-specific styles */
+    /* ===================== PRINT STYLING ===================== */
     @media print {
       body {
-        background: white !important;
-        color: black !important;
-        font-size: 12px;
+        background: #ffffff !important;
+        color: #000000 !important;
       }
-      
-      .main-content {
-        margin: 0 !important;
-        padding: 20px !important;
-        background: white !important;
+      .timesheet-card {
         box-shadow: none !important;
-        border-radius: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
+        border: none !important;
+        padding: 0 !important;
       }
-      
-      .icon-btn, .float-end, .action-btn, .btn-save, .d-flex.align-items-center.ms-3, .mb-4 form button[type="submit"] { /* Hiding the Holiday button and Update button in print */
+      .timesheet-card::before {
         display: none !important;
       }
-      
-      .main-content h2 {
-        color: black !important;
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 18px;
-        font-weight: bold;
+      .header-section, .controls-bar, .actions-column, .action-btn-group, .save-status-indicator {
+        display: none !important;
       }
-      
-      table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        margin: 0 !important;
+      .table-responsive-container {
+        border: none !important;
       }
-      
-      table thead {
-        background-color: #f0f0f0 !important;
-        -webkit-print-color-adjust: exact;
-        color-adjust: exact;
+      table.timesheet-table {
+        border: 1px solid #000000 !important;
       }
-      
-      th, td {
-        border: 1px solid #000 !important;
-        padding: 8px 6px !important;
-        font-size: 10px !important;
-        text-align: center !important;
+      table.timesheet-table th, table.timesheet-table td {
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
+        padding: 6px 4px !important;
+        font-size: 8px !important;
       }
-      
-      th {
-        font-weight: bold !important;
-        background-color: #f0f0f0 !important;
-        -webkit-print-color-adjust: exact;
-        color-adjust: exact;
+      .table-input {
+        border: none !important;
+        background: transparent !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        height: auto !important;
       }
-      
-      td.left {
-        text-align: left !important;
-      }
-      
-      tr:nth-child(even) td {
-        background-color: #f9f9f9 !important;
-        -webkit-print-color-adjust: exact;
-        color-adjust: exact;
-      }
-      
       .print-header {
+        display: block !important;
         text-align: center;
         margin-bottom: 20px;
       }
-      
       .print-footer {
-        margin-top: 30px;
+        display: block !important;
         text-align: center;
-        font-size: 10px;
-        color: #666;
-      }
-      
-      /* Hide actions column in print */
-      .actions-column {
-        display: none !important;
-      }
-      
-      /* Hide input fields and show values in print */
-      .day-input, .field-input {
-        border: none !important;
-        background: transparent !important;
-        text-align: center !important;
-        font-weight: bold !important;
-        padding: 0 !important;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-      }
-      
-      .day-column {
-        width: 35px !important;
-        min-width: 35px !important;
-        max-width: 35px !important;
+        margin-top: 20px;
+        font-size: 8px;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="main-content">
-    <div class="print-header" style="display: none;">
-      <h1>MCC PAYROLL SYSTEM</h1>
-      <h2>Instructor Part-time Timesheet</h2>
-      <p>Generated on: <span id="print-date"></span></p>
-      <hr>
-    </div>
+  <div class="container-fluid">
+    <div class="timesheet-card">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div class="d-flex align-items-center">
-        <a href="{{ route('dashboard') }}" class="icon-btn btn-back me-3" title="Back to Dashboard">
-          <i class="bi bi-arrow-left"></i>
-        </a>
-        <h2 class="mb-0">Instructor Part-time Timesheet</h2>
+      <!-- ===================== PRINT HEADER ===================== -->
+      <div class="print-header d-none">
+        <h4 class="fw-bold mb-1">MCC PAYROLL SYSTEM</h4>
+        <h5 class="text-secondary mb-2">Instructor Part-time Timesheet</h5>
+        <p class="small text-muted mb-0">Generated on: <span id="print-date"></span></p>
+        <hr class="my-3">
       </div>
-      
-      <div class="d-flex align-items-center">
-        <button onclick="openPrintPage()" class="icon-btn print-btn me-2" title="Open Print Page">
-          <i class="bi bi-printer"></i>
+
+      <!-- ===================== HEADER ===================== -->
+      <div class="header-section">
+        <div class="header-title-group">
+          <a href="{{ route('dashboard') }}" class="btn-back" title="Back to Dashboard">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </a>
+          <h2>Instructor Part-time Timesheet</h2>
+        </div>
+        <div class="header-actions">
+          <button onclick="openPrintPage()" class="btn-action-secondary" title="Print Timesheet">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+          <a href="{{ route('parttime.create') }}" class="btn-action-primary">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Entry
+          </a>
+        </div>
+      </div>
+
+      <!-- ===================== CONTROLS BAR ===================== -->
+      <div class="controls-bar">
+        <form method="GET" action="{{ route('parttime.index') }}" class="filter-form">
+          <div class="filter-group">
+            <label for="month">Month</label>
+            <select name="month" id="month" class="filter-select">
+              @for ($m = 1; $m <= 12; $m++)
+                <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
+                  {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                </option>
+              @endfor
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="period">Period</label>
+            <select name="period" id="period" class="filter-select">
+              <option value="auto" {{ $period == 'auto' ? 'selected' : '' }}>Auto</option>
+              <option value="1-15" {{ $period == '1-15' ? 'selected' : '' }}>1-15</option>
+              <option value="16-end" {{ $period == '16-end' ? 'selected' : '' }}>16-End</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="year">Year</label>
+            <select name="year" id="year" class="filter-select">
+              @php
+                $currentYear = now()->year;
+              @endphp
+              @for ($y = $currentYear - 2; $y <= $currentYear + 2; $y++)
+                <option value="{{ $y }}" {{ $y == $year ? 'selected' : '' }}>{{ $y }}</option>
+              @endfor
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-update">Update</button>
+        </form>
+
+        <button type="button" class="btn-holiday-manage">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Holiday
         </button>
-        <a href="{{ route('parttime.create') }}" class="icon-btn add-btn" title="Add Timesheet Entry">
-          <i class="bi bi-plus-lg"></i>
-        </a>
       </div>
-    </div>
 
-    <div class="d-flex justify-content-center mb-4">
-      <form method="GET" action="{{ route('parttime.index') }}" class="d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center">
-          <label for="month" class="me-2 fw-bold">Month:</label>
-          <select name="month" id="month" class="form-select" style="width: auto;">
-            @for ($m = 1; $m <= 12; $m++)
-              <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
-                {{ \Carbon\Carbon::create()->month($m)->format('F') }}
-              </option>
-            @endfor
-          </select>
-        </div>
-        <div class="d-flex align-items-center">
-          <label for="period" class="me-2 fw-bold">Period:</label>
-          <select name="period" id="period" class="form-select" style="width: auto;">
-            <option value="auto" {{ $period == 'auto' ? 'selected' : '' }}>Auto</option>
-            <option value="1-15" {{ $period == '1-15' ? 'selected' : '' }}>1-15</option>
-            <option value="16-end" {{ $period == '16-end' ? 'selected' : '' }}>16-End</option>
-          </select>
-        </div>
-        <div class="d-flex align-items-center">
-          <label for="year" class="me-2 fw-bold">Year:</label>
-          <select name="year" id="year" class="form-select" style="width: auto;">
-            @php
-              $currentYear = now()->year;
-            @endphp
-            @for ($y = $currentYear - 2; $y <= $currentYear + 2; $y++)
-              <option value="{{ $y }}" {{ $y == $year ? 'selected' : '' }}>{{ $y }}</option>
-            @endfor
-          </select>
-        </div>
-        
-        <button type="submit" class="btn btn-primary">Update</button>
-      </form>
-      
-      <div class="d-flex align-items-center ms-3">
-        <button type="button" class="btn btn-warning">
-          <i class="bi bi-calendar-event me-1"></i> Holiday
-        </button>
-      </div>
-      
-    </div>
+      <!-- ===================== TABLE ===================== -->
+      <div class="table-responsive-container">
+        <table class="timesheet-table">
+          <thead>
+            <tr>
+              <th class="col-name-sticky">Names</th>
+              <th style="min-width: 100px;">Designation</th>
+              <th style="min-width: 70px;">Prev. Abs.</th>
+              <th style="min-width: 90px;">Department</th>
 
-    <div class="table-container mt-3">
-      <table>
-        <thead>
-          <tr>
-            <th rowspan="2">NAMES</th>
-            <th rowspan="2">DESIGNATION</th>
-            <th rowspan="2">Prev. Abs.</th>
-            <th rowspan="2">DEPARTMENT</th>
-            <th colspan="{{ count($days) }}">Days ({{ $startDay }}–{{ $startDay + count($days) - 1 }})</th>
-            <th rowspan="2">Details for<br>Inclusive Hours of Classes</th>
-            <th rowspan="2">TOTAL<br>Hour</th>
-            <th rowspan="2">Rate per<br>Hour</th>
-            <th rowspan="2">Deduction<br>Previous Cut Off</th>
-            <th rowspan="2">TOTAL HONORARIUM</th>
-            <th rowspan="2" class="actions-column">Actions</th>
-          </tr>
-          <tr>
-            @foreach($days as $day)
+              @foreach($days as $day)
                 @php
-                    $isHolidayHeader = in_array($day['date'], $holidays ?? []);
-                    $isSundayHeader = (\Carbon\Carbon::parse($day['date'])->dayOfWeekIso == 7);
-                    $headerClass = $isHolidayHeader ? 'holiday-column' : ($isSundayHeader ? 'sunday-column' : '');
+                  $isHolidayHeader = in_array($day['date'], $holidays ?? []);
+                  $isSundayHeader = (\Carbon\Carbon::parse($day['date'])->dayOfWeekIso == 7);
+                  $headerClass = $isHolidayHeader ? 'holiday-column' : ($isSundayHeader ? 'sunday-column' : '');
                 @endphp
                 <th class="day-header {{ $headerClass }}">
-                    <span class="day-number" style="color: #000;">{{ $day['number'] }}</span><br>
-                    <small class="weekday" data-day="{{ $day['number'] }}" style="color: #000;">{{ $day['abbr'] }}</small>
-                    <input type="hidden" class="default-hours-abbr" data-abbr="{{ $day['abbr'] }}" value="{{ $day['default_hours'] }}">
+                  <span class="day-number" style="color: {{ $isHolidayHeader ? 'var(--holiday-text)' : 'inherit' }};">{{ $day['number'] }}</span>
+                  <span class="day-abbr" style="color: {{ $isHolidayHeader ? 'var(--holiday-text)' : 'inherit' }};">{{ $day['abbr'] }}</span>
                 </th>
-            @endforeach
+              @endforeach
 
-          </tr>
-        </thead>
-        <tbody>
-          @forelse($timesheets as $timesheet)
-          <tr>
-            <td class="left">{{ $timesheet->employee_name }}</td>
-            <td>{{ ucfirst($timesheet->designation) }}</td>
-            <td>
-              <input type="text" 
-                     class="form-control field-input"
-                     value="{{ $timesheet->prov_abr ?? 0 }}" 
-                     data-timesheet-id="{{ $timesheet->id }}" 
-                     data-field="prov_abr"
-                     placeholder="0">
-            </td>
-            <td>{{ $timesheet->department }}</td>
-            @foreach($days as $day)
-              @php
-                $currentDate = $day['date'];
-                $isHoliday = in_array($currentDate, $holidays ?? []);
-                $weekday = \Carbon\Carbon::parse($currentDate)->format('D'); // Mon, Tue, etc.
-                $weekdayMap = ['Mon'=>'mon_hours','Tue'=>'tue_hours','Wed'=>'wed_hours','Thu'=>'thu_hours','Fri'=>'fri_hours','Sat'=>'sat_hours','Sun'=>'sun_hours'];
-                $field = $weekdayMap[$weekday] ?? 'mon_hours';
-
-                $isDisabledOrHoliday = ($weekday === 'Sun') || $isHoliday;
-                $value = $isDisabledOrHoliday ? 0 : ($timesheet->$field ?? 0);
-
-                $columnClasses = $isHoliday ? 'holiday-column' : ($weekday === 'Sun' ? 'sunday-column' : '');
-                $inputClasses = $isHoliday ? 'holiday-input' : ($weekday === 'Sun' ? 'sunday-input' : '');
-              @endphp
-              <td class="day-column {{ $columnClasses }}">
-                <input type="number"
-                       class="form-control days-input {{ $inputClasses }}"
-                       value="{{ $value }}" 
-                       min="0"
-                       max="24"
-                       step="0.5"
+              <th style="min-width: 140px;">Details (Inclusive Hours)</th>
+              <th style="min-width: 60px;">Total Hr</th>
+              <th style="min-width: 80px;">Rate / Hr</th>
+              <th style="min-width: 80px;">Deduction</th>
+              <th style="min-width: 120px;">Total Honorarium</th>
+              <th class="actions-column" style="min-width: 110px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($timesheets as $timesheet)
+            <tr>
+              <td class="col-name-sticky">{{ $timesheet->employee_name }}</td>
+              <td class="text-secondary" style="font-weight: 500;">{{ ucfirst($timesheet->designation) }}</td>
+              <td>
+                <input type="text"
+                       class="table-input field-input"
+                       value="{{ $timesheet->prov_abr ?? 0 }}"
                        data-timesheet-id="{{ $timesheet->id }}"
-                       data-day="{{ $day['number'] }}"
-                       data-day-date="{{ $currentDate }}"
-                       data-field="{{ $field }}"
-                       data-day-abbr="{{ $day['abbr'] }}"
-                       data-is-holiday="{{ $isHoliday ? 'true' : 'false' }}"
-                       {{ $isDisabledOrHoliday ? 'readonly' : '' }}
-                       >
+                       data-field="prov_abr"
+                       placeholder="0">
               </td>
-            @endforeach
-            <td>
-              <input type="text" 
-                     class="form-control field-input" 
-                     value="{{ $timesheet->details }}" 
-                     data-timesheet-id="{{ $timesheet->id }}" 
-                     data-field="details"
-                     placeholder="Details">
-            </td>
-            <td id="total-hour-{{ $timesheet->id }}" class="number-cell">{{ number_format($timesheet->total_hour ?? 0, 2) }}</td>
-            <td>
-              <input type="number" 
-                     class="form-control field-input" 
-                     value="{{ $timesheet->rate_per_hour }}" 
-                     data-timesheet-id="{{ $timesheet->id }}" 
-                     data-field="rate_per_hour"
-                     min="0" 
-                     step="0.01"
-                     placeholder="0.00">
-            </td>
-            <td>
-              <input type="number" 
-                     class="form-control field-input" 
-                     value="{{ $timesheet->deduction }}" 
-                     data-timesheet-id="{{ $timesheet->id }}" 
-                     data-field="deduction"
-                     min="0" 
-                     step="0.01"
-                     placeholder="0.00">
-            </td>
-            <td id="total-honorarium-{{ $timesheet->id }}">₱{{ number_format($timesheet->total_honorarium, 2) }}</td>
-            <td class="actions-column">
-              <a href="{{ route('parttime.edit', $timesheet->id) }}"
-                 class="action-btn btn-edit me-2"
-                 title="Edit Timesheet">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <span id="save-status-{{ $timesheet->id }}" class="action-btn btn-auto-status" title="Auto-Save Status">
-                  <i class="bi bi-grip-horizontal"></i>
-              </span>
-              <form action="{{ route('parttime.destroy', $timesheet->id) }}" method="POST" style="display:inline;">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="action-btn btn-delete" title="Delete">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
-            </td>
-          </tr>
-          @empty
-          <tr>
-            <td colspan="22" class="text-center py-5">
-              <div class="empty-state">
-                <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i>
-                <h5 class="text-muted">No Timesheet Records Found</h5>
-                <p class="text-muted mb-3">There are no fulltime timesheet entries to display.</p>
-                <a href="{{ route('parttime.create') }}" class="btn btn-primary">
-                  <i class="bi bi-plus-lg me-2"></i>Add First Timesheet
-                </a>
-              </div>
-            </td>
-          </tr>
-          @endforelse
-        </tbody>
-      </table>
-    </div>
-    
-    <div class="print-footer" style="display: none;">
-      <p>Generated by MCC Payroll System - {{ date('Y-m-d H:i:s') }}</p>
+              <td class="col-dept">{{ $timesheet->department }}</td>
+
+              @foreach($days as $day)
+                @php
+                  $currentDate = $day['date'];
+                  $isHoliday = in_array($currentDate, $holidays ?? []);
+                  $weekday = \Carbon\Carbon::parse($currentDate)->format('D');
+                  $weekdayMap = ['Mon'=>'mon_hours','Tue'=>'tue_hours','Wed'=>'wed_hours','Thu'=>'thu_hours','Fri'=>'fri_hours','Sat'=>'sat_hours','Sun'=>'sun_hours'];
+                  $field = $weekdayMap[$weekday] ?? 'mon_hours';
+
+                  $isDisabledOrHoliday = ($weekday === 'Sun') || $isHoliday;
+                  $value = $isDisabledOrHoliday ? 0 : ($timesheet->$field ?? 0);
+
+                  $columnClasses = $isHoliday ? 'holiday-column' : ($weekday === 'Sun' ? 'sunday-column' : '');
+                  $inputClasses = $isHoliday ? 'holiday-input' : ($weekday === 'Sun' ? 'sunday-input' : '');
+                @endphp
+                <td class="day-column {{ $columnClasses }}">
+                  <input type="number"
+                         class="table-input day-input {{ $inputClasses }}"
+                         value="{{ $value }}"
+                         min="0"
+                         max="24"
+                         step="0.5"
+                         data-timesheet-id="{{ $timesheet->id }}"
+                         data-day="{{ $day['number'] }}"
+                         data-day-date="{{ $currentDate }}"
+                         data-field="{{ $field }}"
+                         data-day-abbr="{{ $day['abbr'] }}"
+                         data-is-holiday="{{ $isHoliday ? 'true' : 'false' }}"
+                         {{ $isDisabledOrHoliday ? 'readonly' : '' }}>
+                </td>
+              @endforeach
+
+              <td class="col-details">
+                <input type="text"
+                       class="table-input field-input field-input-details"
+                       value="{{ $timesheet->details }}"
+                       data-timesheet-id="{{ $timesheet->id }}"
+                       data-field="details"
+                       placeholder="Details">
+              </td>
+              <td id="total-hour-{{ $timesheet->id }}" class="fw-bold">{{ is_numeric($timesheet->total_hour) && floor($timesheet->total_hour) == $timesheet->total_hour ? number_format($timesheet->total_hour, 0) : number_format($timesheet->total_hour ?? 0, 2) }}</td>
+              <td>
+                <input type="number"
+                       class="table-input field-input text-end"
+                       value="{{ $timesheet->rate_per_hour }}"
+                       data-timesheet-id="{{ $timesheet->id }}"
+                       data-field="rate_per_hour"
+                       min="0"
+                       step="0.01"
+                       placeholder="0.00">
+              </td>
+              <td>
+                <input type="number"
+                       class="table-input field-input text-end"
+                       value="{{ $timesheet->deduction }}"
+                       data-timesheet-id="{{ $timesheet->id }}"
+                       data-field="deduction"
+                       min="0"
+                       step="0.01"
+                       placeholder="0.00">
+              </td>
+              <td id="total-honorarium-{{ $timesheet->id }}" class="fw-bold text-success">₱{{ number_format($timesheet->total_honorarium ?? 0, 2) }}</td>
+              <td class="actions-column">
+                <div class="action-btn-group">
+                  <a href="{{ route('parttime.edit', $timesheet->id) }}"
+                     class="btn-circle"
+                     title="Edit Timesheet">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </a>
+
+                  <span id="save-status-{{ $timesheet->id }}" class="save-status-indicator" title="Auto-Save Status">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  </span>
+
+                  <form action="{{ route('parttime.destroy', $timesheet->id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn-circle btn-circle-delete btn-delete" title="Delete">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="100" class="text-center py-5">
+                <div class="empty-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                  <h5>No Timesheet Records Found</h5>
+                  <p class="mb-3">There are no part-time timesheet entries to display.</p>
+                  <a href="{{ route('parttime.create') }}" class="btn btn-primary btn-action-primary">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add First Timesheet
+                  </a>
+                </div>
+              </td>
+            </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ===================== PRINT FOOTER ===================== -->
+      <div class="print-footer d-none">
+        <p>Generated by MCC Payroll System - {{ date('Y-m-d H:i:s') }}</p>
+      </div>
+
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+
   <script>
-    // Format numbers to remove .00 for whole numbers
+    // Format numbers to remove trailing zeros for whole numbers
     function formatNumber(value) {
       if (typeof value === 'string') {
         value = parseFloat(value);
       }
+      if (isNaN(value)) return '0';
       return value === Math.floor(value) ? value.toString() : value.toFixed(2);
     }
-    
-    // Handle Sunday column styling
-    document.addEventListener('DOMContentLoaded', function() {
-      // Add input handler for number formatting
-      document.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('input', function() {
-          if (this.value) {
-            this.value = this.value.replace(/(\.\d*?[1-9])0+$/g, '$1').replace(/\.0+$/g, '');
-          }
-        });
-      });
-      
-      document.querySelectorAll('.weekday').forEach(weekday => {
-        if (weekday.textContent.trim() === 'Sun') {
-          weekday.closest('th').classList.add('sunday-column');
-          const dayNumber = weekday.dataset.day;
-          document.querySelectorAll(`[data-day="${dayNumber}"]`).forEach(td => {
-            td.closest('td').classList.add('sunday-column');
-          });
-        }
-      });
-    });
-    
-    // Open dedicated print page
-    function openPrintPage() {
-        Swal.fire({
-            title: 'Open Print Page',
-            text: 'This will open a dedicated print-optimized page in a new tab.',
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonColor: '#0dcaf0',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="bi bi-box-arrow-up-right"></i> Open Print Page',
-            cancelButtonText: 'Cancel',
-            customClass: {
-                popup: 'swal-custom-popup',
-                title: 'swal-custom-title',
-                content: 'swal-custom-content',
-                confirmButton: 'swal-print-button',
-                cancelButton: 'swal-custom-cancel-button'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const month = urlParams.get('month') || {{ $month }};
-                const year = urlParams.get('year') || {{ $year }};
-                const period = urlParams.get('period') || '{{ $period }}';
-                
-                const printUrl = `{{ route('parttime.print') }}?month=${month}&year=${year}&period=${period}`;
-                
-                window.open(printUrl, '_blank');
-            }
-        });
+
+    const saveTimers = {};
+    function debounce(func, delay, timesheetId) {
+      if (saveTimers[timesheetId]) {
+        clearTimeout(saveTimers[timesheetId]);
+      }
+      saveTimers[timesheetId] = setTimeout(func, delay);
     }
 
-    // Check for success message from Laravel session
+    // Open dedicated print page
+    function openPrintPage() {
+      Swal.fire({
+        title: 'Open Print Page',
+        text: 'This will open a dedicated print-optimized page in a new tab.',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Open Print Page',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const month = urlParams.get('month') || {{ $month }};
+          const year = urlParams.get('year') || {{ $year }};
+          const period = urlParams.get('period') || '{{ $period }}';
+          const printUrl = `{{ route('parttime.print') }}?month=${month}&year=${year}&period=${period}`;
+          window.open(printUrl, '_blank');
+        }
+      });
+    }
+
+    // Laravel session alerts
     @if(session('success'))
       Swal.fire({
         icon: 'success',
-        title: 'Success!',
+        title: 'Success',
         text: '{{ session('success') }}',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#dc3545',
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: true,
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'swal-custom-popup',
-          title: 'swal-custom-title',
-          content: 'swal-custom-content',
-          confirmButton: 'swal-custom-button'
-        }
+        confirmButtonColor: '#2563eb',
       });
     @endif
 
-    // Check for error message from Laravel session
     @if(session('error'))
       Swal.fire({
         icon: 'error',
-        title: 'Error!',
+        title: 'Error',
         text: '{{ session('error') }}',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#dc3545',
-        customClass: {
-          popup: 'swal-custom-popup',
-          title: 'swal-custom-title',
-          content: 'swal-custom-content',
-          confirmButton: 'swal-custom-button'
-        }
+        confirmButtonColor: '#dc2626',
       });
     @endif
 
-    // Enhanced delete confirmation with SweetAlert
+    // Delete confirmation
     document.querySelectorAll('.btn-delete').forEach(button => {
       button.addEventListener('click', function(e) {
         e.preventDefault();
         const form = this.closest('form');
-        
         Swal.fire({
           title: 'Are you sure?',
           text: "You won't be able to revert this!",
           icon: 'warning',
           showCancelButton: true,
-          confirmButtonColor: '#dc3545',
-          cancelButtonColor: '#6c757d',
+          confirmButtonColor: '#dc2626',
+          cancelButtonColor: '#64748b',
           confirmButtonText: 'Yes, delete it!',
-          cancelButtonText: 'Cancel',
-          customClass: {
-            popup: 'swal-custom-popup',
-            title: 'swal-custom-title',
-            content: 'swal-custom-content',
-            confirmButton: 'swal-custom-button',
-            cancelButton: 'swal-custom-cancel-button'
-          }
         }).then((result) => {
           if (result.isConfirmed) {
-            // Show loading state
-            Swal.fire({
-              title: 'Deleting...',
-              text: 'Please wait while we delete the timesheet.',
-              icon: 'info',
-              allowOutsideClick: false,
-              allowEscapeKey: false,
-              showConfirmButton: false,
-              didOpen: () => {
-                Swal.showLoading();
-              },
-              customClass: {
-                popup: 'swal-custom-popup',
-                title: 'swal-custom-title',
-                content: 'swal-custom-content'
-              }
-            });
+            Swal.fire({ title: 'Deleting...', icon: 'info', allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading(); } });
             form.submit();
           }
         });
       });
     });
 
-    // Auto-save functionality
+    // Calculations & Autosave (part-time rules: deduction is hours-based, same-weekday inputs mirror)
     document.addEventListener('DOMContentLoaded', function() {
 
-        const saveTimers = {};
-
-        function debounce(func, delay, timesheetId) {
-            if (saveTimers[timesheetId]) {
-                clearTimeout(saveTimers[timesheetId]);
-            }
-            saveTimers[timesheetId] = setTimeout(func, delay);
-        }
-
-        function calculateTotals(row) {
-            let grossHours = 0;
-            
-            // 1. Calculate Gross Total Hours from day inputs (excluding holidays/Sundays)
-            row.querySelectorAll('.days-input').forEach(input => {
-                if (input.dataset.isHoliday === 'true' || input.classList.contains('sunday-input')) {
-                    return;
-                }
-                grossHours += parseFloat(input.value) || 0;
-            });
-
-            // 2. Get other values
-            const prevAbsInput = row.querySelector('[data-field="prov_abr"]');
-            const ratePerHourInput = row.querySelector('[data-field="rate_per_hour"]');
-            const deductionInput = row.querySelector('[data-field="deduction"]');
-
-            const prevAbsHours = parseFloat(prevAbsInput ? prevAbsInput.value : 0) || 0;
-            const ratePerHour = parseFloat(ratePerHourInput ? ratePerHourInput.value : 0) || 0;
-            const deductionHours = parseFloat(deductionInput ? deductionInput.value : 0) || 0;
-
-            // 3. Perform calculations
-            // Prev. Abs. is in hours, subtracted from gross hours
-            const finalPayableHours = Math.max(0, grossHours - prevAbsHours);
-            const grossHonorarium = finalPayableHours * ratePerHour;
-            // Deduction is in hours, multiplied by rate, then subtracted from honorarium
-            const monetaryDeduction = deductionHours * ratePerHour;
-            const totalHonorarium = Math.max(0, grossHonorarium - monetaryDeduction);
-
-            // 4. Update display
-            const timesheetId = row.querySelector('.btn-auto-status').id.replace('save-status-', '');
-            const totalHourEl = document.getElementById(`total-hour-${timesheetId}`);
-            const totalHonorariumEl = document.getElementById(`total-honorarium-${timesheetId}`);
-
-            if (totalHourEl) totalHourEl.textContent = finalPayableHours.toFixed(2).replace(/\.00$/, '');
-            if (totalHonorariumEl) totalHonorariumEl.textContent = `₱${totalHonorarium.toFixed(2)}`;
-
-            return { finalPayableHours: finalPayableHours.toFixed(2), totalHonorarium: totalHonorarium.toFixed(2) };
-        }
-
-        function saveAllData(timesheetId, row) {
-            const statusIcon = document.getElementById(`save-status-${timesheetId}`);
-            statusIcon.classList.remove('saved', 'error');
-            statusIcon.classList.add('saving');
-            statusIcon.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
-            const { finalPayableHours, totalHonorarium } = calculateTotals(row);
-
-            const fieldInputs = row.querySelectorAll('.field-input, .days-input');
-            const dataToSave = {};
-
-            fieldInputs.forEach(input => {
-                if (input.dataset.field && !input.readOnly) {
-                    dataToSave[input.dataset.field] = input.value;
-                }
-            });
-
-            // Ensure calculated totals are part of the data sent
-            dataToSave['total_hour'] = finalPayableHours;
-            dataToSave['total_honorarium'] = totalHonorarium;
-
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const promises = [];
-
-            Object.keys(dataToSave).forEach(field => {
-                const promise = fetch(`/parttime/${timesheetId}/update-field`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ field: field, value: dataToSave[field] })
-                });
-                promises.push(promise);
-            });
-
-            Promise.all(promises)
-                .then(responses => Promise.all(responses.map(r => r.ok ? r.json().catch(() => ({ success: true })) : Promise.reject(new Error(`Failed with status ${r.status}`)))))
-                .then(() => {
-                    statusIcon.classList.remove('saving');
-                    statusIcon.classList.add('saved');
-                    statusIcon.innerHTML = '<i class="bi bi-check-lg"></i>';
-                    setTimeout(() => {
-                        statusIcon.classList.remove('saved');
-                        statusIcon.innerHTML = '<i class="bi bi-grip-horizontal"></i>';
-                    }, 3000);
-                })
-                .catch(error => {
-                    console.error('Autosave Error:', error);
-                    statusIcon.classList.remove('saving');
-                    statusIcon.classList.add('error');
-                    statusIcon.innerHTML = '<i class="bi bi-x-lg"></i>';
-                    setTimeout(() => {
-                        statusIcon.classList.remove('error');
-                        statusIcon.innerHTML = '<i class="bi bi-grip-horizontal"></i>';
-                    }, 5000);
-                });
-        }
-
-        // Initial calculation on page load
-        document.querySelectorAll('tbody tr').forEach(row => {
-            if (row.querySelector('.btn-auto-status')) {
-                calculateTotals(row);
-            }
+      function calculateTotals(row) {
+        let grossHours = 0;
+        row.querySelectorAll('.day-input').forEach(input => {
+          if (input.dataset.isHoliday === 'true' || input.classList.contains('sunday-input')) {
+            return;
+          }
+          grossHours += parseFloat(input.value) || 0;
         });
 
-        // Attach event listeners
-        document.querySelectorAll('.field-input, .days-input').forEach(input => {
-          input.addEventListener('input', function() {
-              // Skip readonly fields (Sundays and Holidays)
-              if (this.readOnly) {
-                  return;
-              }
-              const row = this.closest('tr');
-              const statusElement = row.querySelector('.btn-auto-status');
-              if (!statusElement) return;
+        const prevAbsInput = row.querySelector('[data-field="prov_abr"]');
+        const ratePerHourInput = row.querySelector('[data-field="rate_per_hour"]');
+        const deductionInput = row.querySelector('[data-field="deduction"]');
 
-              const timesheetId = statusElement.id.replace('save-status-', '');
+        const prevAbsHours = parseFloat(prevAbsInput ? prevAbsInput.value : 0) || 0;
+        const ratePerHour = parseFloat(ratePerHourInput ? ratePerHourInput.value : 0) || 0;
+        const deductionHours = parseFloat(deductionInput ? deductionInput.value : 0) || 0;
 
-              // Mirroring logic for day inputs
-              if (this.classList.contains('days-input')) {
-                  const weekdayAbbr = this.dataset.dayAbbr;
-                  if (weekdayAbbr) {
-                      document.querySelectorAll(`.days-input[data-day-abbr="${weekdayAbbr}"]`).forEach(otherInput => {
-                          if (otherInput !== this && !otherInput.hasAttribute('readonly')) {
-                              otherInput.value = this.value;
-                          }
-                      });
-                  }
-              }
+        const finalPayableHours = Math.max(0, grossHours - prevAbsHours);
+        const grossHonorarium = finalPayableHours * ratePerHour;
+        const monetaryDeduction = deductionHours * ratePerHour;
+        const totalHonorarium = Math.max(0, grossHonorarium - monetaryDeduction);
 
-              calculateTotals(row); // Live calculation
+        const timesheetId = row.querySelector('.save-status-indicator').id.replace('save-status-', '');
+        const totalHourEl = document.getElementById(`total-hour-${timesheetId}`);
+        const totalHonorariumEl = document.getElementById(`total-honorarium-${timesheetId}`);
 
-              debounce(() => saveAllData(timesheetId, row), 1500, timesheetId);
+        if (totalHourEl) totalHourEl.textContent = finalPayableHours.toFixed(2).replace(/\.00$/, '');
+        if (totalHonorariumEl) totalHonorariumEl.textContent = `₱${totalHonorarium.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+        return { finalPayableHours: finalPayableHours.toFixed(2), totalHonorarium: totalHonorarium.toFixed(2) };
+      }
+
+      function saveAllData(timesheetId, row) {
+        const statusIcon = document.getElementById(`save-status-${timesheetId}`);
+        statusIcon.className = 'save-status-indicator saving';
+        statusIcon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>`;
+
+        const { finalPayableHours, totalHonorarium } = calculateTotals(row);
+
+        const fieldInputs = row.querySelectorAll('.field-input, .day-input');
+        const dataToSave = {};
+
+        fieldInputs.forEach(input => {
+          if (input.dataset.field && !input.readOnly) {
+            dataToSave[input.dataset.field] = input.value;
+          }
+        });
+
+        dataToSave['total_hour'] = finalPayableHours;
+        dataToSave['total_honorarium'] = totalHonorarium;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const promises = [];
+
+        Object.keys(dataToSave).forEach(field => {
+          const promise = fetch(`/parttime/${timesheetId}/update-field`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrfToken,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ field: field, value: dataToSave[field] })
           });
+          promises.push(promise);
         });
+
+        Promise.all(promises)
+          .then(responses => Promise.all(responses.map(r => r.ok ? r.json().catch(() => ({ success: true })) : Promise.reject(new Error(`Failed with status ${r.status}`)))))
+          .then(() => {
+            statusIcon.className = 'save-status-indicator saved';
+            statusIcon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+            setTimeout(() => {
+              statusIcon.className = 'save-status-indicator';
+              statusIcon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            }, 3000);
+          })
+          .catch(error => {
+            console.error('Autosave Error:', error);
+            statusIcon.className = 'save-status-indicator error';
+            statusIcon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+            setTimeout(() => {
+              statusIcon.className = 'save-status-indicator';
+              statusIcon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            }, 5000);
+          });
+      }
+
+      // Initial calculation on page load
+      document.querySelectorAll('tbody tr').forEach(row => {
+        if (row.querySelector('.save-status-indicator')) {
+          calculateTotals(row);
+        }
+      });
+
+      // Fix default hour formatting on load
+      document.querySelectorAll('.day-input').forEach(input => {
+        if (input.value) {
+          input.value = formatNumber(input.value);
+        }
+      });
+
+      // Attach event listeners
+      document.querySelectorAll('.field-input, .day-input').forEach(input => {
+        input.addEventListener('input', function() {
+          if (this.readOnly) return;
+
+          const row = this.closest('tr');
+          const statusElement = row.querySelector('.save-status-indicator');
+          if (!statusElement) return;
+
+          const timesheetId = statusElement.id.replace('save-status-', '');
+
+          // Mirror same-weekday hours across every row (part-time-only behavior)
+          if (this.classList.contains('day-input')) {
+            const weekdayAbbr = this.dataset.dayAbbr;
+            if (weekdayAbbr) {
+              document.querySelectorAll(`.day-input[data-day-abbr="${weekdayAbbr}"]`).forEach(otherInput => {
+                if (otherInput !== this && !otherInput.hasAttribute('readonly')) {
+                  otherInput.value = this.value;
+                }
+              });
+            }
+          }
+
+          calculateTotals(row);
+          debounce(() => saveAllData(timesheetId, row), 1500, timesheetId);
+        });
+
+        input.addEventListener('change', function() {
+          if (!this.classList.contains('day-input') || this.readOnly) return;
+          const value = parseFloat(this.value);
+          if (isNaN(value) || value < 0 || value > 24) {
+            this.value = 0;
+            alert('Hours must be between 0 and 24');
+            this.dispatchEvent(new Event('input'));
+          } else {
+            this.value = formatNumber(value);
+          }
+        });
+      });
     });
   </script>
 
-  <style>
-    /* Custom SweetAlert2 styling to match theme */
-    .swal-custom-popup {
-      border-radius: 15px !important;
-      border: 2px solid #dc3545 !important;
-    }
-    
-    .swal-custom-title {
-      color: #dc3545 !important;
-      font-weight: 700 !important;
-    }
-    
-    .swal-custom-content {
-      color: #2c3e50 !important;
-    }
-    
-    .swal-custom-button {
-      background: linear-gradient(135deg, #dc3545, #c82333) !important;
-      border: none !important;
-      border-radius: 8px !important;
-      font-weight: 600 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.5px !important;
-      padding: 12px 30px !important;
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3) !important;
-    }
-    
-    .swal-custom-button:hover {
-      background: linear-gradient(135deg, #a71d2a, #b21e2f) !important;
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4) !important;
-    }
-    
-    .swal-custom-cancel-button {
-      background: linear-gradient(135deg, #6c757d, #5a6268) !important;
-      border: none !important;
-      border-radius: 8px !important;
-      font-weight: 600 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.5px !important;
-      padding: 12px 30px !important;
-      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3) !important;
-    }
-    
-    .swal-custom-cancel-button:hover {
-      background: linear-gradient(135deg, #545b62, #4e555b) !important;
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4) !important;
-    }
-
-    /* Print button styling */
-    .swal-print-button {
-      background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
-      border: none !important;
-      border-radius: 8px !important;
-      font-weight: 600 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.5px !important;
-      padding: 12px 30px !important;
-      box-shadow: 0 4px 15px rgba(13, 202, 240, 0.3) !important;
-    }
-    
-    .swal-print-button:hover {
-      background: linear-gradient(135deg, #0aa2c0, #0891a5) !important;
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(13, 202, 240, 0.4) !important;
-    }
-
-    /* Print-specific header and footer styling */
-    @media print {
-      .print-header {
-        display: block !important;
-        page-break-inside: avoid;
+  <script>
+    devtools.detect(function(status){
+      if(status){
+        document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
       }
-      
-      .print-footer {
-        display: block !important;
-        page-break-inside: avoid;
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-      }
-      
-      .print-header h1 {
-        font-size: 20px;
-        margin: 0;
-        color: black;
-      }
-      
-      .print-header h2 {
-        font-size: 16px;
-        margin: 5px 0;
-        color: black;
-      }
-      
-      .print-header p {
-        font-size: 12px;
-        margin: 5px 0;
-        color: black;
-      }
-    }
-  </style>
-<script>
-// DevTools detection to make page blank if opened
-devtools.detect(function(status){
-  if(status){
-    document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
-  }
-});
-
-// Handle working hours
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Fix for default hours format on load
-    document.querySelectorAll('.days-input').forEach(input => {
-         // Ensure the initial value is formatted correctly (removes .00 if integer)
-         if (input.value) {
-            input.value = formatNumber(input.value);
-         }
     });
-
-    // Handle input changes (validation and formatting)
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('days-input')) {
-            const input = e.target;
-            const value = parseFloat(input.value);
-            
-            if (isNaN(value) || value < 0 || value > 24) {
-                // Use the stored default hours for reset
-                input.value = formatNumber(input.dataset.defaultHours);
-                alert('Hours must be between 0 and 24');
-            } else {
-                // Reformat the value after change event
-                input.value = formatNumber(value);
-            }
-        }
-    });
-});
-</script>
+  </script>
 </body>
 </html>

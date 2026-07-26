@@ -8,583 +8,491 @@
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
     :root {
-      --primary: #2c3e50;
-      --primary-light: #34495e;
-      --accent: #3498db;
-      --success: #27ae60;
-      --warning: #f39c12;
-      --danger: #e74c3c;
-      --info: #16a085;
-      --light: #ecf0f1;
-      --dark: #1a1a1a;
-      --muted: #f8f9fa;
+      /* Shared app tokens — same family used on the timesheet pages */
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-tint: #eff6ff;
+
+      --slate-50:  #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-900: #0f172a;
+
+      --success: #16a34a;
+      --success-tint: #f0fdf4;
+      --warning: #d97706;
+      --warning-tint: #fffbeb;
+      --danger: #dc2626;
+      --danger-tint: #fef2f2;
+      --info: #0891b2;
+      --info-tint: #ecfeff;
+
+      --radius: 10px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html, body {
-      height: 100%;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    html, body { height: 100%; }
 
     body {
-      background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
-      background-attachment: fixed;
-      color: var(--dark);
-      padding-bottom: 2rem;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--slate-50);
+      color: var(--slate-900);
+      padding-bottom: 3rem;
     }
 
-    /* Header */
+    a { text-decoration: none; }
+
+    :focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    /* ---------- Header ---------- */
     .page-header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      color: white;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      background: white;
+      border-bottom: 1px solid var(--slate-200);
+      padding: 1.5rem 0;
+      margin-bottom: 1.75rem;
     }
 
     .header-content {
-      max-width: 1400px;
+      max-width: 1320px;
       margin: 0 auto;
+      padding: 0 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .header-title {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 14px;
+    }
+
+    .header-title .icon-chip {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: var(--primary-tint);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
     }
 
     .header-title h1 {
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 700;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.01em;
     }
 
     .header-title p {
-      margin: 0;
-      font-size: 0.95rem;
-      opacity: 0.9;
+      font-size: 0.85rem;
+      color: var(--slate-500);
+      font-weight: 500;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 10px;
-    }
+    .header-actions { display: flex; gap: 0.6rem; }
 
     .btn {
       border-radius: 8px;
-      padding: 0.6rem 1.2rem;
+      padding: 0.55rem 1rem;
       font-weight: 600;
-      border: none;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); color: white; }
 
-    .btn-primary:hover {
-      background: #2980b9;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-      color: white;
-      text-decoration: none;
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid white;
-    }
-
-    .btn-secondary:hover {
+    .btn-outline {
       background: white;
-      color: var(--primary);
-      text-decoration: none;
+      color: var(--slate-700);
+      border-color: var(--slate-200);
     }
+    .btn-outline:hover { background: var(--slate-100); color: var(--slate-900); }
 
-    .btn-sm {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.85rem;
-    }
-
-    /* Container */
+    /* ---------- Container ---------- */
     .container-main {
-      max-width: 1400px;
+      max-width: 1320px;
       margin: 0 auto;
-      padding: 0 1rem;
+      padding: 0 1.5rem;
     }
 
-    /* Stats Section */
+    /* ---------- Stats ---------- */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
 
     .stat-card {
       background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      border-left: 4px solid var(--accent);
-      transition: all 0.3s ease;
-      text-align: center;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      box-shadow: var(--shadow-sm);
     }
 
-    .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    .stat-card .stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
     }
 
-    .stat-card.instructors {
-      border-left-color: var(--accent);
-    }
-
-    .stat-card.staff {
-      border-left-color: var(--success);
-    }
-
-    .stat-card.utility {
-      border-left-color: var(--warning);
-    }
-
-    .stat-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
+    .stat-card.instructors .stat-icon { background: var(--primary-tint); color: var(--primary); }
+    .stat-card.staff .stat-icon       { background: var(--success-tint); color: var(--success); }
+    .stat-card.utility .stat-icon     { background: var(--warning-tint); color: var(--warning); }
+    .stat-card.total .stat-icon       { background: var(--info-tint); color: var(--info); }
 
     .stat-value {
-      font-size: 2.2rem;
-      font-weight: 700;
-      margin: 0.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--slate-900);
     }
 
     .stat-label {
-      font-size: 0.9rem;
-      color: #7f8c8d;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 0.78rem;
+      color: var(--slate-500);
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
-    /* Table Section */
+    /* ---------- Department legend ---------- */
+    .legend-bar {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
+      padding: 0.85rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+
+    .legend-bar .legend-title {
+      font-weight: 700;
+      color: var(--slate-600);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .legend-dot .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ---------- Filter ---------- */
+    .filter-section {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 0.75rem;
+    }
+
+    .form-control, .form-select {
+      border-radius: 999px;
+      border: 1px solid var(--slate-200);
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      background: var(--slate-50);
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      background: white;
+    }
+
+    .filter-row .btn-primary { border-radius: 999px; padding: 0.6rem 1.25rem; }
+
+    /* ---------- Table ---------- */
     .table-section {
       background: white;
-      border-radius: 12px;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     .table-header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      color: white;
-      padding: 1.5rem;
+      padding: 1rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid var(--slate-200);
     }
 
     .table-header h2 {
-      margin: 0;
-      font-size: 1.3rem;
+      font-size: 1rem;
       font-weight: 700;
+      color: var(--slate-900);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
+
+    .table-header h2 i { color: var(--primary); }
 
     .badge-count {
-      background: rgba(255, 255, 255, 0.25);
-      color: white;
-      padding: 0.35rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      background: var(--primary-tint);
+      color: var(--primary);
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
     }
 
-    .table-wrapper {
-      overflow-x: auto;
-    }
+    .table-wrapper { overflow-x: auto; }
 
-    .table {
-      margin: 0;
-      border-collapse: collapse;
-    }
+    .table { margin: 0; border-collapse: collapse; width: 100%; min-width: 720px; }
 
     .table thead th {
-      background: #f8f9fa;
-      border-bottom: 2px solid #dee2e6;
-      padding: 1rem 0.75rem;
+      background: var(--slate-50);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 0.75rem 1rem;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--dark);
+      letter-spacing: 0.04em;
+      color: var(--slate-500);
+      white-space: nowrap;
     }
 
     .table tbody td {
-      padding: 1rem 0.75rem;
-      border-bottom: 1px solid #e9ecef;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--slate-100);
       vertical-align: middle;
+      font-size: 0.9rem;
     }
 
-    .table tbody tr:hover {
-      background-color: rgba(52, 152, 219, 0.05);
-      transition: background-color 0.2s ease;
-    }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr:hover { background-color: var(--slate-50); }
 
-    /* Employee Name */
     .employee-name {
       font-weight: 700;
-      color: var(--dark);
+      color: var(--slate-900);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), #2980b9);
-      color: white;
+      background: var(--primary-tint);
+      color: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.8rem;
+      flex-shrink: 0;
     }
 
-    /* Badge Styles */
     .badge {
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
       font-weight: 700;
       display: inline-block;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
-    .badge-department {
-      background: rgba(52, 152, 219, 0.15);
-      color: var(--accent);
-    }
+    .badge-department { background: var(--slate-100); color: var(--slate-600); }
+    .badge-dept-bsit { background: var(--danger-tint); color: var(--danger); }
+    .badge-dept-bsba { background: var(--success-tint); color: var(--success); }
+    .badge-dept-bshm { background: var(--warning-tint); color: var(--warning); }
+    .badge-dept-education { background: var(--primary-tint); color: var(--primary); }
 
-    /* Department color coding */
-    .badge-dept-bsit {
-      background: rgba(231, 76, 60, 0.15);
-      color: #e74c3c;
-      border: 1px solid rgba(231, 76, 60, 0.3);
-    }
+    .badge-fulltime { background: var(--success-tint); color: var(--success); }
+    .badge-parttime { background: var(--warning-tint); color: var(--warning); }
+    .badge-staff { background: var(--success-tint); color: var(--success); }
+    .badge-utility { background: var(--warning-tint); color: var(--warning); }
 
-    .badge-dept-bsba {
-      background: rgba(39, 174, 96, 0.15);
-      color: #27ae60;
-      border: 1px solid rgba(39, 174, 96, 0.3);
-    }
+    .amount { font-weight: 700; color: var(--slate-900); }
 
-    .badge-dept-bshm {
-      background: rgba(243, 156, 18, 0.15);
-      color: #d68910;
-      border: 1px solid rgba(243, 156, 18, 0.3);
-    }
-
-    .badge-dept-education {
-      background: rgba(52, 152, 219, 0.15);
-      color: #2980b9;
-      border: 1px solid rgba(52, 152, 219, 0.3);
-    }
-
-    .badge-instructor {
-      background: rgba(52, 152, 219, 0.15);
-      color: var(--accent);
-    }
-
-    .badge-staff {
-      background: rgba(39, 174, 96, 0.15);
-      color: var(--success);
-    }
-
-    .badge-utility {
-      background: rgba(243, 156, 18, 0.15);
-      color: var(--warning);
-    }
-
-    .badge-fulltime {
-      background: rgba(39, 174, 96, 0.15);
-      color: var(--success);
-    }
-
-    .badge-parttime {
-      background: rgba(243, 156, 18, 0.15);
-      color: var(--warning);
-    }
-
-    /* Amount */
-    .amount {
-      font-weight: 700;
-      color: var(--accent);
-      font-size: 1.05rem;
-    }
-
-    /* Actions */
-    .action-buttons {
-      display: flex;
-      gap: 0.5rem;
-    }
+    .action-buttons { display: flex; gap: 0.4rem; }
 
     .btn-icon {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 6px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 0.9rem;
+      transition: background 0.15s ease, color 0.15s ease;
+      font-size: 0.85rem;
     }
 
-    .btn-edit {
-      background: rgba(52, 152, 219, 0.15);
-      color: var(--accent);
-    }
+    .btn-edit { background: var(--primary-tint); color: var(--primary); }
+    .btn-edit:hover { background: var(--primary); color: white; }
 
-    .btn-edit:hover {
-      background: var(--accent);
-      color: white;
-    }
+    .btn-delete { background: var(--danger-tint); color: var(--danger); }
+    .btn-delete:hover { background: var(--danger); color: white; }
 
-    .btn-delete {
-      background: rgba(231, 76, 60, 0.15);
-      color: var(--danger);
-    }
+    .empty-state { text-align: center; padding: 3.5rem 2rem; color: var(--slate-400); }
+    .empty-state i { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
+    .empty-state p { margin: 0.25rem 0 0 0; }
+    .empty-state p:first-of-type { font-size: 1rem; font-weight: 600; color: var(--slate-600); }
 
-    .btn-delete:hover {
-      background: var(--danger);
-      color: white;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #95a5a6;
-    }
-
-    .empty-state i {
-      font-size: 5rem;
-      margin-bottom: 1rem;
-      opacity: 0.2;
-    }
-
-    /* Filter Section */
-    .filter-section {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .filter-title {
-      font-weight: 700;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .filter-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    .form-control,
-    .form-select {
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 0.75rem;
-    }
-
-    .form-control:focus,
-    .form-select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-    }
-
-    /* Footer */
     .page-footer {
       text-align: center;
-      padding: 2rem;
-      color: #7f8c8d;
-      font-size: 0.9rem;
+      padding: 1.5rem;
+      color: var(--slate-400);
+      font-size: 0.82rem;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
-      .header-content {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .header-title h1 {
-        font-size: 1.5rem;
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-      }
-
-      .table {
-        font-size: 0.85rem;
-      }
-
-      .table thead th,
-      .table tbody td {
-        padding: 0.75rem 0.5rem;
-      }
-
-      .filter-row {
-        grid-template-columns: 1fr;
-      }
+      .header-content { flex-direction: column; align-items: flex-start; }
+      .filter-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    /* Print Styles */
     @media print {
-      body {
-        background: white;
-      }
-
-      .page-header,
-      .filter-section,
-      .header-actions,
-      .action-buttons {
-        display: none !important;
-      }
-
-      .table {
-        box-shadow: none;
-      }
-
-      .table thead th {
-        background: #333 !important;
-        color: white !important;
-      }
-
-      .page-footer {
-        display: none;
-      }
+      body { background: white; }
+      .page-header, .filter-section, .header-actions, .action-buttons { display: none !important; }
+      .table-section { border: none; box-shadow: none; }
+      .page-footer { display: none; }
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
+
   <div class="page-header">
     <div class="header-content">
       <div class="header-title">
+        <div class="icon-chip"><i class="bi bi-building"></i></div>
         <div>
-          <i class="bi bi-building" style="font-size: 2.5rem;"></i>
-        </div>
-        <div>
-          <h1>Master List - All Employees</h1>
-          <p>Madridejos Community College </p>
+          <h1>Master List</h1>
+          <p>All employees — Madridejos Community College</p>
         </div>
       </div>
       <div class="header-actions">
-        <a href="{{ route('dashboard') }}" class="btn btn-secondary">
-          <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+        <a href="{{ route('dashboard') }}" class="btn btn-outline">
+          <i class="bi bi-arrow-left"></i> Dashboard
         </a>
+        <button class="btn btn-outline" onclick="window.print()">
+          <i class="bi bi-printer"></i> Print
+        </button>
         <a href="{{ route('master.list.add') }}" class="btn btn-primary">
           <i class="bi bi-plus-lg"></i> Add Employee
         </a>
-        <button class="btn btn-secondary" onclick="window.print()">
-          <i class="bi bi-printer"></i> Print
-        </button>
       </div>
     </div>
   </div>
 
-  <!-- Main Container -->
   <div class="container-main">
-    <!-- Statistics -->
+
     <div class="stats-grid">
       <div class="stat-card instructors">
-        <div class="stat-icon" style="color: var(--accent);">
-          <i class="bi bi-briefcase-fill"></i>
+        <div class="stat-icon"><i class="bi bi-briefcase-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ $employees->filter(fn($e) => str_contains(strtolower($e->type ?? ''), 'instructor') || str_contains(strtolower($e->designation ?? ''), 'instructor'))->count() }}</div>
+          <div class="stat-label">Instructors</div>
         </div>
-        <div class="stat-value">{{ $employees->filter(fn($e) => str_contains(strtolower($e->type ?? ''), 'instructor') || str_contains(strtolower($e->designation ?? ''), 'instructor'))->count() }}</div>
-        <div class="stat-label">Instructors</div>
       </div>
 
       <div class="stat-card staff">
-        <div class="stat-icon" style="color: var(--success);">
-          <i class="bi bi-person-lines-fill"></i>
+        <div class="stat-icon"><i class="bi bi-person-lines-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ $employees->where('type', '=', 'Staff')->count() }}</div>
+          <div class="stat-label">Staff</div>
         </div>
-        <div class="stat-value">{{ $employees->where('type', '=', 'Staff')->count() }}</div>
-        <div class="stat-label">Staff Members</div>
       </div>
 
       <div class="stat-card utility">
-        <div class="stat-icon" style="color: var(--warning);">
-          <i class="bi bi-tools"></i>
+        <div class="stat-icon"><i class="bi bi-tools"></i></div>
+        <div>
+          <div class="stat-value">{{ $employees->where('type', '=', 'Utility')->count() }}</div>
+          <div class="stat-label">Utility</div>
         </div>
-        <div class="stat-value">{{ $employees->where('type', '=', 'Utility')->count() }}</div>
-        <div class="stat-label">Utility Workers</div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon" style="color: var(--info);">
-          <i class="bi bi-people-fill"></i>
+      <div class="stat-card total">
+        <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ $employees->count() }}</div>
+          <div class="stat-label">Total Employees</div>
         </div>
-        <div class="stat-value">{{ $employees->count() }}</div>
-        <div class="stat-label">Total Employees</div>
       </div>
     </div>
 
-    <!-- Department Color Legend -->
-    <div style="background: white; border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
-      <span style="font-weight: 700; font-size: 0.9rem; color: #555;"><i class="bi bi-palette-fill"></i> Department Colors:</span>
-      <span class="badge badge-dept-bsit" style="padding: 0.45rem 1rem;">● BSIT</span>
-      <span class="badge badge-dept-bsba" style="padding: 0.45rem 1rem;">● BSBA</span>
-      <span class="badge badge-dept-bshm" style="padding: 0.45rem 1rem;">● BSHM</span>
-      <span class="badge badge-dept-education" style="padding: 0.45rem 1rem;">● Education</span>
+    <div class="legend-bar">
+      <span class="legend-title"><i class="bi bi-palette-fill"></i> Departments</span>
+      <span class="legend-dot"><span class="dot" style="background: var(--danger);"></span> BSIT</span>
+      <span class="legend-dot"><span class="dot" style="background: var(--success);"></span> BSBA</span>
+      <span class="legend-dot"><span class="dot" style="background: var(--warning);"></span> BSHM</span>
+      <span class="legend-dot"><span class="dot" style="background: var(--primary);"></span> Education</span>
     </div>
 
-    <!-- Filter Section -->
     <div class="filter-section">
-      <div class="filter-title">
-        <i class="bi bi-funnel-fill"></i> Search & Filter
-      </div>
       <form method="GET" action="{{ route('master.list') }}" id="filterForm">
         <div class="filter-row">
-          <input type="text" class="form-control" placeholder="🔍 Search by name or email..." id="searchInput" name="search" value="{{ request('search', '') }}">
+          <input type="text" class="form-control" placeholder="Search by name or email..." id="searchInput" name="search" value="{{ request('search', '') }}">
           <select class="form-select" id="designationFilter" name="employee_type" onchange="document.getElementById('filterForm').submit()">
             <option value="all">All Types</option>
             <option value="fulltime" {{ $selectedEmployeeType === 'fulltime' ? 'selected' : '' }}>Full-time</option>
@@ -598,26 +506,22 @@
               <option value="{{ $dept }}" {{ $selectedDepartment === $dept ? 'selected' : '' }}>{{ $dept }}</option>
             @endforeach
           </select>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-search"></i> Search
-          </button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
         </div>
       </form>
     </div>
 
-    <!-- Employees Table -->
     <div class="table-section">
       <div class="table-header">
-        <h2>
-          <i class="bi bi-list-check"></i> All Employees
-        </h2>
-        <span class="badge-count">{{ $employees->count() }} Total</span>
+        <h2><i class="bi bi-list-check"></i> All Employees</h2>
+        <span class="badge-count">{{ $employees->count() }} total</span>
       </div>
+
       @if($employees->isEmpty())
         <div class="empty-state">
           <i class="bi bi-inbox"></i>
-          <p style="margin: 0; font-size: 1.1rem;">No employees found</p>
-          <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Try adjusting your search or filter criteria</p>
+          <p>No employees found</p>
+          <p style="font-size: 0.85rem;">Try adjusting your search or filter criteria</p>
         </div>
       @else
         <div class="table-wrapper">
@@ -646,34 +550,35 @@
                   };
                   $isInstructor = str_contains(strtolower($employee->type ?? ''), 'instructor')
                                || str_contains(strtolower($employee->designation ?? ''), 'instructor');
+
+                  $nameParts = preg_split('/\s+/', trim($employee->employee_name ?? 'Unknown'), -1, PREG_SPLIT_NO_EMPTY);
+                  $initials = strtoupper(substr($nameParts[0] ?? 'U', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
                 @endphp
                 <tr>
                   <td>{{ $idx + 1 }}</td>
                   <td>
                     <div class="employee-name">
-                      <div class="avatar" style="background: linear-gradient(135deg, {{ ['#3498db', '#e74c3c', '#27ae60', '#f39c12'][($idx % 4)] }}, {{ ['#2980b9', '#c0392b', '#229954', '#d68910'][($idx % 4)] }});">
-                        {{ substr($employee->employee_name ?? 'UN', 0, 1) }}{{ substr(explode(' ', $employee->employee_name ?? 'Unknown')[1] ?? '', 0, 1) }}
-                      </div>
+                      <div class="avatar">{{ $initials }}</div>
                       <div>
                         <span>{{ $employee->employee_name }}</span>
                         @if($isInstructor && $employee->email)
-                          <br><small><a href="mailto:{{ $employee->email }}" style="color: var(--accent); text-decoration: none; font-size: 0.8rem;"><i class="bi bi-envelope-fill" style="font-size: 0.75rem;"></i> {{ $employee->email }}</a></small>
+                          <br><small><a href="mailto:{{ $employee->email }}" style="color: var(--primary); font-size: 0.78rem;"><i class="bi bi-envelope-fill" style="font-size: 0.72rem;"></i> {{ $employee->email }}</a></small>
                         @endif
                       </div>
                     </div>
                   </td>
                   <td>
                     @if($employee->email)
-                      <a href="mailto:{{ $employee->email }}" style="color: var(--accent); text-decoration: none;">{{ $employee->email }}</a>
+                      <a href="mailto:{{ $employee->email }}" style="color: var(--slate-600);">{{ $employee->email }}</a>
                     @else
-                      <span class="text-muted">-</span>
+                      <span class="text-muted">—</span>
                     @endif
                   </td>
                   <td>
                     @if($employee->department)
                       <span class="badge {{ $deptBadgeClass }}">{{ $employee->department }}</span>
                     @else
-                      <span class="text-muted">-</span>
+                      <span class="text-muted">—</span>
                     @endif
                   </td>
                   <td>
@@ -693,7 +598,7 @@
                     @if($employee->rate)
                       <span class="amount">₱{{ number_format($employee->rate, 2) }}</span>
                     @else
-                      <span class="text-muted">-</span>
+                      <span class="text-muted">—</span>
                     @endif
                   </td>
                   <td>
@@ -715,9 +620,8 @@
     </div>
   </div>
 
-  <!-- Footer -->
   <div class="page-footer">
-    <p>Madridejos Community College | Employee Master List | © 2025</p>
+    <p>Madridejos Community College · Employee Master List · © 2025</p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -732,8 +636,8 @@
         text: 'This action cannot be undone!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#e74c3c',
-        cancelButtonColor: '#95a5a6',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#94a3b8',
         confirmButtonText: 'Yes, Delete!',
         cancelButtonText: 'Cancel'
       }).then((result) => {
@@ -766,14 +670,12 @@
       });
     }
 
-    // DevTools detection
     devtools.detect(function(status) {
       if (status) {
         document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
       }
     });
 
-    // Auto-submit search input after user stops typing (400ms debounce)
     let searchTimer;
     document.getElementById('searchInput').addEventListener('input', function () {
       clearTimeout(searchTimer);

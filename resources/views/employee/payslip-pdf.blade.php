@@ -262,16 +262,64 @@
         </thead>
         <tbody>
             <tr>
-                <td>Basic / Honorarium</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->total_honorarium ?? 0, 2) }}</td>
-            </tr>
-            <tr>
                 <td>Total Hours / Days</td>
                 <td class="text-right">{{ $payslip->total_hours_or_days ?? $payslip->days ?? 0 }}</td>
             </tr>
             <tr>
-                <td>Rate per Hour</td>
+                <td>Rate</td>
                 <td class="text-right">&#8369;{{ number_format($payslip->rate ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Gross Pay</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->total_honorarium ?? 0, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {{-- ── Government Deductions ── --}}
+    <div class="section-title">Government Deductions</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Deduction Type</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Withholding Tax</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->withholding_tax ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>GSIS</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->gsis ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>PhilHealth</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->philhealth ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Pag-IBIG (HDMF)</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->pag_ibig ?? 0, 2) }}</td>
+            </tr>
+            @if(($payslip->sss ?? 0) > 0)
+            <tr>
+                <td>SSS</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->sss ?? 0, 2) }}</td>
+            </tr>
+            @endif
+            <tr>
+                <td>Other Deductions</td>
+                <td class="text-right">&#8369;{{ number_format($payslip->other_deduction ?? ($payslip->deduction ?? 0), 2) }}</td>
+            </tr>
+            <tr class="total-row">
+                <td>Total Deductions</td>
+                <td class="text-right">
+                    @php
+                        $totalDedPdf = (float)($payslip->withholding_tax ?? 0) + (float)($payslip->gsis ?? 0) + (float)($payslip->philhealth ?? 0) + (float)($payslip->pag_ibig ?? 0) + (float)($payslip->sss ?? 0) + (float)($payslip->deduction ?? 0);
+                    @endphp
+                    &#8369;{{ number_format($totalDedPdf, 2) }}
+                </td>
             </tr>
         </tbody>
     </table>

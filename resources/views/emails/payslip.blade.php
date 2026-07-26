@@ -169,7 +169,7 @@
         </div>
 
         <div class="payslip-summary">
-            <div class="section-title">Honorarium Calculation</div>
+            <div class="section-title">Salary & Deductions</div>
             <table class="summary-table">
                 <thead>
                     <tr>
@@ -186,10 +186,67 @@
                         <td>Rate</td>
                         <td>{{ $rate ?? '₱0.00' }}</td>
                     </tr>
-                    <tr class="total-row">
-                        <td>Total Honorarium</td>
-                        <td>{{ $totalHonorarium ?? '₱0.00' }}</td>
-                    </tr>
+                    @if(isset($timesheet))
+                        @php
+                            $grossPay = (float)($timesheet->total_honorarium ?? 0);
+                            if ($grossPay <= 0 && isset($timesheet->total_hour) && isset($timesheet->rate_per_hour)) {
+                                $grossPay = (float)($timesheet->total_hour ?? 0) * (float)($timesheet->rate_per_hour ?? 0) - (float)($timesheet->deduction ?? 0);
+                            }
+                            $wtax = (float)($timesheet->withholding_tax ?? 0);
+                            $gsis = (float)($timesheet->gsis ?? 0);
+                            $philhealth = (float)($timesheet->philhealth ?? 0);
+                            $pagibig = (float)($timesheet->pag_ibig ?? 0);
+                            $sss = (float)($timesheet->sss ?? 0);
+                            $otherDed = (float)($timesheet->deduction ?? 0);
+                            $totalDed = $wtax + $gsis + $philhealth + $pagibig + $sss + $otherDed;
+                            $netPay = $grossPay - $totalDed;
+                        @endphp
+                        <tr>
+                            <td><strong>Gross Pay</strong></td>
+                            <td style="font-weight:700;">₱{{ number_format($grossPay, 2) }}</td>
+                        </tr>
+                        <tr style="background:#fff5f5;">
+                            <td style="color:#dc2626;font-weight:600;">— Withholding Tax</td>
+                            <td style="color:#dc2626;">₱{{ number_format($wtax, 2) }}</td>
+                        </tr>
+                        <tr style="background:#f0f6ff;">
+                            <td style="color:#2563eb;font-weight:600;">— GSIS</td>
+                            <td style="color:#2563eb;">₱{{ number_format($gsis, 2) }}</td>
+                        </tr>
+                        <tr style="background:#f0fdf4;">
+                            <td style="color:#059669;font-weight:600;">— PhilHealth</td>
+                            <td style="color:#059669;">₱{{ number_format($philhealth, 2) }}</td>
+                        </tr>
+                        <tr style="background:#fffbeb;">
+                            <td style="color:#b45309;font-weight:600;">— Pag-IBIG</td>
+                            <td style="color:#b45309;">₱{{ number_format($pagibig, 2) }}</td>
+                        </tr>
+                        @if($sss > 0)
+                        <tr style="background:#f5f3ff;">
+                            <td style="color:#6d28d9;font-weight:600;">— SSS</td>
+                            <td style="color:#6d28d9;">₱{{ number_format($sss, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if($otherDed > 0)
+                        <tr>
+                            <td style="color:var(--text-2);font-weight:600;">— Other Deductions</td>
+                            <td style="color:var(--text-2);">₱{{ number_format($otherDed, 2) }}</td>
+                        </tr>
+                        @endif
+                        <tr style="background:#fff5f5;">
+                            <td style="font-weight:700;color:#dc2626;">Total Deductions</td>
+                            <td style="font-weight:700;color:#dc2626;">₱{{ number_format($totalDed, 2) }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Net Pay</td>
+                            <td>₱{{ number_format(max(0, $netPay), 2) }}</td>
+                        </tr>
+                    @else
+                        <tr class="total-row">
+                            <td>Total Honorarium</td>
+                            <td>{{ $totalHonorarium ?? '₱0.00' }}</td>
+                        </tr>
+                    @endif
                 </tbody>
             </table>
         </div>

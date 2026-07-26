@@ -449,13 +449,13 @@
     /* ─── Stat Cards ─────────────────────────────────── */
     .stat-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(7, 1fr);
       gap: 0.55rem;
       margin-bottom: 0.55rem;
       flex-shrink: 0;
     }
 
-    @media (max-width: 1200px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 1400px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 768px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .stat-card {
@@ -547,15 +547,21 @@
     /* ─── Charts Grid ────────────────────────────────── */
 .charts-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, minmax(0, 1fr));
       gap: 0.55rem;
       flex: 1;
       min-height: 0;
       overflow: hidden;
     }
 
-    @media (max-width: 1100px) { .charts-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 700px)  { .charts-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 991px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        overflow: visible;
+      }
+    }
 
     /* ─── Chart Card ─────────────────────────────────── */
     .chart-card {
@@ -569,6 +575,10 @@
       gap: 0.45rem;
       min-height: 0;
       overflow: hidden;
+    }
+
+    @media (max-width: 991px) {
+      .chart-card { min-height: 260px; }
     }
 
     .chart-card-header {
@@ -714,6 +724,11 @@
         z-index: 1025;
       }
       .sidebar-overlay.show { display: block; }
+
+      body { overflow: visible; height: auto; }
+      .app { height: auto; min-height: 100vh; }
+      .content { height: auto; overflow: visible; }
+      .page-body { overflow: visible; }
     }
 
     /* ─── Animations ─────────────────────────────────── */
@@ -846,6 +861,10 @@
         <i class="bi bi-calculator"></i><span>Salary Adjustment</span>
       </a>
 
+      <a href="{{ route('admin.deductions.index') }}" class="sidebar-btn text-decoration-none">
+        <i class="bi bi-percent"></i><span>Tax & Gov't Deductions</span>
+      </a>
+
       <div class="nav-label">Analytics</div>
 
       <a href="{{ route('admin.evaluation.results') }}" class="sidebar-btn text-decoration-none">
@@ -942,49 +961,66 @@
         </div>
 
         <!-- Teaching Staff -->
-        <div class="stat-card fu d2" style="--sc-color:#7c3aed; --sc-bg:rgba(124,58,237,0.1);">
+        <div class="stat-card fu d2" style="--sc-color:#1d4ed8; --sc-bg:rgba(29,78,216,0.1);">
           <div class="stat-icon"><i class="bi bi-mortarboard-fill"></i></div>
           <div class="stat-value counter" data-target="{{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }}">{{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }}</div>
           <div class="stat-label">Teaching Staff</div>
           <div class="stat-footer up"><i class="bi bi-mortarboard"></i>Full & Part-Time</div>
           @php $teachPct = $totalEmployees > 0 ? round((($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0)) / $totalEmployees * 100) : 0; @endphp
-          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $teachPct }}%; background:#7c3aed;"></div></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $teachPct }}%; background:#1d4ed8;"></div></div>
         </div>
 
         <!-- Non-Teaching -->
-        <div class="stat-card fu d3" style="--sc-color:#0891b2; --sc-bg:rgba(8,145,178,0.1);">
+        <div class="stat-card fu d3" style="--sc-color:#3b82f6; --sc-bg:rgba(59,130,246,0.1);">
           <div class="stat-icon"><i class="bi bi-person-gear"></i></div>
           <div class="stat-value counter" data-target="{{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }}">{{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }}</div>
           <div class="stat-label">Non-Teaching</div>
           <div class="stat-footer info"><i class="bi bi-buildings"></i>Staff & Utility</div>
           @php $nonTeachPct = $totalEmployees > 0 ? round((($totalStaff ?? 0) + ($totalUtility ?? 0)) / $totalEmployees * 100) : 0; @endphp
-          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $nonTeachPct }}%; background:#0891b2;"></div></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $nonTeachPct }}%; background:#3b82f6;"></div></div>
         </div>
 
         <!-- Full-Time -->
-        <div class="stat-card fu d4" style="--sc-color:#16a34a; --sc-bg:rgba(22,163,74,0.1);">
+        <div class="stat-card fu d4" style="--sc-color:#10b981; --sc-bg:rgba(16,185,129,0.1);">
           <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
           <div class="stat-value counter" data-target="{{ $totalFulltimeInstructors ?? 0 }}">{{ $totalFulltimeInstructors ?? 0 }}</div>
           <div class="stat-label">Full-Time</div>
           <div class="stat-footer up"><i class="bi bi-clock-fill"></i>Regular instructors</div>
           @php $totalI = ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0); $ftPct = $totalI > 0 ? round(($totalFulltimeInstructors ?? 0) / $totalI * 100) : 0; @endphp
-          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $ftPct }}%; background:#16a34a;"></div></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $ftPct }}%; background:#10b981;"></div></div>
         </div>
 
         <!-- Part-Time -->
-        <div class="stat-card fu d5" style="--sc-color:#d97706; --sc-bg:rgba(217,119,6,0.1);">
+        <div class="stat-card fu d5" style="--sc-color:#f59e0b; --sc-bg:rgba(245,158,11,0.1);">
           <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
           <div class="stat-value counter" data-target="{{ $totalParttimeInstructors ?? 0 }}">{{ $totalParttimeInstructors ?? 0 }}</div>
           <div class="stat-label">Part-Time</div>
           <div class="stat-footer"><i class="bi bi-hourglass-split"></i>Contractual</div>
           @php $ptPct = $totalI > 0 ? round(($totalParttimeInstructors ?? 0) / $totalI * 100) : 0; @endphp
-          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $ptPct }}%; background:#d97706;"></div></div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $ptPct }}%; background:#f59e0b;"></div></div>
         </div>
 
+        <!-- Departments -->
+        <div class="stat-card fu d6" style="--sc-color:#1e40af; --sc-bg:rgba(30,64,175,0.1);">
+          <div class="stat-icon"><i class="bi bi-building"></i></div>
+          <div class="stat-value counter" data-target="{{ $departmentCount ?? 0 }}">{{ $departmentCount ?? 0 }}</div>
+          <div class="stat-label">Departments</div>
+          <div class="stat-footer info"><i class="bi bi-grid-3x3-gap"></i>Active units</div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:100%; background:#1e40af;"></div></div>
+        </div>
+
+        <!-- Gov't Deductions -->
+        <div class="stat-card fu d7" style="--sc-color:#ef4444; --sc-bg:rgba(239,68,68,0.1);">
+          <div class="stat-icon"><i class="bi bi-percent"></i></div>
+          <div class="stat-value">₱<span class="counter" data-target="{{ $totalGovtDeductions ?? 0 }}">{{ $totalGovtDeductions ?? 0 }}</span></div>
+          <div class="stat-label">Gov't Deductions</div>
+          <div class="stat-footer info"><i class="bi bi-wallet2"></i>This month</div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:100%; background:#ef4444;"></div></div>
+        </div>
       </div>
       <!-- END STAT CARDS -->
 
-      <!-- ═══ CHARTS (3 columns) ═══ -->
+      <!-- ═══ CHARTS (2x2 grid) ═══ -->
       <div class="charts-grid">
 
         <!-- 1. Employee Distribution — Donut -->
@@ -1000,8 +1036,8 @@
             <canvas id="donutChart" role="img" aria-label="Donut chart showing employee distribution between teaching and non-teaching staff."></canvas>
           </div>
           <div class="chart-legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#7c3aed;"></div>Teaching ({{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#0891b2;"></div>Non-Teaching ({{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#2563eb;"></div>Teaching ({{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Non-Teaching ({{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }})</div>
           </div>
         </div>
 
@@ -1018,15 +1054,39 @@
             <canvas id="employmentChart" role="img" aria-label="Horizontal bar chart showing count of Full-Time, Part-Time, Staff, and Utility workers."></canvas>
           </div>
           <div class="chart-legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#16a34a;"></div>Full-Time ({{ $totalFulltimeInstructors ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#d97706;"></div>Part-Time ({{ $totalParttimeInstructors ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#0891b2;"></div>Staff ({{ $totalStaff ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#6366f1;"></div>Utility ({{ $totalUtility ?? 0 }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time ({{ $totalFulltimeInstructors ?? 0 }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time ({{ $totalParttimeInstructors ?? 0 }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6;"></div>Staff ({{ $totalStaff ?? 0 }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Utility ({{ $totalUtility ?? 0 }})</div>
           </div>
         </div>
-
-        <!-- 3. Attendance — Line -->
+ 
+        <!-- 3. Department Analytics -->
         <div class="chart-card fu d8">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Department Analytics</div>
+              <div class="chart-card-sub">Headcount by active department</div>
+            </div>
+            <span class="live-badge"><span class="dot"></span>Live</span>
+          </div>
+          <div class="chart-area">
+            @if(isset($departmentAnalysis) && $departmentAnalysis->isNotEmpty())
+              <canvas id="departmentChart" role="img" aria-label="Bar chart showing full-time and part-time counts per active department."></canvas>
+            @else
+              <div class="p-4 text-center" style="color:var(--text-3);">No active department analytics available.</div>
+            @endif
+          </div>
+          @if(isset($departmentAnalysis) && $departmentAnalysis->isNotEmpty())
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time</div>
+          </div>
+          @endif
+        </div>
+ 
+        <!-- 4. Attendance — Line -->
+        <div class="chart-card fu d9">
           <div class="chart-card-header">
             <div>
               <div class="chart-card-title">Attendance Summary</div>
@@ -1041,7 +1101,7 @@
           </div>
           <div class="chart-legend">
             <div class="legend-item"><div class="legend-swatch" style="background:#2563eb; border-radius:50%;"></div>Present</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#f43f5e; border-radius:50%;"></div>Absent</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#ef4444; border-radius:50%;"></div>Absent</div>
           </div>
         </div>
 
@@ -1128,6 +1188,8 @@ const STATS = {
   nonTeach: {{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }},
 };
 
+const DEPARTMENT_STATS = {!! json_encode(isset($departmentAnalysis) ? $departmentAnalysis->toArray() : []) !!};
+
 /* ── Live Clock ──────────────────────────────────── */
 function tick() {
   const d = new Date();
@@ -1167,7 +1229,7 @@ function initDonut() {
       labels: ['Teaching', 'Non-Teaching'],
       datasets: [{
         data: [STATS.teaching, STATS.nonTeach],
-        backgroundColor: ['#7c3aed', '#0891b2'],
+        backgroundColor: ['#2563eb', '#93c5fd'],
         borderColor: isDark() ? '#161b27' : '#ffffff',
         borderWidth: 4,
         hoverOffset: 10,
@@ -1201,10 +1263,10 @@ function initEmployment() {
       datasets: [{
         data: [STATS.fulltime, STATS.parttime, STATS.staff, STATS.utility],
         backgroundColor: [
-          'rgba(22,163,74,0.85)',
-          'rgba(217,119,6,0.85)',
-          'rgba(8,145,178,0.85)',
-          'rgba(99,102,241,0.85)'
+          'rgba(16,185,129,0.85)',
+          'rgba(245,158,11,0.85)',
+          'rgba(59,130,246,0.85)',
+          'rgba(147,197,253,0.85)'
         ],
         borderRadius: { topRight: 6, bottomRight: 6 },
         borderSkipped: false,
@@ -1273,13 +1335,13 @@ function initAttendance() {
         {
           label: 'Absent',
           data: d.absent,
-          borderColor: '#f43f5e',
-          backgroundColor: 'rgba(244,63,94,0.07)',
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.07)',
           fill: true,
           tension: 0.42,
           pointRadius: 3,
           pointHoverRadius: 5,
-          pointBackgroundColor: '#f43f5e',
+          pointBackgroundColor: '#ef4444',
           pointBorderColor: isDark() ? '#161b27' : '#fff',
           pointBorderWidth: 2,
           borderWidth: 2,
@@ -1321,9 +1383,66 @@ function refreshAttendance() {
   }, 500);
 }
 
+/* ── 4. Department Analytics — Grouped Bar ───────── */
+let deptChart;
+function initDepartment() {
+ if (!DEPARTMENT_STATS || DEPARTMENT_STATS.length === 0) return;
+  
+ const ctx = document.getElementById('departmentChart');
+ if (!ctx) return;
+  
+ const labels = DEPARTMENT_STATS.map(d => d.code);
+ const ftData = DEPARTMENT_STATS.map(d => d.fulltime);
+ const ptData = DEPARTMENT_STATS.map(d => d.parttime);
+  
+ deptChart = new Chart(ctx.getContext('2d'), {
+   type: 'bar',
+   data: {
+     labels: labels,
+     datasets: [
+       {
+         label: 'Full-Time',
+         data: ftData,
+         backgroundColor: 'rgba(16,185,129,0.85)',
+         borderRadius: { topLeft: 6, topRight: 6 },
+         borderSkipped: false,
+       },
+       {
+         label: 'Part-Time',
+         data: ptData,
+         backgroundColor: 'rgba(245,158,11,0.85)',
+         borderRadius: { topLeft: 6, topRight: 6 },
+         borderSkipped: false,
+       }
+     ]
+   },
+   options: {
+     responsive: true,
+     maintainAspectRatio: false,
+     plugins: { legend: { display: false } },
+     scales: {
+       x: {
+         stacked: false,
+         grid: { display: false },
+         ticks: { color: tc() },
+         border: { display: false }
+       },
+       y: {
+         beginAtZero: true,
+         stacked: false,
+         grid: { color: gc() },
+         ticks: { color: tc(), maxTicksLimit: 6 },
+         border: { display: false }
+       }
+     },
+     animation: { duration: 850 }
+   }
+ });
+}
+
 /* ── Update chart colors on theme change ─────────── */
 function updateChartTheme() {
-  [donut, empChart, attChart].forEach(c => {
+  [donut, empChart, deptChart, attChart].forEach(c => {
     if (!c) return;
     if (c.options.scales) {
       Object.values(c.options.scales).forEach(ax => {
@@ -1483,6 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Init charts */
   initDonut();
   initEmployment();
+  initDepartment();
   initAttendance();
 
   /* Counters */

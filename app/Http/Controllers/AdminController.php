@@ -14,6 +14,7 @@ use App\Models\ParttimeTimesheet;
 use App\Models\StaffTimesheet;
 use App\Models\UtilityTimesheet;
 use App\Models\PayslipHistory;
+use App\Models\Department;
 
 use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon; 
@@ -24,6 +25,7 @@ class AdminController extends Controller
     public function dashboard(Request $request)
     {
         $stats = $this->getEmployeeStatistics();
+        $departmentAnalysis = $this->getDepartmentAnalytics();
 
         $userDepartment = null;
         $user = Auth::user();
@@ -34,15 +36,61 @@ class AdminController extends Controller
 
         $staffPayPeriod = '1-15 and 16-30/31';
 
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        $taxQuery = 'COALESCE(withholding_tax, 0) + COALESCE(gsis, 0) + COALESCE(philhealth, 0) + COALESCE(pag_ibig, 0) + COALESCE(sss, 0)';
+        
+        $totalGovtDeductions = 0;
+        $totalGovtDeductions += FulltimeTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
+        $totalGovtDeductions += ParttimeTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
+        $totalGovtDeductions += StaffTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
+        $totalGovtDeductions += UtilityTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
+
         return view('admin.dashboard', [
             'totalEmployees' => $stats['totalEmployees'],
             'totalFulltimeInstructors' => $stats['totalFulltimeInstructors'],
             'totalParttimeInstructors' => $stats['totalParttimeInstructors'],
             'totalStaff' => $stats['totalStaff'],
             'totalUtility' => $stats['totalUtility'],
+            'departmentAnalysis' => $departmentAnalysis,
+            'departmentCount' => $departmentAnalysis->count(),
             'userDepartment' => $userDepartment,
             'staffPayPeriod' => $staffPayPeriod, 
+            'totalGovtDeductions' => $totalGovtDeductions,
         ]);
+    }
+
+    /**
+     * Get department-level analytics for active departments.
+     */
+    private function getDepartmentAnalytics()
+    {
+        try {
+            return Department::active()->orderBy('name')->get()->map(function ($department) {
+                $fulltime = FulltimeTimesheet::where('department', $department->code)
+                    ->whereNotNull('employee_name')
+                    ->where('employee_name', '!=', '')
+                    ->distinct()
+                    ->count('employee_name');
+
+                $parttime = ParttimeTimesheet::where('department', $department->code)
+                    ->whereNotNull('employee_name')
+                    ->where('employee_name', '!=', '')
+                    ->distinct()
+                    ->count('employee_name');
+
+                return [
+                    'name' => $department->name,
+                    'code' => $department->code,
+                    'fulltime' => $fulltime,
+                    'parttime' => $parttime,
+                    'total' => $fulltime + $parttime,
+                ];
+            });
+        } catch (\Exception $e) {
+            Log::error('Failed to build department analytics: ' . $e->getMessage());
+            return collect();
+        }
     }
 
     /**

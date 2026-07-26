@@ -6,12 +6,10 @@
     <title>Attendance Checker Dashboard</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: Arial, sans-serif;
@@ -19,253 +17,272 @@
             min-height: 100vh;
         }
 
+        /* Header */
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: rgba(255,255,255,.95); backdrop-filter: blur(10px);
+            padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0,0,0,.1);
+            display: flex; justify-content: space-between; align-items: center;
         }
-
-        .header h1 {
-            color: #007bff;
-            font-size: 1.5rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
+        .header h1 { color: #007bff; font-size: 1.5rem; }
+        .user-info  { display: flex; align-items: center; gap: 1rem; }
         .user-badge {
-            background: #007bff;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
+            background: #007bff; color: white; padding: .5rem 1rem;
+            border-radius: 20px; font-size: .9rem; font-weight: bold;
         }
-
         .logout-btn {
-            background: #dc3545;
-            color: white;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-            cursor: pointer;
+            background: #dc3545; color: white; padding: .5rem 1rem;
+            border: none; border-radius: 5px; text-decoration: none;
+            font-size: .9rem; transition: background .3s; cursor: pointer;
         }
+        .logout-btn:hover { background: #c82333; }
 
-        .logout-btn:hover {
-            background: #c82333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
+        /* Container / Cards */
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            background: rgba(255,255,255,.95); backdrop-filter: blur(10px);
+            border-radius: 10px; padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,.1); margin-bottom: 2rem;
         }
+        .card h3 { color: #007bff; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
 
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h3 {
-            color: #007bff;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card p {
-            color: #666;
-            margin-bottom: 1rem;
-        }
-
+        /* Buttons */
         .btn {
-            display: inline-block;
-            background: #007bff;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
+            display: inline-block; background: #007bff; color: white;
+            padding: .75rem 1.5rem; border: none; border-radius: 5px;
+            text-decoration: none; font-size: 1rem; cursor: pointer; transition: background .3s;
+        }
+        .btn:hover        { background: #0056b3; }
+        .btn-secondary    { background: #6c757d; }
+        .btn-secondary:hover { background: #545b62; }
+        .btn-danger       { background: linear-gradient(135deg,#dc3545,#c82333); color: white; border: none; }
+        .btn-danger:hover { background: linear-gradient(135deg,#c82333,#a71e2a); transform: translateY(-2px); }
+        .btn-success      { background: #28a745; }
+        .btn-success:hover{ background: #218838; }
+
+        /* Course selector */
+        .single-course-grid { display: flex; justify-content: center; margin-top: 1rem; }
+        .course-card {
+            background: rgba(255,255,255,.9); border: 2px solid #e3f2fd;
+            border-radius: 15px; padding: 2rem; text-align: center;
+            cursor: pointer; transition: all .3s ease; max-width: 350px; width: 100%;
+        }
+        .course-card:hover { transform: translateY(-8px); box-shadow: 0 12px 35px rgba(0,123,255,.25); border-color: #007bff; }
+        .course-card h4 { margin: .5rem 0; color: #333; font-size: 1.2rem; }
+        .course-card p  { margin: .5rem 0; color: #666; font-size: .9rem; }
+        .course-icon {
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem; font-size: 1.5rem; color: white;
+        }
+        .bsit-color      { background: #dc3545; }
+        .bsba-color      { background: #28a745; }
+        .bshm-color      { background: #ffc107; color: #333 !important; }
+        .education-color { background: #6f42c1; }
+        .course-count {
+            display: inline-block; background: #007bff; color: white;
+            padding: .25rem .75rem; border-radius: 15px; font-size: .8rem; font-weight: bold;
+        }
+        .start-btn {
+            margin-top: 1rem; padding: .75rem 1.5rem;
+            background: linear-gradient(135deg,#dc3545,#c82333);
+            color: white; border-radius: 25px; font-weight: bold; font-size: 1rem;
         }
 
-        .btn:hover {
-            background: #0056b3;
+        /* Date controls */
+        .date-controls {
+            display: flex; justify-content: center; align-items: center;
+            gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap;
+        }
+        .current-week {
+            font-weight: bold; font-size: 1.1rem; color: #007bff;
+            padding: .5rem 1rem; background: rgba(0,123,255,.1); border-radius: 5px;
         }
 
-        .btn-secondary {
-            background: #6c757d;
+        /* Legend */
+        .legend {
+            display: flex; gap: 1rem; flex-wrap: wrap; font-size: .75rem;
+            margin-top: .5rem; padding: .5rem; background: #f8f9fa;
+            border-radius: 6px; align-items: center;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-dot  { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Table */
+        .table-container { overflow-x: auto; margin-top: 1rem; }
+        .loading-spinner { text-align: center; padding: 2rem; color: #007bff; font-size: 1.1rem; }
+        .loading-spinner i { font-size: 2rem; display: block; margin-bottom: .5rem; }
+
+        table {
+            width: 100%; border-collapse: collapse; background: white;
+            border-radius: 8px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,.1); min-width: 1300px;
+        }
+        table thead              { background: linear-gradient(135deg,#007bff,#4da6ff); color: white; }
+        table th, table td       { padding: 7px 5px; text-align: center; border: 1px solid #dee2e6; }
+        table th                 { font-weight: 600; font-size: .8rem; }
+        table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        table tbody tr:hover     { background-color: rgba(0,123,255,.05); }
+
+        .day-group-th {
+            background: linear-gradient(135deg,#0056b3,#007bff);
+            color: white; font-weight: bold; font-size: .75rem;
+            border-bottom: 2px solid rgba(255,255,255,.3);
         }
 
-        .btn-secondary:hover {
-            background: #545b62;
+        /* Time inputs */
+        .time-cell { padding: 3px !important; }
+        .time-input-group { display: flex; flex-direction: column; gap: 2px; }
+        .time-input-group label {
+            font-size: .6rem; color: #888; text-transform: uppercase; font-weight: 600;
         }
+        .time-input-group input[type="time"] {
+            width: 88px; padding: 2px 4px; border: 1px solid #ccc;
+            border-radius: 4px; font-size: .72rem; color: #333; background: #fff;
+            transition: border-color .2s;
+        }
+        .time-input-group input[type="time"]:focus {
+            outline: none; border-color: #007bff; box-shadow: 0 0 0 2px rgba(0,123,255,.15);
+        }
+        .time-input-group input.has-time { border-color: #28a745; background: #f0fff4; }
+        .time-input-group input.late     { border-color: #fd7e14; background: #fff8f0; }
 
-        .course-badge {
-            background: #28a745;
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+        /* Metric badges */
+        .day-metrics { font-size: .6rem; margin-top: 2px; display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; }
+        .badge-hours { background: #007bff; color: white; border-radius: 3px; padding: 1px 3px; }
+        .badge-late  { background: #fd7e14; color: white; border-radius: 3px; padding: 1px 3px; }
+        .badge-under { background: #dc3545; color: white; border-radius: 3px; padding: 1px 3px; }
+        .badge-over  { background: #28a745; color: white; border-radius: 3px; padding: 1px 3px; }
 
-        .quick-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-top: 1rem;
+        .col-id   { min-width: 55px; }
+        .col-name { min-width: 140px; text-align: left !important; }
+        .col-desg { min-width: 90px; font-size: .8rem; }
+        .col-type { min-width: 70px; font-size: .8rem; }
+
+        /* Stats */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+            gap: 1rem; margin-top: 1rem;
         }
+        .stat-item {
+            text-align: center; padding: 1rem;
+            background: rgba(255,255,255,.9); border-radius: 8px; border: 1px solid #e3f2fd;
+        }
+        .stat-value   { font-size: 1.8rem; font-weight: bold; margin-bottom: .5rem; }
+        .stat-label   { color: #666; font-size: .85rem; }
+        .text-success { color: #28a745; }
+        .text-danger  { color: #dc3545; }
+        .text-warning { color: #fd7e14; }
+        .text-primary { color: #007bff; }
+
+        /* Actions */
+        .quick-actions { margin-top: 1.5rem; text-align: center; }
+        .quick-actions .btn { margin: .25rem; }
+
+        .bulk-actions {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;
+            padding: 1rem; margin: 1rem 0; box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .bulk-actions-info    { font-weight: bold; color: #495057; }
+        .bulk-actions-buttons { display: flex; gap: .5rem; }
+
+        input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .selected-row { background-color: rgba(0,123,255,.08) !important; }
+
+        /* Notifications */
+        .notification {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            min-width: 300px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.15); animation: slideIn .3s ease-out;
+        }
+        .notification.success { background: linear-gradient(135deg,#28a745,#20c997); color: white; }
+        .notification.error   { background: linear-gradient(135deg,#dc3545,#fd7e14); color: white; }
+        .notification.warning { background: linear-gradient(135deg,#fd7e14,#ffc107); color: white; }
+        .notification-content {
+            padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .notification-close { background: none; border: none; color: white; cursor: pointer; font-size: 1rem; opacity: .8; }
+        .notification-close:hover { opacity: 1; }
+
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .user-info {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                flex-direction: column;
-            }
+            .header        { flex-direction: column; gap: 1rem; text-align: center; }
+            .date-controls { flex-direction: column; }
+            .stats-grid    { grid-template-columns: repeat(2,1fr); }
+            .notification  { left: 20px; right: 20px; min-width: auto; }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', function (event) {
-                    event.preventDefault();
+                logoutBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
                     Swal.fire({
-                        title: 'Are you sure?',
-                        text: 'You will be logged out of your session.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
+                        title: 'Are you sure?', text: 'You will be logged out.',
+                        icon: 'warning', showCancelButton: true,
+                        confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
                         confirmButtonText: 'Yes, logout'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            document.getElementById('logout-form').submit();
-                        }
-                    });
+                    }).then(r => { if (r.isConfirmed) document.getElementById('logout-form').submit(); });
                 });
             }
         });
     </script>
 
+    <!-- Header -->
     <div class="header">
         <h1><i class="fas fa-clipboard-check"></i> Attendance Checker Dashboard</h1>
         <div class="user-info">
             <div class="user-badge">
                 <i class="fas fa-user"></i> {{ session('user_name') }}
                 @if(session('user_course'))
-                    <span class="course-badge">{{ strtoupper(session('user_course')) }}</span>
+                    <span style="background:rgba(255,255,255,.3);padding:.1rem .5rem;border-radius:10px;font-size:.75rem;">
+                        {{ strtoupper(session('user_course')) }}
+                    </span>
                 @endif
             </div>
-            <a id="logoutBtn" class="logout-btn" href="{{ route('logout') }}">
+            <a id="logoutBtn" class="logout-btn" href="{{ route('attendance.logout') }}">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
+            <form id="logout-form" action="{{ route('attendance.logout') }}" method="POST" style="display:none;">@csrf</form>
         </div>
     </div>
 
     <div class="container">
+
+        <!-- Course Card -->
         <div class="card">
             @php
-                $userCourse = strtoupper(session('user_course', 'BSIT'));
-                $courseInfo = [
-                    'BSIT' => [
-                        'name' => 'BSIT Department',
-                        'description' => 'Information Technology Instructors Attendance Management',
-                        'icon' => 'fas fa-laptop-code',
-                        'color' => 'bsit-color'
-                    ],
-                    'BSBA' => [
-                        'name' => 'BSBA Department',
-                        'description' => 'Business Administration Instructors Attendance Management',
-                        'icon' => 'fas fa-briefcase',
-                        'color' => 'bsba-color'
-                    ],
-                    'BSHM' => [
-                        'name' => 'BSHM Department',
-                        'description' => 'Hospitality Management Instructors Attendance Management',
-                        'icon' => 'fas fa-hotel',
-                        'color' => 'bshm-color'
-                    ],
-                    'EDUCATION' => [
-                        'name' => 'Education Department',
-                        'description' => 'Education Faculty Attendance Management',
-                        'icon' => 'fas fa-graduation-cap',
-                        'color' => 'education-color'
-                    ]
+                $userCourse    = strtoupper(session('user_course', 'BSIT'));
+                $courseInfo    = [
+                    'BSIT'      => ['name'=>'BSIT Department',      'icon'=>'fas fa-laptop-code',    'color'=>'bsit-color'],
+                    'BSBA'      => ['name'=>'BSBA Department',      'icon'=>'fas fa-briefcase',      'color'=>'bsba-color'],
+                    'BSHM'      => ['name'=>'BSHM Department',      'icon'=>'fas fa-hotel',          'color'=>'bshm-color'],
+                    'EDUCATION' => ['name'=>'Education Department',  'icon'=>'fas fa-graduation-cap', 'color'=>'education-color'],
                 ];
                 $currentCourse = $courseInfo[$userCourse] ?? $courseInfo['BSIT'];
             @endphp
-
             <h3><i class="{{ $currentCourse['icon'] }}"></i> {{ $currentCourse['name'] }}</h3>
-            <p>{{ $currentCourse['description'] }}</p>
-            <div class="course-selection">
-                <div class="single-course-grid">
-                    <div class="course-card" onclick="loadAttendance('{{ strtolower($userCourse) }}')">
-                        <div class="course-icon {{ $currentCourse['color'] }}">
-                            <i class="{{ $currentCourse['icon'] }}"></i>
-                        </div>
-                        <h4>{{ $userCourse }} Attendance</h4>
-                        <p>{{ $currentCourse['name'] }}</p>
-                        <span class="course-count" id="course-count">0 Instructors</span>
-                        <div class="start-btn">
-                            <i class="fas fa-play"></i> Start Attendance
-                        </div>
+            <p>CSC-Compliant Attendance â€” records AM In / AM Out / PM In / PM Out per employee per day.</p>
+            <div class="single-course-grid">
+                <div class="course-card" onclick="loadAttendance('{{ strtolower($userCourse) }}')">
+                    <div class="course-icon {{ $currentCourse['color'] }}">
+                        <i class="{{ $currentCourse['icon'] }}"></i>
                     </div>
+                    <h4>{{ $userCourse }} Attendance</h4>
+                    <p>{{ $currentCourse['name'] }}</p>
+                    <span class="course-count" id="course-count">0 Instructors</span>
+                    <div class="start-btn"><i class="fas fa-play"></i> Start Attendance</div>
                 </div>
             </div>
         </div>
 
-        <div id="attendance-section" class="card" style="display: none;">
+        <!-- Attendance Section -->
+        <div id="attendance-section" class="card" style="display:none;">
             <h3 id="attendance-title"><i class="fas fa-calendar-check"></i> Attendance Management</h3>
 
             <div class="date-controls">
@@ -281,26 +298,51 @@
                 </button>
             </div>
 
+            <div class="legend">
+                <strong>Legend:</strong>
+                <span class="legend-item"><span class="legend-dot" style="background:#28a745"></span> Has time entry</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#fd7e14"></span> Late / Early departure</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#dc3545"></span> Undertime</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#007bff"></span> Hours worked</span>
+                <span style="margin-left:auto;font-style:italic;color:#888;font-size:.7rem;">
+                    Official: 08:00â€“12:00 | 13:00â€“17:00
+                </span>
+            </div>
+
             <div class="table-container" id="attendance-table-container">
                 <div class="loading-spinner" id="loading-spinner">
                     <i class="fas fa-spinner fa-spin"></i> Loading attendance data...
                 </div>
-                <table id="attendance-table" style="display: none;">
+                <table id="attendance-table" style="display:none;">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">
+                            <th rowspan="2" style="width:35px;">
                                 <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()" title="Select All">
                             </th>
-                            <th>Employee ID</th>
-                            <th>Instructor Name</th>
-                            <th>Designation</th>
-                            <th>Type</th>
-                            <th class="day-header">Mon<br><small id="mon-date"></small></th>
-                            <th class="day-header">Tue<br><small id="tue-date"></small></th>
-                            <th class="day-header">Wed<br><small id="wed-date"></small></th>
-                            <th class="day-header">Thu<br><small id="thu-date"></small></th>
-                            <th class="day-header">Fri<br><small id="fri-date"></small></th>
-                            <th class="day-header">Sat<br><small id="sat-date"></small></th>
+                            <th rowspan="2" class="col-id">ID</th>
+                            <th rowspan="2" class="col-name" style="text-align:left;">Instructor Name</th>
+                            <th rowspan="2" class="col-desg">Designation</th>
+                            <th rowspan="2" class="col-type">Type</th>
+                            <th colspan="2" class="day-group-th">Mon <small id="mon-date"></small></th>
+                            <th colspan="2" class="day-group-th">Tue <small id="tue-date"></small></th>
+                            <th colspan="2" class="day-group-th">Wed <small id="wed-date"></small></th>
+                            <th colspan="2" class="day-group-th">Thu <small id="thu-date"></small></th>
+                            <th colspan="2" class="day-group-th">Fri <small id="fri-date"></small></th>
+                            <th colspan="2" class="day-group-th">Sat <small id="sat-date"></small></th>
+                        </tr>
+                        <tr>
+                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
+                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
                         </tr>
                     </thead>
                     <tbody id="attendance-tbody"></tbody>
@@ -308,21 +350,21 @@
             </div>
 
             <div class="quick-actions">
-                <button class="btn" onclick="markAllPresent()">
-                    <i class="fas fa-check-double"></i> Mark All Present
+                <button class="btn btn-success" onclick="markAllPresent()">
+                    <i class="fas fa-check-double"></i> Fill Default Times
                 </button>
-                <button class="btn btn-secondary" onclick="markAllAbsent()">
-                    <i class="fas fa-times"></i> Mark All Absent
+                <button class="btn btn-secondary" onclick="clearAllTimes()">
+                    <i class="fas fa-times"></i> Clear All Times
                 </button>
-                <button class="btn" onclick="saveAttendance(event)">
-                    <i class="fas fa-save"></i> Save Changes
+                <button class="btn" id="save-attendance-btn" onclick="saveAttendance(event)">
+                    <i class="fas fa-save"></i> Save Attendance
                 </button>
                 <button class="btn btn-secondary" onclick="exportAttendance()">
-                    <i class="fas fa-file-export"></i> Export Report
+                    <i class="fas fa-file-export"></i> Export CSV
                 </button>
             </div>
 
-            <div class="bulk-actions" id="bulk-actions" style="display: none;">
+            <div class="bulk-actions" id="bulk-actions" style="display:none;">
                 <div class="bulk-actions-info">
                     <span id="selected-count">0</span> employee(s) selected
                 </div>
@@ -337,706 +379,422 @@
             </div>
         </div>
 
-        <div id="stats-section" class="card" style="display: none;">
-            <h3><i class="fas fa-chart-pie"></i> Attendance Statistics</h3>
+        <!-- Statistics -->
+        <div id="stats-section" class="card" style="display:none;">
+            <h3><i class="fas fa-chart-pie"></i> Weekly Attendance Statistics</h3>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-value" id="total-instructors">0</div>
-                    <div class="stat-label">Total Instructors</div>
+                    <div class="stat-value text-primary" id="total-employees">0</div>
+                    <div class="stat-label">Total Employees</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value text-success" id="present-today">0</div>
-                    <div class="stat-label">Present Today</div>
+                    <div class="stat-label">Days with Entries</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value text-danger" id="absent-today">0</div>
-                    <div class="stat-label">Absent Today</div>
+                    <div class="stat-label">Days without Entries</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-warning" id="avg-hours">0h</div>
+                    <div class="stat-label">Avg Daily Hours</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value" id="attendance-rate">0%</div>
                     <div class="stat-label">Attendance Rate</div>
                 </div>
             </div>
-        </div>
-    </div>
+</div>
 
-    <style>
-        .course-selection { margin-top: 1rem; }
+<script>
+const OFF_AM_IN='08:00', OFF_AM_OUT='12:00', OFF_PM_IN='13:00', OFF_PM_OUT='17:00';
+const DAYS=['monday','tuesday','wednesday','thursday','friday','saturday'];
+let currentDate=new Date(), selectedCourse='', attendanceData=[];
 
-        .single-course-grid {
-            display: flex;
-            justify-content: center;
-            margin-top: 1rem;
-        }
+function getWeekMonday(d){const x=new Date(d),day=x.getDay();x.setDate(x.getDate()+(day===0?-6:1-day));return x;}
+function formatLocalDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function escapeHtml(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s??'')));return d.innerHTML;}
+function toMins(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m;}
+function fmtMins(m){if(!m||m<=0)return '';const h=Math.floor(m/60),mn=m%60;return h>0?(mn>0?h+'h '+mn+'m':h+'h'):mn+'m';}
+function calcMetrics(aI,aO,pI,pO){
+    let l=0,u=0,ov=0,w=0;
+    const ai=toMins(aI),ao=toMins(aO),pi=toMins(pI),po=toMins(pO);
+    const oi=toMins(OFF_AM_IN),oo=toMins(OFF_PM_OUT);
+    if(ai!==null&&ai>oi)l=ai-oi;
+    if(po!==null){if(po<oo)u=oo-po;if(po>oo)ov=po-oo;}
+    if(ai!==null&&ao!==null&&ao>ai)w+=ao-ai;
+    if(pi!==null&&po!==null&&po>pi)w+=po-pi;
+    return{lateness:l,undertime:u,overtime:ov,worked:w};
+}
 
-        .course-card {
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #e3f2fd;
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            max-width: 350px;
-            width: 100%;
-        }
+document.addEventListener('DOMContentLoaded', loadCourseCounts);
+function redirect401(){window.location.href='{{ route("attendance.attendlog.form") }}';}
 
-        .course-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 35px rgba(0, 123, 255, 0.25);
-            border-color: #007bff;
-        }
+function loadCourseCounts(){
+    const c='{{ strtolower(session("user_course","bsit")) }}';
+    fetch('/attendance/api/course-counts?course='+encodeURIComponent(c))
+        .then(r=>{if(r.status===401){redirect401();return null;}return r.json();})
+        .then(d=>{if(!d)return;const n=d.count||0;document.getElementById('course-count').textContent=n+' Instructor'+(n!==1?'s':'');})
+        .catch(()=>{document.getElementById('course-count').textContent='0 Instructors';});
+}
 
-        .course-card .start-btn,
-        .start-btn {
-            margin-top: 1rem;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
+function loadAttendance(course){
+    selectedCourse=course.toLowerCase();
+    document.getElementById('attendance-section').style.display='block';
+    document.getElementById('stats-section').style.display='block';
+    document.getElementById('attendance-title').innerHTML='<i class="fas fa-calendar-check"></i> '+escapeHtml(course.toUpperCase())+' Attendance &mdash; CSC Form No. 48';
+    updateWeekDisplay();
+    fetchAttendanceData();
+}
 
-        .start-btn:hover {
-            background: linear-gradient(135deg, #c82333, #a71e2a);
-        }
+function updateWeekDisplay(){
+    const today=new Date(),som=getWeekMonday(currentDate),eom=new Date(som);
+    eom.setDate(som.getDate()+5);
+    document.getElementById('current-week').textContent=som.toLocaleDateString()+' \u2013 '+eom.toLocaleDateString();
+    document.getElementById('next-week-btn').disabled=som>=getWeekMonday(today);
+    ['mon','tue','wed','thu','fri','sat'].forEach((d,i)=>{
+        const dd=new Date(som);dd.setDate(som.getDate()+i);
+        document.getElementById(d+'-date').textContent=dd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    });
+}
 
-        .course-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.5rem;
-            color: white;
-        }
+function previousWeek(){currentDate.setDate(currentDate.getDate()-7);updateWeekDisplay();fetchAttendanceData();}
+function nextWeek(){currentDate.setDate(currentDate.getDate()+7);updateWeekDisplay();fetchAttendanceData();}
+function goToCurrentWeek(){currentDate=new Date();updateWeekDisplay();fetchAttendanceData();}
 
-        .bsit-color      { background: #dc3545; }
-        .bsba-color      { background: #28a745; }
-        .bshm-color      { background: #ffc107; color: #333 !important; }
-        .education-color { background: #6f42c1; }
-
-        .course-card h4 { margin: 0.5rem 0; color: #333; font-size: 1.2rem; }
-        .course-card p  { margin: 0.5rem 0; color: #666; font-size: 0.9rem; }
-
-        .course-count {
-            display: inline-block;
-            background: #007bff;
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .date-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            margin: 1.5rem 0;
-            flex-wrap: wrap;
-        }
-
-        .current-week {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #007bff;
-            padding: 0.5rem 1rem;
-            background: rgba(0, 123, 255, 0.1);
-            border-radius: 5px;
-        }
-
-        .table-container { overflow-x: auto; margin-top: 1rem; }
-
-        .loading-spinner {
-            text-align: center;
-            padding: 2rem;
-            color: #007bff;
-            font-size: 1.1rem;
-        }
-
-        .loading-spinner i { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        table thead {
-            background: linear-gradient(135deg, #007bff, #4da6ff);
-            color: white;
-        }
-
-        table th, table td {
-            padding: 12px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-
-        table th { font-weight: 600; font-size: 0.9rem; }
-
-        table tbody tr:nth-child(even) { background-color: #f8f9fa; }
-
-        table tbody tr:hover { background-color: rgba(0, 123, 255, 0.1); }
-
-        .attendance-cell {
-            cursor: pointer;
-            padding: 8px !important;
-            font-size: 1.2rem;
-        }
-
-        .attendance-cell:hover { background-color: rgba(0, 123, 255, 0.2) !important; }
-
-        .attendance-present { color: #28a745; }
-        .attendance-absent  { color: #dc3545; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            border: 1px solid #e3f2fd;
-        }
-
-        .stat-value { font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; }
-        .stat-label { color: #666; font-size: 0.9rem; }
-
-        .quick-actions { margin-top: 1.5rem; text-align: center; }
-        .quick-actions .btn { margin: 0.25rem; }
-
-        .bulk-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .bulk-actions-info  { font-weight: bold; color: #495057; }
-        .bulk-actions-buttons { display: flex; gap: 0.5rem; }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-            border: none;
-        }
-
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #c82333, #a71e2a);
-            transform: translateY(-2px);
-        }
-
-        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        .employee-checkbox { cursor: pointer; }
-        .selected-row { background-color: rgba(0, 123, 255, 0.1) !important; }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            min-width: 300px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            animation: slideIn 0.3s ease-out;
-        }
-
-        .notification.success { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
-        .notification.error   { background: linear-gradient(135deg, #dc3545, #fd7e14); color: white; }
-
-        .notification-content {
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .notification-close {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1rem;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-
-        .notification-close:hover { opacity: 1; }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to   { transform: translateX(0);   opacity: 1; }
-        }
-
-        @media (max-width: 768px) {
-            .single-course-grid { padding: 0 1rem; }
-            .course-card        { max-width: 100%; }
-            .date-controls      { flex-direction: column; }
-            .stats-grid         { grid-template-columns: repeat(2, 1fr); }
-            .notification       { left: 20px; right: 20px; min-width: auto; }
-        }
-    </style>
-
-    <script>
-        let currentDate    = new Date();
-        let selectedCourse = '';
-        let attendanceData = [];
-
-        // ── FIX #2: getWeekMonday ─────────────────────────────────────────────
-        // The original `date - getDay() + 1` formula was wrong on Sundays:
-        // getDay() returns 0, so the expression became `date + 1`, jumping
-        // FORWARD to next Monday instead of back to the previous one.
-        function getWeekMonday(date) {
-            const d   = new Date(date);
-            const day = d.getDay();                 // 0=Sun … 6=Sat
-            const diff = day === 0 ? -6 : 1 - day; // Sunday → −6, else → 1−day
-            d.setDate(d.getDate() + diff);
-            return d;
-        }
-
-        // ── FIX #3: formatLocalDate ───────────────────────────────────────────
-        // toISOString() converts to UTC before formatting. In UTC+ timezones
-        // (Philippines = UTC+8) midnight local time is still the previous UTC
-        // day, so toISOString().split('T')[0] returned yesterday's date.
-        function formatLocalDate(d) {
-            const yyyy = d.getFullYear();
-            const mm   = String(d.getMonth() + 1).padStart(2, '0');
-            const dd   = String(d.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
-
-        // ── FIX #5: escapeHtml ────────────────────────────────────────────────
-        // Prevents XSS when inserting API values into innerHTML.
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(String(str)));
-            return div.innerHTML;
-        }
-
-        // ── Init ──────────────────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', function () {
-            loadCourseCounts();
-        });
-
-        function loadCourseCounts() {
-            const userCourse = '{{ strtolower(session("user_course", "bsit")) }}';
-            fetch(`/attendance/api/course-counts?course=${encodeURIComponent(userCourse)}`)
-                .then(response => {
-                    // FIX: Handle 401 from middleware (session expired) gracefully.
-                    if (response.status === 401) {
-                        window.location.href = '{{ route("attendance.attendlog.form") }}';
-                        return null;
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data) return;
-                    const count = data.count || 0;
-                    document.getElementById('course-count').textContent =
-                        `${count} Instructor${count !== 1 ? 's' : ''}`;
-                })
-                .catch(error => {
-                    console.error('Error loading course counts:', error);
-                    document.getElementById('course-count').textContent = '0 Instructors';
-                });
-        }
-
-        function loadAttendance(course) {
-            selectedCourse = course.toLowerCase();
-
-            document.getElementById('attendance-section').style.display = 'block';
-            document.getElementById('stats-section').style.display      = 'block';
-
-            const courseUpper = course.toUpperCase();
-            document.getElementById('attendance-title').innerHTML =
-                `<i class="fas fa-calendar-check"></i> ${escapeHtml(courseUpper)} Attendance Management`;
-
-            document.getElementById('loading-spinner').style.display  = 'block';
-            document.getElementById('attendance-table').style.display = 'none';
-
-            updateWeekDisplay();
-            fetchAttendanceData();
-        }
-
-        function updateWeekDisplay() {
-            const today       = new Date();
-            const startOfWeek = getWeekMonday(currentDate);
-            const endOfWeek   = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 5); // Mon → Sat
-
-            document.getElementById('current-week').textContent =
-                `${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
-
-            // FIX #7: Disable Next Week button when already on the current week.
-            // Compare week starts (not endOfWeek > today) to prevent navigating
-            // to a week that starts today but has future days still editable.
-            const nextWeekBtn    = document.getElementById('next-week-btn');
-            const currentMonday  = getWeekMonday(today);
-            nextWeekBtn.disabled = startOfWeek >= currentMonday;
-
-            // Update day-header dates.
-            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-            days.forEach((day, i) => {
-                const dayDate = new Date(startOfWeek);
-                dayDate.setDate(startOfWeek.getDate() + i);
-                document.getElementById(`${day}-date`).textContent =
-                    dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            });
-        }
-
-        function fetchAttendanceData() {
-    if (!selectedCourse) {
-        showNotification('❌ Please select a course first.', 'error');
-        return;
-    }
- 
-    const startOfWeek = getWeekMonday(currentDate);
-    const formattedDate = formatLocalDate(startOfWeek);
- 
-    document.getElementById('loading-spinner').style.display = 'block';
-    document.getElementById('attendance-table').style.display = 'none';
-    document.getElementById('attendance-tbody').innerHTML = '';
- 
-    console.log('Fetching attendance data for:', selectedCourse, 'week starting:', formattedDate);
- 
-    fetch(`/attendance/api/attendance-data/${encodeURIComponent(selectedCourse)}?week_start=${encodeURIComponent(formattedDate)}`)
-        .then(response => {
-            // FIX #4: Better error handling for various HTTP status codes
-            if (response.status === 401) {
-                console.warn('Session expired');
-                window.location.href = '{{ route("attendance.attendlog.form") }}';
-                return null;
-            }
- 
-            if (response.status === 403) {
-                throw new Error('Unauthorized access to this department');
-            }
- 
-            if (response.status === 500) {
-                throw new Error('Server error. Please try again later.');
-            }
- 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
- 
-            return response.json();
+function fetchAttendanceData(){
+    if(!selectedCourse){showNotification('Please select a course first.','error');return;}
+    const som=getWeekMonday(currentDate),date=formatLocalDate(som);
+    document.getElementById('loading-spinner').style.display='block';
+    document.getElementById('attendance-table').style.display='none';
+    document.getElementById('attendance-tbody').innerHTML='';
+    fetch('/attendance/api/attendance-data/'+encodeURIComponent(selectedCourse)+'?week_start='+encodeURIComponent(date))
+        .then(r=>{
+            if(r.status===401){redirect401();return null;}
+            if(r.status===403)throw new Error('Unauthorized access to this department');
+            if(!r.ok)throw new Error('HTTP '+r.status);
+            return r.json();
         })
-        .then(data => {
-            if (!data) return; // Null from 401 redirect
- 
-            // FIX #5: Validate response data structure
-            if (data.error) {
-                throw new Error(data.error);
-            }
- 
-            if (!Array.isArray(data)) {
-                console.error('Unexpected response format:', data);
-                throw new Error('Invalid response format from server');
-            }
- 
-            attendanceData = [];
-            const tbody = document.getElementById('attendance-tbody');
-            tbody.innerHTML = '';
- 
-            let processedCount = 0;
- 
-            data.forEach((employee, index) => {
-                try {
-                    // FIX #6: Validate employee object structure
-                    if (!employee || typeof employee !== 'object') {
-                        console.warn('Invalid employee object at index', index, employee);
-                        return;
-                    }
- 
-                    if (!employee.employee_name || !employee.id) {
-                        console.warn('Missing required employee fields at index', index);
-                        return;
-                    }
- 
-                    // FIX #7: Safe property access with defaults
-                    const empId = String(employee.id).trim();
-                    const empName = String(employee.employee_name).trim();
-                    const empDesignation = String(employee.designation || 'N/A').trim();
-                    const empType = String(employee.employee_type || 'Employee').trim();
- 
-                    // FIX #8: Safe JSON parsing with fallback
-                    let existingAttendance = {};
-                    if (employee.days && typeof employee.days === 'object') {
-                        existingAttendance = employee.days;
-                    } else if (typeof employee.days === 'string') {
-                        try {
-                            existingAttendance = JSON.parse(employee.days) || {};
-                        } catch (e) {
-                            console.warn('Failed to parse days JSON for', empId);
-                            existingAttendance = {};
+        .then(data=>{
+            if(!data)return;
+            if(data.error)throw new Error(data.error);
+            if(!Array.isArray(data))throw new Error('Invalid response format');
+            attendanceData=[];
+            const tbody=document.getElementById('attendance-tbody');
+            tbody.innerHTML='';
+            let count=0;
+            data.forEach((emp,idx)=>{
+                try{
+                    if(!emp||!emp.id||!emp.employee_name)return;
+                    const empId=String(emp.id).trim();
+                    const empName=String(emp.employee_name).trim();
+                    const empDesg=String(emp.designation||'N/A').trim();
+                    const empType=String(emp.employee_type||'Employee').trim();
+                    const attendance={};
+                    DAYS.forEach(day=>{
+                        const saved=emp.saved_times&&emp.saved_times[day];
+                        if(saved){
+                            attendance[day]={am_in:saved.am_in||'',am_out:saved.am_out||'',pm_in:saved.pm_in||'',pm_out:saved.pm_out||''};
+                        } else {
+                            const leg=!!(emp.days&&emp.days[day]);
+                            attendance[day]={am_in:leg?OFF_AM_IN:'',am_out:leg?OFF_AM_OUT:'',pm_in:leg?OFF_PM_IN:'',pm_out:leg?OFF_PM_OUT:''};
                         }
-                    }
- 
-                    // FIX #9: Safe boolean conversion for attendance days
-                    const attendance = {
-                        monday:    convertToBoolean(existingAttendance.monday),
-                        tuesday:   convertToBoolean(existingAttendance.tuesday),
-                        wednesday: convertToBoolean(existingAttendance.wednesday),
-                        thursday:  convertToBoolean(existingAttendance.thursday),
-                        friday:    convertToBoolean(existingAttendance.friday),
-                        saturday:  convertToBoolean(existingAttendance.saturday)
-                    };
- 
-                    const row = createAttendanceRow(empId, empName, empDesignation, empType, attendance);
-                    tbody.appendChild(row);
-                    processedCount++;
- 
-                    // Store in attendanceData array
-                    attendanceData.push({
-                        id: empId,
-                        employee_name: empName,
-                        designation: empDesignation,
-                        employee_type: empType,
-                        attendance: attendance
                     });
- 
-                } catch (error) {
-                    console.error('Error processing employee at index', index, ':', error);
-                }
+                    tbody.appendChild(createAttendanceRow(empId,empName,empDesg,empType,attendance));
+                    attendanceData.push({id:empId,employee_name:empName,designation:empDesg,employee_type:empType,attendance});
+                    count++;
+                }catch(e){console.error('Row error',idx,e);}
             });
- 
-            console.log(`Processed ${processedCount} employees successfully`);
- 
-            document.getElementById('loading-spinner').style.display = 'none';
-            document.getElementById('attendance-table').style.display = 'block';
- 
-            if (processedCount === 0) {
-                showNotification('⚠️ No employee data found for this department and week.', 'warning');
-            } else {
-                showNotification(`✅ Loaded ${processedCount} employee records.`, 'success');
-            }
- 
+            document.getElementById('loading-spinner').style.display='none';
+            document.getElementById('attendance-table').style.display='block';
+            if(count===0)showNotification('No employee data found.','warning');
+            else showNotification('Loaded '+count+' employee records.','success');
             updateStatistics();
         })
-        .catch(error => {
-            console.error('Error fetching attendance data:', error);
-            document.getElementById('loading-spinner').style.display = 'none';
-            document.getElementById('attendance-table').style.display = 'block';
- 
-            const errorMessage = error.message || 'Failed to load attendance data';
-            showNotification(`❌ Error: ${escapeHtml(errorMessage)}`, 'error');
- 
-            // Show helpful message
-            const tbody = document.getElementById('attendance-tbody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" style="text-align: center; padding: 20px; color: #dc3545;">
-                        <i class="fas fa-exclamation-triangle"></i><br>
-                        <strong>Unable to load attendance data</strong><br>
-                        <small>${escapeHtml(errorMessage)}</small><br>
-                        <small>Please refresh the page or contact support if the problem persists.</small>
-                    </td>
-                </tr>
-            `;
+        .catch(err=>{
+            document.getElementById('loading-spinner').style.display='none';
+            document.getElementById('attendance-table').style.display='block';
+            document.getElementById('attendance-tbody').innerHTML='<tr><td colspan="17" style="text-align:center;padding:20px;color:#dc3545;"><i class="fas fa-exclamation-triangle"></i><br><strong>Unable to load data</strong><br><small>'+escapeHtml(err.message)+'</small></td></tr>';
+            showNotification(escapeHtml(err.message),'error');
         });
 }
- 
-// FIX #3: Add helper function for safe boolean conversion
-function convertToBoolean(value) {
-    if (value === undefined || value === null) {
-        return false;
-    }
-    if (typeof value === 'boolean') {
-        return value;
-    }
-    if (typeof value === 'number') {
-        return value > 0;
-    }
-    if (typeof value === 'string') {
-        return value.toLowerCase() === 'true' || Number(value) > 0;
-    }
-    return false;
+
+// â”€â”€â”€ ROW BUILDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function createAttendanceRow(empId,empName,empDesg,empType,attendance){
+    const tr=document.createElement('tr');
+    tr.dataset.empId=empId;
+    const chkTd=document.createElement('td');
+    const chk=document.createElement('input');
+    chk.type='checkbox';chk.className='employee-checkbox';chk.dataset.empId=empId;
+    chk.addEventListener('change',updateBulkActionsUI);
+    chkTd.appendChild(chk);tr.appendChild(chkTd);
+    appendTd(tr,empId,'col-id');
+    appendTd(tr,empName,'col-name',true);
+    appendTd(tr,empDesg,'col-desg');
+    appendTd(tr,empType,'col-type');
+    DAYS.forEach(day=>{
+        const d=attendance[day]||{am_in:'',am_out:'',pm_in:'',pm_out:''};
+        tr.appendChild(buildTimeCell(empId,day,'am',d.am_in,d.am_out));
+        tr.appendChild(buildTimeCell(empId,day,'pm',d.pm_in,d.pm_out));
+    });
+    return tr;
 }
- 
-// FIX #2: Improved updateStatistics with null checks
-function updateStatistics() {
-    const totalEmployees = attendanceData.length;
-    
-    if (totalEmployees === 0) {
-        document.getElementById('total-employees').textContent = '0';
-        document.getElementById('avg-attendance').textContent = '0%';
-        return;
+function appendTd(tr,text,cls,leftAlign){
+    const td=document.createElement('td');
+    if(cls)td.className=cls;
+    if(leftAlign)td.style.textAlign='left';
+    td.textContent=text;
+    tr.appendChild(td);
+}
+function buildTimeCell(empId,day,period,inVal,outVal){
+    const tdEl=document.createElement('td');
+    tdEl.className='time-cell';
+    const group=document.createElement('div');
+    group.className='time-input-group';
+    const inKey=period==='am'?'am_in':'pm_in';
+    const outKey=period==='am'?'am_out':'pm_out';
+    const inLbl=period==='am'?'AM In':'PM In';
+    const outLbl=period==='am'?'AM Out':'PM Out';
+    group.appendChild(wrapLbl(buildTimeInput(empId,day,inKey,inLbl,inVal||''),inLbl));
+    group.appendChild(wrapLbl(buildTimeInput(empId,day,outKey,outLbl,outVal||''),outLbl));
+    const metrics=document.createElement('div');
+    metrics.className='day-metrics';
+    metrics.id='metrics-'+empId+'-'+day+'-'+period;
+    group.appendChild(metrics);
+    if(inVal||outVal)setTimeout(()=>refreshDayMetrics(empId,day),0);
+    tdEl.appendChild(group);
+    return tdEl;
+}
+function wrapLbl(input,text){
+    const w=document.createElement('div'),l=document.createElement('label');
+    l.textContent=text;w.appendChild(l);w.appendChild(input);return w;
+}
+function buildTimeInput(empId,day,key,lbl,initVal){
+    const inp=document.createElement('input');
+    inp.type='time';inp.id='time_'+empId+'_'+day+'_'+key;
+    inp.value=initVal;inp.title=lbl+' - '+day;
+    applyInputStyle(inp,key,initVal);
+    inp.addEventListener('change',function(){
+        const emp=attendanceData.find(e=>e.id===empId);
+        if(emp){if(!emp.attendance[day])emp.attendance[day]={};emp.attendance[day][key]=this.value;}
+        applyInputStyle(inp,key,this.value);
+        refreshDayMetrics(empId,day);
+        updateStatistics();
+    });
+    return inp;
+}
+function applyInputStyle(inp,key,val){
+    inp.classList.remove('has-time','late');
+    if(!val)return;
+    inp.classList.add('has-time');
+    if(key==='am_in'&&val>OFF_AM_IN)inp.classList.add('late');
+    if(key==='am_out'&&val<OFF_AM_OUT)inp.classList.add('late');
+    if(key==='pm_in'&&val>OFF_PM_IN)inp.classList.add('late');
+    if(key==='pm_out'&&val<OFF_PM_OUT)inp.classList.add('late');
+}
+function refreshDayMetrics(empId,day){
+    const emp=attendanceData.find(e=>e.id===empId);
+    if(!emp)return;
+    const d=emp.attendance[day]||{};
+    const amEl=document.getElementById('metrics-'+empId+'-'+day+'-am');
+    if(amEl){
+        amEl.innerHTML='';
+        if(d.am_in&&d.am_out){
+            const mins=toMins(d.am_out)-toMins(d.am_in);
+            const late=toMins(d.am_in)>toMins(OFF_AM_IN)?toMins(d.am_in)-toMins(OFF_AM_IN):0;
+            amEl.innerHTML='<span class="badge-hours">'+fmtMins(mins)+'</span>';
+            if(late)amEl.innerHTML+='<span class="badge-late">+'+fmtMins(late)+'</span>';
+        }
     }
- 
-    let totalPresent = 0;
-    let totalDays = 0;
- 
-    attendanceData.forEach(emp => {
-        const attendance = emp.attendance || {};
-        const daysList = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
- 
-        daysList.forEach(day => {
-            totalDays++;
-            if (attendance[day] === true) {
-                totalPresent++;
-            }
+    const pmEl=document.getElementById('metrics-'+empId+'-'+day+'-pm');
+    if(pmEl){
+        pmEl.innerHTML='';
+        if(d.pm_in&&d.pm_out){
+            const mins=toMins(d.pm_out)-toMins(d.pm_in);
+            const under=toMins(d.pm_out)<toMins(OFF_PM_OUT)?toMins(OFF_PM_OUT)-toMins(d.pm_out):0;
+            const over=toMins(d.pm_out)>toMins(OFF_PM_OUT)?toMins(d.pm_out)-toMins(OFF_PM_OUT):0;
+            pmEl.innerHTML='<span class="badge-hours">'+fmtMins(mins)+'</span>';
+            if(under)pmEl.innerHTML+='<span class="badge-under">-'+fmtMins(under)+'</span>';
+            if(over)pmEl.innerHTML+='<span class="badge-over">+'+fmtMins(over)+'</span>';
+        }
+    }
+}
+
+// â”€â”€â”€ QUICK ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function markAllPresent(){
+    attendanceData.forEach(emp=>{
+        DAYS.forEach(day=>{
+            emp.attendance[day]={am_in:OFF_AM_IN,am_out:OFF_AM_OUT,pm_in:OFF_PM_IN,pm_out:OFF_PM_OUT};
+            ['am_in','am_out','pm_in','pm_out'].forEach(k=>{
+                const inp=document.getElementById('time_'+emp.id+'_'+day+'_'+k);
+                if(inp){inp.value=emp.attendance[day][k];applyInputStyle(inp,k,inp.value);}
+            });
+            refreshDayMetrics(emp.id,day);
         });
     });
- 
-    document.getElementById('total-employees').textContent = totalEmployees;
-    
-    const avgAttendance = totalDays > 0 
-        ? Math.round((totalPresent / totalDays) * 100) 
-        : 0;
-    document.getElementById('avg-attendance').textContent = avgAttendance + '%';
+    updateStatistics();
+    showNotification('Official times applied to all employees.','success');
 }
- 
-// FIX #1: Improve saveAttendance with better validation
-function saveAttendance(event) {
+function clearAllTimes(){
+    attendanceData.forEach(emp=>{
+        DAYS.forEach(day=>{
+            emp.attendance[day]={am_in:'',am_out:'',pm_in:'',pm_out:''};
+            ['am_in','am_out','pm_in','pm_out'].forEach(k=>{
+                const inp=document.getElementById('time_'+emp.id+'_'+day+'_'+k);
+                if(inp){inp.value='';applyInputStyle(inp,k,'');}
+            });
+            refreshDayMetrics(emp.id,day);
+        });
+    });
+    updateStatistics();
+    showNotification('All time entries cleared.','warning');
+}
+
+// â”€â”€â”€ SAVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function saveAttendance(event){
     event.preventDefault();
- 
-    if (!selectedCourse) {
-        showNotification('❌ Please select a course first.', 'error');
+    if(!selectedCourse){showNotification('Please select a course first.','error');return;}
+    if(!attendanceData.length){showNotification('No attendance data loaded.','error');return;}
+    const hasAny=attendanceData.some(emp=>DAYS.some(day=>{const d=emp.attendance[day];return d&&(d.am_in||d.am_out||d.pm_in||d.pm_out);}));
+    if(!hasAny){
+        Swal.fire({icon:'warning',title:'No times entered',text:'No time entries found. Save anyway?',showCancelButton:true,confirmButtonText:'Yes, save'})
+            .then(r=>{if(r.isConfirmed)performSaveAttendance();});
         return;
     }
- 
-    if (!attendanceData || attendanceData.length === 0) {
-        showNotification('❌ No attendance data loaded. Please load data first.', 'error');
-        return;
-    }
- 
-    // Validate that at least one employee has attendance marked
-    const hasAnyAttendance = attendanceData.some(emp => {
-        return emp.attendance && Object.values(emp.attendance).some(day => day === true);
-    });
- 
-    if (!hasAnyAttendance) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'No attendance marked',
-            text: 'You haven\'t marked any attendance. Do you want to save anyway?',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, save',
-            cancelButtonText: 'Cancel'
-        }).then(result => {
-            if (result.isConfirmed) {
-                performSaveAttendance();
-            }
-        });
-        return;
-    }
- 
     performSaveAttendance();
 }
- 
-function performSaveAttendance() {
-    const startOfWeek = getWeekMonday(currentDate);
-    const saveData = {
-        course: selectedCourse.toUpperCase(),
-        week_start: formatLocalDate(startOfWeek),
-        attendance_data: attendanceData.map(emp => ({
-            id: emp.id,
-            employee_name: emp.employee_name,
-            name: emp.employee_name,
-            designation: emp.designation,
-            employee_type: emp.employee_type,
-            type: emp.employee_type,
-            attendance: emp.attendance
+function performSaveAttendance(){
+    const som=getWeekMonday(currentDate);
+    const saveData={
+        course:selectedCourse.toUpperCase(),
+        week_start:formatLocalDate(som),
+        attendance_data:attendanceData.map(emp=>({
+            id:emp.id,employee_name:emp.employee_name,name:emp.employee_name,
+            designation:emp.designation,employee_type:emp.employee_type,type:emp.employee_type,
+            attendance:emp.attendance
         }))
     };
- 
-    const saveBtn = event?.target?.closest('button') || document.getElementById('save-attendance-btn');
-    if (!saveBtn) return;
- 
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    saveBtn.disabled = true;
- 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
- 
-    fetch('/attendance/api/save-attendance', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify(saveData)
+    const btn=document.getElementById('save-attendance-btn'),orig=btn.innerHTML;
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled=true;
+    const csrfMeta=document.querySelector('meta[name="csrf-token"]');
+    const csrf=csrfMeta?csrfMeta.getAttribute('content'):'';
+    fetch('/attendance/api/save-attendance',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'Accept':'application/json'},
+        body:JSON.stringify(saveData)
     })
-    .then(response => {
-        if (response.status === 401) {
-            window.location.href = '{{ route("attendance.attendlog.form") }}';
-            return null;
-        }
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (!data) return;
- 
-        if (data.success) {
-            showNotification('✅ ' + (data.message || 'Attendance saved successfully!'), 'success');
-            setTimeout(() => {
-                fetchAttendanceData();
-                loadCourseCounts();
-            }, 500);
- 
-            // Fire-and-forget history save
-            fetch('/attendance/api/save-attendance-history', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify(saveData)
-            }).catch(err => console.warn('History save failed (non-critical):', err));
+    .then(r=>{if(r.status===401){redirect401();return null;}if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(data=>{
+        if(!data)return;
+        if(data.success){
+            showNotification(data.message||'Attendance saved!','success');
+            setTimeout(()=>{fetchAttendanceData();loadCourseCounts();},500);
+            fetch('/attendance/api/save-attendance-history',{
+                method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf},
+                body:JSON.stringify(saveData)
+            }).catch(e=>console.warn('History save failed:',e));
         } else {
-            showNotification('❌ Error: ' + (data.message || 'Failed to save attendance'), 'error');
+            showNotification(data.message||'Failed to save.','error');
         }
     })
-    .catch(error => {
-        console.error('Error saving attendance:', error);
-        showNotification('❌ Error: ' + (error.message || 'Failed to save attendance. Please try again.'), 'error');
-    })
-    .finally(() => {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-    });
+    .catch(err=>showNotification(err.message||'Failed to save.','error'))
+    .finally(()=>{btn.innerHTML=orig;btn.disabled=false;});
 }
- 
-// FIX #10: Add data validation summary before save
-function validateAttendanceData() {
-    const errors = [];
- 
-    if (!attendanceData || attendanceData.length === 0) {
-        errors.push('No attendance data loaded');
+
+// â”€â”€â”€ STATISTICS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function updateStatistics(){
+    const total=attendanceData.length;
+    document.getElementById('total-employees').textContent=total;
+    if(!total){
+        ['present-today','absent-today','avg-hours','attendance-rate'].forEach(id=>document.getElementById(id).textContent='0');
+        return;
     }
- 
-    attendanceData.forEach((emp, idx) => {
-        if (!emp.id) errors.push(`Employee ${idx}: Missing ID`);
-        if (!emp.employee_name) errors.push(`Employee ${idx}: Missing name`);
-        if (!emp.attendance || typeof emp.attendance !== 'object') {
-            errors.push(`Employee ${idx}: Invalid attendance data`);
-        }
+    let dp=0,da=0,tm=0;
+    attendanceData.forEach(emp=>{
+        DAYS.forEach(day=>{
+            const d=emp.attendance[day]||{};
+            if(d.am_in||d.am_out||d.pm_in||d.pm_out){dp++;tm+=calcMetrics(d.am_in,d.am_out,d.pm_in,d.pm_out).worked;}
+            else da++;
+        });
     });
- 
-    return errors;
+    document.getElementById('present-today').textContent=dp;
+    document.getElementById('absent-today').textContent=da;
+    document.getElementById('avg-hours').textContent=(dp>0?(tm/dp/60).toFixed(1):0)+'h';
+    document.getElementById('attendance-rate').textContent=Math.round(dp/(total*6)*100)+'%';
 }
+
+// â”€â”€â”€ SELECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function toggleSelectAll(){
+    const all=document.getElementById('select-all-checkbox').checked;
+    document.querySelectorAll('.employee-checkbox').forEach(c=>{c.checked=all;c.closest('tr').classList.toggle('selected-row',all);});
+    updateBulkActionsUI();
+}
+function updateBulkActionsUI(){
+    const sel=document.querySelectorAll('.employee-checkbox:checked').length;
+    document.getElementById('selected-count').textContent=sel;
+    document.getElementById('bulk-actions').style.display=sel>0?'flex':'none';
+}
+function clearSelection(){
+    document.querySelectorAll('.employee-checkbox').forEach(c=>{c.checked=false;c.closest('tr').classList.remove('selected-row');});
+    document.getElementById('select-all-checkbox').checked=false;
+    updateBulkActionsUI();
+}
+function bulkDeleteSelected(){
+    const sel=[...document.querySelectorAll('.employee-checkbox:checked')].map(c=>c.dataset.empId);
+    if(!sel.length)return;
+    Swal.fire({icon:'warning',title:'Delete '+sel.length+' record(s)?',text:'Removes attendance for this week.',
+        showCancelButton:true,confirmButtonColor:'#dc3545',confirmButtonText:'Delete'})
+    .then(r=>{
+        if(!r.isConfirmed)return;
+        const csrfMeta=document.querySelector('meta[name="csrf-token"]');
+        const csrf=csrfMeta?csrfMeta.getAttribute('content'):'';
+        fetch('/attendance/api/bulk-delete-attendance',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf},
+            body:JSON.stringify({course:selectedCourse.toUpperCase(),employee_ids:sel})
+        })
+        .then(r=>r.json())
+        .then(data=>{
+            if(data.success){showNotification(data.message,'success');fetchAttendanceData();}
+            else showNotification(data.message||'Delete failed.','error');
+        })
+        .catch(()=>showNotification('Delete request failed.','error'));
+    });
+}
+
+// â”€â”€â”€ EXPORT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function exportAttendance(){
+    if(!attendanceData.length){showNotification('No data to export.','error');return;}
+    const rows=[['Employee Name','Designation','Type','Day','AM In','AM Out','PM In','PM Out','Total Hours','Lateness (min)','Undertime (min)','Overtime (min)']];
+    attendanceData.forEach(emp=>{
+        DAYS.forEach(day=>{
+            const d=emp.attendance[day]||{},m=calcMetrics(d.am_in,d.am_out,d.pm_in,d.pm_out);
+            rows.push([emp.employee_name,emp.designation,emp.employee_type,
+                day.charAt(0).toUpperCase()+day.slice(1),
+                d.am_in||'',d.am_out||'',d.pm_in||'',d.pm_out||'',
+                (m.worked/60).toFixed(2),m.lateness,m.undertime,m.overtime]);
+        });
+    });
+    const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;
+    a.download='attendance_'+selectedCourse+'_'+formatLocalDate(getWeekMonday(currentDate))+'.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('CSV export downloaded.','success');
+}
+
+// â”€â”€â”€ NOTIFICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function showNotification(message,type){
+    type=type||'success';
+    document.querySelectorAll('.notification').forEach(n=>n.remove());
+    const div=document.createElement('div');
+    div.className='notification '+type;
+    div.innerHTML='<div class="notification-content"><span>'+message+'</span><button class="notification-close" onclick="this.closest(\'.notification\').remove()">\u00D7</button></div>';
+    document.body.appendChild(div);
+    setTimeout(()=>{if(div.parentNode)div.remove();},5000);
+}
+</script>
+</body>
+</html>

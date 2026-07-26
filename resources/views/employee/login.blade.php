@@ -3,398 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Portal Login - MCC Payroll</title>
+    <title>Employee Login — MCC Payroll</title>
+    <meta name="description" content="Sign in to the MCC Employee Portal to view payslips, attendance, and timesheets.">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* Blue marlin token system: abyss (deep dorsal) → navy → brand blue
-               → flash (the iridescent cyan a marlin's flank throws off when
-               it's lit up hunting) → belly (silver-white underside). */
-            --marlin-abyss: #061529;
-            --marlin-navy: #0f2f66;
-            --marlin-blue: #2563eb;
-            --marlin-blue-hover: #1d4ed8;
-            --marlin-flash: #38bdf8;
-            --marlin-belly: #f8fafc;
-            --ink: #1f2937;
-            --muted: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-page: #f3f5f9;
+            --bg-glass: rgba(255, 255, 255, 0.72);
+            --bg-glass-strong: rgba(255, 255, 255, 0.88);
+
+            --text-primary: #0f1729;
+            --text-secondary: #5a6478;
+            --text-tertiary: #8892a4;
+            --text-on-dark: #ffffff;
+
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-soft: rgba(37, 99, 235, 0.06);
+            --accent-ring: rgba(37, 99, 235, 0.12);
+
+            --border: rgba(0, 0, 0, 0.08);
+            --border-input: #dce1ea;
+            --border-input-focus: var(--accent);
+
+            --danger-bg: #fef2f2;
+            --danger-border: #fecaca;
+            --danger-text: #b91c1c;
+
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-pill: 999px;
+
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.12);
+            --shadow-input-focus: 0 0 0 3px var(--accent-ring);
+
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #eef2f7;
+            font-family: var(--font);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(6, 21, 41, 0.25);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            overflow: hidden;
-            max-width: 940px;
-            width: 100%;
-        }
-
-        /* ── Left panel: the marlin's water ──
-           Deep abyss at the top fading down through navy into brand blue,
-           with a flash of cyan at the corner — the same vertical gradient
-           a marlin's body runs, dark dorsal ridge to lit-up flank. */
-        .login-left {
+            justify-content: center;
             position: relative;
-            overflow: hidden;
-            color: white;
-            padding: 55px 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            isolation: isolate;
-            background:
-                radial-gradient(circle at 85% 90%, rgba(56, 189, 248, 0.35), transparent 55%),
-                linear-gradient(165deg, var(--marlin-abyss) 0%, var(--marlin-navy) 45%, var(--marlin-blue) 100%);
+            overflow-x: hidden;
         }
 
-        /* Hunting stripes: a marlin flashes faint vertical bars down its
-           flank when it's actively chasing bait — used here at low opacity
-           as the panel's texture instead of a stock pattern. */
-        .login-left::before {
+        /* ===================== BACKGROUND ===================== */
+        body::before {
             content: "";
-            position: absolute;
+            position: fixed;
             inset: 0;
-            background-image: repeating-linear-gradient(
-                90deg,
-                rgba(255,255,255,0.05) 0px,
-                rgba(255,255,255,0.05) 2px,
-                transparent 2px,
-                transparent 34px
-            );
-            z-index: 0;
+            background: url('{{ asset('images/mcc.jpg') }}') no-repeat center center/cover;
+            filter: blur(3px) brightness(0.3) saturate(1.1);
+            transform: scale(1.04);
+            z-index: -2;
         }
 
-        .login-left > * { position: relative; z-index: 1; }
-
-        .fin-badge {
-            width: 58px; height: 58px;
-            margin-bottom: 22px;
-        }
-
-        .login-left h1 {
-            font-family: 'Outfit', 'Segoe UI', sans-serif;
-            font-size: 2.15rem;
-            font-weight: 800;
-            letter-spacing: -0.01em;
-            margin-bottom: 14px;
-            line-height: 1.15;
-        }
-
-        .login-left p {
-            font-size: 1rem;
-            color: #cfe0f7;
-            line-height: 1.7;
-            max-width: 34ch;
-        }
-
-        .feature-list {
-            list-style: none;
-            margin-top: 28px;
-            text-align: left;
-        }
-
-        .feature-list li {
-            display: flex; align-items: center; gap: 10px;
-            font-size: 0.9rem; margin-bottom: 11px; color: #dce8fa;
-        }
-
-        .feature-list li::before {
+        body::after {
             content: "";
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--marlin-flash);
-            box-shadow: 0 0 8px 1px rgba(56, 189, 248, 0.8);
-            flex-shrink: 0;
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(12, 17, 28, 0.35) 0%,
+                rgba(12, 17, 28, 0.55) 100%
+            );
+            z-index: -1;
         }
 
-        /* Signature element: a single line-art marlin, mid-leap, anchored
-           to the bottom-right of the panel. It drifts very slightly on a
-           loop — the one animated flourish on the page. */
-        .marlin-mark {
-            position: absolute;
-            bottom: -18px;
-            right: -30px;
-            width: 260px;
-            height: auto;
-            opacity: 0.22;
-            z-index: 0;
-            animation: marlin-drift 7s ease-in-out infinite;
-        }
-
-        @keyframes marlin-drift {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            50%      { transform: translate(-6px, -10px) rotate(-2deg); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .marlin-mark { animation: none; }
-        }
-
-        /* ── Right panel: the boat deck — clean, quiet, functional ── */
-        .login-right {
-            padding: 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .logo-section { text-align: center; margin-bottom: 25px; }
-
-        .logo {
-            width: 72px; height: 72px;
-            border-radius: 50%;
-            border: 3px solid rgba(37, 99, 235, 0.3);
-            object-fit: cover;
-            margin-bottom: 12px;
-            display: block; margin-left: auto; margin-right: auto;
-        }
-
-        .login-right h2 {
-            font-family: 'Outfit', 'Segoe UI', sans-serif;
-            color: var(--ink);
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-            text-align: center;
-        }
-        .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; text-align: center; }
-
-        .form-group { margin-bottom: 18px; position: relative; }
-
-        label {
-            display: block;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 7px;
-            font-size: 0.9rem;
-        }
-
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px 42px 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: #f9f9f9;
-        }
-
-        input[type="email"]:focus,
-        input[type="password"]:focus {
-            outline: none;
-            border-color: var(--marlin-blue);
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-        }
-
-        .toggle-pw {
-            position: absolute;
-            right: 14px;
-            bottom: 13px;
-            cursor: pointer;
-            color: #999;
-            font-size: 1rem;
-            line-height: 1;
-            user-select: none;
-        }
-
-        .toggle-pw:hover { color: var(--marlin-blue); }
-
-        .row-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 22px;
-        }
-
-        .checkbox-group { display: flex; align-items: center; gap: 8px; }
-        .checkbox-group input  { width: auto; cursor: pointer; accent-color: var(--marlin-blue); }
-        .checkbox-group label  { margin-bottom: 0; cursor: pointer; font-weight: 400; font-size: 0.88rem; }
-
-        .forgot-link {
-            color: var(--marlin-blue);
-            font-size: 0.88rem;
-            font-weight: 500;
-            text-decoration: none;
-        }
-        .forgot-link:hover { color: var(--marlin-blue-hover); text-decoration: underline; }
-
-        .btn-login {
-            width: 100%;
-            padding: 13px;
-            background: var(--marlin-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-
-        .btn-login:hover   { background: var(--marlin-blue-hover); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
-        .btn-login:active  { transform: translateY(0); }
-        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        .btn-login:focus-visible { outline: 3px solid var(--marlin-flash); outline-offset: 2px; }
-
-        .login-footer { text-align: center; margin-top: 18px; color: var(--muted); font-size: 0.88rem; }
-        .login-footer a { color: var(--marlin-blue); text-decoration: none; font-weight: 600; }
-        .login-footer a:hover { color: var(--marlin-blue-hover); text-decoration: underline; }
-
+        /* ===================== BACK LINK ===================== */
         .back-link {
-            display: inline-flex; align-items: center; gap: 5px;
-            color: var(--marlin-blue); text-decoration: none; font-weight: 500;
-            margin-bottom: 18px; font-size: 0.88rem;
+            position: fixed;
+            top: 24px;
+            left: clamp(16px, 4vw, 40px);
+            z-index: 50;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
         }
-        .back-link:hover { color: var(--marlin-blue-hover); }
+        .back-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .back-link svg { width: 15px; height: 15px; }
 
+        /* ===================== LOGIN CARD ===================== */
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            margin: 24px;
+            padding: 40px 36px 36px;
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow-lg);
+            animation: cardIn 0.5s ease-out both;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===================== HEADER ===================== */
+        .login-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .login-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(37, 99, 235, 0.15);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 16px;
+        }
+
+        .login-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-ring);
+            padding: 5px 12px;
+            border-radius: var(--radius-pill);
+            margin-bottom: 14px;
+        }
+        .login-badge svg { width: 12px; height: 12px; }
+
+        .login-header h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .login-header p {
+            font-size: 0.86rem;
+            color: var(--text-secondary);
+        }
+
+        /* ===================== VALIDATION ERRORS ===================== */
         .validation-errors {
-            background: #fff0f0;
-            border: 1px solid #fcc;
-            color: #c0392b;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 18px;
-            font-size: 0.9rem;
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            color: var(--danger-text);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 0.82rem;
             line-height: 1.6;
         }
 
+        /* ===================== FORM ===================== */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 11px 42px 11px 14px;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            border: 1.5px solid var(--border-input);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .input-wrapper input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--border-input-focus);
+            box-shadow: var(--shadow-input-focus);
+            background: #fff;
+        }
+
+        /* Input icon (left side visual anchor) */
+        .input-icon {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+        }
+        .input-icon svg { width: 17px; height: 17px; }
+
+        /* Password toggle */
+        .toggle-pw {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            padding: 2px;
+            border: none;
+            background: none;
+            transition: color 0.2s ease;
+        }
+        .toggle-pw:hover { color: var(--accent); }
+        .toggle-pw svg { width: 17px; height: 17px; }
+        .toggle-pw .icon-eye-off { display: none; }
+        .toggle-pw.visible .icon-eye { display: none; }
+        .toggle-pw.visible .icon-eye-off { display: block; }
+
+        /* ===================== OPTIONS ROW ===================== */
+        .options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .checkbox-group label {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        /* ===================== SUBMIT BUTTON ===================== */
+        .btn-login {
+            width: 100%;
+            padding: 12px 20px;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            font-weight: 650;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-login:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-login:active { transform: translateY(0); }
+
+        .btn-login:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-login:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .btn-login svg { width: 17px; height: 17px; }
+
+        /* Loading spinner */
         .loading-spinner {
             display: inline-block;
-            width: 18px; height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s ease-in-out infinite;
+            border-top-color: #fff;
+            animation: spin 0.7s ease-in-out infinite;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) {
-            .login-container { grid-template-columns: 1fr; }
-            .login-left { padding: 40px 30px; min-height: 220px; }
-            .login-left h1 { font-size: 1.7rem; }
-            .feature-list { display: none; }
-            .marlin-mark { width: 180px; }
-            .login-right { padding: 35px 25px; }
+        /* ===================== FOOTER ===================== */
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
         }
 
+        .login-footer p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .login-footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .login-footer a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+        /* ===================== PAGE FOOTER ===================== */
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 14px 16px;
+            font-size: 0.74rem;
+            color: rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+        }
+
+        /* ===================== RESPONSIVE ===================== */
         @media (max-width: 480px) {
-            body { padding: 10px; }
-            .login-container { border-radius: 16px; }
-            .login-left { padding: 30px 22px; }
-            .login-right { padding: 25px 20px; }
-            .login-right h2 { font-size: 1.5rem; }
-            .logo { width: 60px; height: 60px; }
+            .login-card {
+                margin: 16px;
+                padding: 28px 22px 24px;
+                border-radius: 16px;
+            }
+            .login-header h1 { font-size: 1.25rem; }
+            .login-logo { width: 52px; height: 52px; }
+            .back-link { top: 16px; left: 16px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .login-card { animation: none; }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
 
-        {{-- ── Left branding panel ── --}}
-        <div class="login-left">
-            <svg class="fin-badge" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M32 6C32 6 40 22 40 36C40 45 36.5 52 32 58C27.5 52 24 45 24 36C24 22 32 6 32 6Z"
-                      fill="rgba(56,189,248,0.18)" stroke="#7dd3fc" stroke-width="1.6" stroke-linejoin="round"/>
-                <path d="M32 14C32 14 35.5 24 35.5 34" stroke="#e0f2fe" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
-            </svg>
+    <!-- ===================== BACK LINK ===================== -->
+    <a href="{{ url('/') }}" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Home
+    </a>
 
-            <h1>Employee Portal</h1>
-            <p>Your personal hub for payroll, attendance, and workplace info.</p>
-            <ul class="feature-list">
-                <li>View and download your payslips</li>
-                <li>Check attendance records</li>
-                <li>Submit and track timesheets</li>
-                <li>Read announcements</li>
-            </ul>
+    <!-- ===================== LOGIN CARD ===================== -->
+    <div class="login-card">
 
-            {{-- Signature element: line-art marlin, mid-leap --}}
-            <svg class="marlin-mark" viewBox="0 0 300 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M8 118 C 60 60, 120 40, 300 30" stroke="white" stroke-width="1.4" fill="none" opacity="0.9"/>
-                <path d="M8 118
-                         C 30 100, 55 84, 95 80
-                         C 150 74, 195 84, 230 62
-                         L 300 30
-                         L 226 76
-                         C 210 92, 190 100, 168 104
-                         C 130 112, 90 112, 62 128
-                         C 46 136, 24 132, 8 118 Z"
-                      fill="white" opacity="0.85"/>
-                <path d="M95 80 C 88 52, 78 32, 60 18 C 82 24, 100 42, 108 66 Z" fill="white" opacity="0.85"/>
-                <path d="M62 128 C 44 132, 26 146, 12 158 C 26 142, 30 130, 40 120 Z" fill="white" opacity="0.85"/>
-                <path d="M168 104 C 172 116, 182 126, 196 130 C 180 128, 166 120, 158 108 Z" fill="white" opacity="0.85"/>
-                <circle cx="242" cy="52" r="2.4" fill="#061529" opacity="0.7"/>
-            </svg>
+        <div class="login-header">
+            <img src="{{ asset('images/logo.png') }}" alt="MCC Logo" class="login-logo">
+            <div class="login-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+                Employee Portal
+            </div>
+            <h1>Welcome back</h1>
+            <p>Sign in to access your account</p>
         </div>
 
-        {{-- ── Right form panel ── --}}
-        <div class="login-right">
-            <a href="/" class="back-link">← Back to Home</a>
-
-            <div class="logo-section">
-                <img src="{{ asset('images/logo.png') }}" alt="MCC Logo" class="logo">
+        @if ($errors->any())
+            <div class="validation-errors">
+                @foreach ($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
             </div>
+        @endif
 
-            <h2>Welcome back</h2>
-            <p class="subtitle">Sign in to your employee account</p>
+        <form action="{{ route('employee.login') }}" method="POST" id="loginForm">
+            @csrf
+            <input type="hidden" name="user_type" value="employee">
 
-            {{--
-                FIX: Removed inline session error/success divs — feedback shown via SweetAlert only.
-                Validation errors ($errors) stay inline since they're per-field and can be multiple.
-            --}}
-            @if ($errors->any())
-                <div class="validation-errors">
-                    @foreach ($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
-
-            {{-- FIX: form action changed from route('login.submit') which POSTs to the admin root '/'
-                       to route('employee.login') which correctly POSTs to /employee/login --}}
-            <form action="{{ route('employee.login') }}" method="POST" id="loginForm">
-                @csrf
-                {{-- Tells LoginController::authenticate this is an employee login --}}
-                <input type="hidden" name="user_type" value="employee">
-
-                <div class="form-group">
-                    <label for="email">Email Address</label>
+            <div class="form-group">
+                <label for="email">Email address</label>
+                <div class="input-wrapper">
                     <input
                         type="email"
                         id="email"
                         name="email"
-                        placeholder="Enter your email"
+                        placeholder="you@example.com"
                         value="{{ old('email') }}"
                         required
                         autofocus
                         autocomplete="email"
                     >
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    </span>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
                     <input
                         type="password"
                         id="password"
@@ -403,30 +470,54 @@
                         required
                         autocomplete="current-password"
                     >
-                    <span class="toggle-pw" id="togglePw" title="Show/hide password">👁</span>
+                    <button type="button" class="toggle-pw" id="togglePw" title="Show or hide password" aria-label="Toggle password visibility">
+                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
                 </div>
+            </div>
 
-                <div class="row-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember">Remember me</label>
-                    </div>
-                    {{-- Link to a forgot-password page if you add one for employees --}}
-                    {{-- <a href="{{ route('employee.forgot.form') }}" class="forgot-link">Forgot password?</a> --}}
+            <div class="options-row">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember me</label>
                 </div>
+            </div>
 
-                <button type="submit" class="btn-login" id="loginBtn">
-                    <span id="btnText">Sign In</span>
-                </button>
+            <button type="submit" class="btn-login" id="loginBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                <span id="btnText">Sign in</span>
+            </button>
 
-                <div class="login-footer">
-                    <p>Don't have an account? <a href="{{ route('register.form') }}">Register here</a></p>
-                </div>
-            </form>
-        </div>
+            <div class="login-footer">
+                <p>Don't have an account? <a href="{{ route('register.form') }}">Register here</a></p>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===================== PAGE FOOTER ===================== -->
+    <div class="page-footer">
+        &copy; {{ date('Y') }} Madridejos Community College
     </div>
 
     <script>
+    // Password visibility toggle
+    document.getElementById('togglePw').addEventListener('click', function () {
+        const pw = document.getElementById('password');
+        const isHidden = pw.type === 'password';
+        pw.type = isHidden ? 'text' : 'password';
+        this.classList.toggle('visible', isHidden);
+    });
+
+    // Disable button while submitting
+    document.getElementById('loginForm').addEventListener('submit', function () {
+        const btn = document.getElementById('loginBtn');
+        const text = document.getElementById('btnText');
+        btn.disabled = true;
+        text.innerHTML = '<span class="loading-spinner"></span> Signing in…';
+    });
+
+    // SweetAlert notifications
     @if(session('error'))
     Swal.fire({
         icon: 'error',
@@ -456,24 +547,6 @@
         timerProgressBar: true
     });
     @endif
-
-    // Password visibility toggle
-    document.getElementById('togglePw').addEventListener('click', function () {
-        const pw = document.getElementById('password');
-        const isHidden = pw.type === 'password';
-
-        pw.type = isHidden ? 'text' : 'password';
-        this.textContent = isHidden ? '🙈' : '👁';
-    });
-
-    // Disable button while submitting
-    document.getElementById('loginForm').addEventListener('submit', function () {
-        const btn = document.getElementById('loginBtn');
-        const text = document.getElementById('btnText');
-
-        btn.disabled = true;
-        text.innerHTML = '<span class="loading-spinner"></span> Signing in...';
-    });
-</script>
+    </script>
 </body>
 </html>

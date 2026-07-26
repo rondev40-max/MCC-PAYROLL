@@ -489,6 +489,13 @@
     background: var(--bg-2); border: 1.5px solid transparent;
     position: relative;
   }
+  button.cal-cell {
+    font: inherit;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button.cal-cell:not(:disabled) { cursor: pointer; }
+  button.cal-cell:disabled { cursor: default; }
   .cal-cell:hover:not(.cal-empty):not(.cal-future-day) {
     transform: scale(1.04); box-shadow: var(--sh-md); z-index: 2;
   }
@@ -546,6 +553,47 @@
   /* weekend (no record) */
   .cal-cell.cal-weekend-empty { background: transparent; border-color: transparent; opacity: .55; }
   .cal-cell.cal-weekend-empty .cal-num { color: rgba(239,68,68,.5); }
+
+  /* weekday with no attendance record yet (distinct from styled statuses above) */
+  .cal-cell.cal-no-record { background: transparent; border: 1.5px dashed var(--border); }
+  .cal-cell.cal-no-record .cal-num { color: var(--text-3); }
+  .cal-cell.cal-no-record::after {
+    content: '';
+    position: absolute; top: 5px; right: 5px;
+    width: 5px; height: 5px; border-radius: 50%;
+    border: 1.5px solid var(--warn);
+  }
+
+  /* custom tooltip (replaces native title attr — accessible on tap, not just hover) */
+  .cal-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--card);
+    font-size: .64rem;
+    font-weight: 600;
+    padding: .35rem .6rem;
+    border-radius: 7px;
+    white-space: nowrap;
+    box-shadow: var(--sh-md);
+    z-index: 20;
+    pointer-events: none;
+  }
+  .cal-tip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text);
+  }
+  .cal-cell.show-tip .cal-tip,
+  .cal-cell:hover .cal-tip,
+  .cal-cell:focus-visible .cal-tip { display: block; }
 
   /* calendar legend */
   .cal-legend {
@@ -716,6 +764,7 @@
     width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
     border: 1px solid var(--border); background: var(--bg);
     color: var(--text-2); cursor: pointer; transition: var(--t); font-size: .75rem;
+    text-decoration: none;
   }
   .btn-ghost:hover { background: var(--brand-light); color: var(--brand); border-color: var(--brand-mid); }
 
@@ -899,6 +948,43 @@
 
     @php
       $initials = collect(explode(' ', $employee->name ?? 'E'))->map(fn($w) => strtoupper($w[0]))->take(2)->implode('');
+
+      // Hoisted derived values — computed once, up top, so nothing below depends on
+      // markup order. (Previously some of these were computed inline inside whichever
+      // component happened to render first, which broke silently if blocks got reordered.)
+      $unread = isset($announcements) ? $announcements->where('is_read', false)->count() : 0;
+      $newPay = isset($payslips) ? $payslips->where('viewed', false)->count() : 0;
+
+      // Attendance calendar month — driven by ?month=&year= so it's navigable from the
+      // Overview tab; defaults to the current month. NOTE: this only shows data for
+      // months your controller actually loads into $attendances — if that query is
+      // scoped to "this month only" server-side, the nav below will render an empty
+      // calendar for any other month until the controller accepts these params too.
+      $calYear    = (int) request('year', now()->year);
+      $calMonth   = (int) request('month', now()->month);
+      $calCursor  = \Carbon\Carbon::create($calYear, $calMonth, 1);
+      $calYear    = $calCursor->year;
+      $calMonth   = $calCursor->month;
+      $isCurrentCalMonth = $calCursor->isSameMonth(now());
+
+      $prevCursor = $calCursor->copy()->subMonth();
+      $nextCursor = $calCursor->copy()->addMonth();
+
+      $calBaseQuery = request()->except(['month', 'year']);
+      $currentTab   = request('tab', 'overview');
+      $calPrevUrl   = url()->current() . '?' . http_build_query(array_merge($calBaseQuery, ['month' => $prevCursor->month, 'year' => $prevCursor->year, 'tab' => $currentTab]));
+      $calNextUrl   = url()->current() . '?' . http_build_query(array_merge($calBaseQuery, ['month' => $nextCursor->month, 'year' => $nextCursor->year, 'tab' => $currentTab]));
+      $calTodayUrl  = url()->current() . '?' . http_build_query(array_merge($calBaseQuery, ['month' => now()->month, 'year' => now()->year, 'tab' => $currentTab]));
+
+      $todayDay  = now()->day;
+      $daysInMo  = $calCursor->daysInMonth;
+      $startDow  = $calCursor->copy()->startOfMonth()->dayOfWeek; // 0=Sun
+
+      /* Build per-day attendance lookup for the viewed month */
+      $attByDay  = collect($attendances ?? [])->filter(function($a) use ($calYear, $calMonth) {
+        $d = \Carbon\Carbon::parse($a->date);
+        return $d->year === $calYear && $d->month === $calMonth;
+      })->keyBy(fn($a) => (int)\Carbon\Carbon::parse($a->date)->format('j'));
     @endphp
 
     <div class="sb-profile">
@@ -929,14 +1015,12 @@
       <div class="nav-label">Payroll</div>
       <button class="sb-link" data-tab="payslips" id="nav-payslips">
         <i class="bi bi-receipt-cutoff"></i> Payslips
-        @php $newPay = isset($payslips) ? $payslips->where('viewed', false)->count() : 0; @endphp
         @if($newPay > 0) <span class="sb-badge">{{ $newPay }}</span> @endif
       </button>
 
       <div class="nav-label">Info</div>
       <button class="sb-link" data-tab="announcements" id="nav-announcements">
         <i class="bi bi-megaphone-fill"></i> Announcements
-        @php $unread = isset($announcements) ? $announcements->where('is_read', false)->count() : 0; @endphp
         @if($unread > 0) <span class="sb-dot"></span> @endif
       </button>
       <button class="sb-link" data-tab="profile" id="nav-profile">
@@ -996,7 +1080,12 @@
         <div class="tb-user" id="profileBtn">
           <div class="tb-avatar">{{ $initials }}</div>
           <div class="d-none d-sm-block">
-            <div class="tb-uname">{{ Str::words($employee->name ?? 'Employee', 1, '') }}</div>
+            <div class="tb-uname">
+              {{ Str::words($employee->name ?? 'Employee', 1, '') }}
+              @if(Auth::user()->email_verified_at)
+                <i class="bi bi-patch-check-fill text-primary" title="Email Verified" style="font-size:.7rem;"></i>
+              @endif
+            </div>
             <div class="tb-urole">{{ $employee->position ?? 'Employee' }}</div>
           </div>
           <i class="bi bi-chevron-down d-none d-sm-block" style="font-size:.6rem;color:var(--text-3);margin-left:2px;"></i>
@@ -1006,29 +1095,126 @@
 
     <div class="page-body">
 
+      @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert" style="border-radius: var(--r-md); font-size: .8rem;">
+          <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      @endif
+
+      @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert" style="border-radius: var(--r-md); font-size: .8rem;">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      @endif
+
+      @if(session('info'))
+        <div class="alert alert-info alert-dismissible fade show mb-3" role="alert" style="border-radius: var(--r-md); font-size: .8rem;">
+          <i class="bi bi-info-circle-fill me-2"></i>{{ session('info') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      @endif
+
+      @if(is_null(Auth::user()->email_verified_at))
+        <div class="alert alert-warning mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-radius: var(--r-md); border-left: 4px solid #f59e0b; background: rgba(245,158,11,0.1); color: var(--text);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-envelope-exclamation-fill text-warning fs-4"></i>
+            <div>
+              <strong style="font-size: .85rem;">Email Address Not Verified</strong>
+              <div style="font-size: .75rem; color: var(--text-2);">
+                Please verify your email ({{ Auth::user()->email }}) to ensure secure delivery and access to your e-payslips.
+              </div>
+            </div>
+          </div>
+          <form method="POST" action="{{ route('verification.resend') }}" class="m-0">
+            @csrf
+            <button type="submit" class="btn btn-warning btn-sm fw-bold px-3" style="border-radius: 8px; font-size: .76rem;">
+              <i class="bi bi-send-fill me-1"></i> Resend Verification Email
+            </button>
+          </form>
+        </div>
+      @endif
+
       <!-- ════════════════════════════════
            PANEL: OVERVIEW
       ════════════════════════════════ -->
       <div class="tab-panel active" id="panel-overview">
 
+        <!-- Premium Hero Welcome Banner -->
+        @php
+          $hour = (int)date('H');
+          if ($hour < 12) {
+              $greeting = 'Good Morning';
+              $greetingIcon = 'bi-brightness-high-fill';
+          } elseif ($hour < 18) {
+              $greeting = 'Good Afternoon';
+              $greetingIcon = 'bi-sun-fill';
+          } else {
+              $greeting = 'Good Evening';
+              $greetingIcon = 'bi-moon-stars-fill';
+          }
+          $latestPayslip = isset($payslips) && $payslips->count() > 0 ? $payslips->first() : null;
+          $netPayVal = $latestPayslip ? '₱' . number_format($latestPayslip->net_pay ?? $latestPayslip->total_net_pay ?? 0, 2) : '—';
+        @endphp
+
+        <div class="hero-welcome-card mb-3 p-3 p-md-4 text-white position-relative overflow-hidden"
+             style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%); border-radius: var(--r-xl); box-shadow: 0 10px 30px rgba(37,99,235,0.22); border: 1px solid rgba(255,255,255,0.15);">
+          <!-- Ambient glowing background orbs -->
+          <div style="position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(59,130,246,0.25); filter:blur(30px); pointer-events:none;"></div>
+          <div style="position:absolute; bottom:-60px; right:100px; width:160px; height:160px; border-radius:50%; background:rgba(16,185,129,0.2); filter:blur(35px); pointer-events:none;"></div>
+
+          <div class="row align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8 mb-3 mb-lg-0">
+              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <span class="badge" style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:.72rem; font-weight:600; border-radius:20px; padding:.3rem .75rem;">
+                  <i class="bi {{ $greetingIcon }} me-1 text-warning"></i> {{ $greeting }}
+                </span>
+                <span class="badge" style="background:rgba(16,185,129,0.25); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; font-size:.72rem; font-weight:600; border-radius:20px; padding:.3rem .75rem;">
+                  <span class="pulse-dot d-inline-block me-1" style="width:6px;height:6px;background:#10b981;border-radius:50%;"></span> Active Session
+                </span>
+              </div>
+              <h2 class="fw-bold mb-1 text-white" style="font-family:'Sora',sans-serif; font-size: 1.4rem; letter-spacing:-.02em;">
+                Welcome back, {{ Str::words($employee->name ?? 'Employee', 2, '') }}! 👋
+              </h2>
+              <p class="mb-0 text-white-50" style="font-size: .83rem; max-width: 620px;">
+                Access your real-time attendance log, monthly timesheets, and downloadable e-payslips anytime from your employee portal.
+              </p>
+            </div>
+
+            <div class="col-lg-4 text-lg-end">
+              <div class="d-inline-flex flex-column align-items-lg-end p-2 px-3" style="background:rgba(255,255,255,0.1); backdrop-filter:blur(12px); border-radius:var(--r-lg); border:1px solid rgba(255,255,255,0.2);">
+                <div class="text-white-50" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; font-weight:700;">Employee ID / Position</div>
+                <div class="fw-bold text-white mt-1" style="font-size:.88rem; font-family:'Sora',sans-serif;">
+                  <i class="bi bi-person-badge me-1"></i> {{ $employee->employee_id ?? 'EMP-'.$user->id }}
+                </div>
+                <div style="font-size:.72rem; color:rgba(255,255,255,0.85);">
+                  {{ $employee->position ?? 'Faculty / Staff' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- KPI Row -->
-        <div class="row g-2 mb-2">
+        <div class="row g-2 mb-3">
           @php
             $kpis = [
-              ['val'=>$stats['present_days'], 'label'=>'Days Present',   'c'=>'#2563eb','bg'=>'rgba(37,99,235,.11)',  'icon'=>'check-circle-fill',   'sub'=>'This month'],
-              ['val'=>$stats['absent_days'],  'label'=>'Days Absent',    'c'=>'#ef4444','bg'=>'rgba(239,68,68,.11)',  'icon'=>'x-circle-fill',       'sub'=>'This month'],
-              ['val'=>$stats['total_hours'],  'label'=>'Hours Rendered', 'c'=>'#10b981','bg'=>'rgba(16,185,129,.11)','icon'=>'hourglass-split',      'sub'=>'Total logged'],
+              ['val'=>$stats['present_days'], 'label'=>'Days Present',   'c'=>'#2563eb','bg'=>'rgba(37,99,235,.10)',  'icon'=>'check-circle-fill',   'sub'=>'This month'],
+              ['val'=>$stats['absent_days'],  'label'=>'Days Absent',    'c'=>'#64748b','bg'=>'rgba(100,116,139,.10)', 'icon'=>'x-circle',            'sub'=>'This month'],
+              ['val'=>$stats['total_hours'],  'label'=>'Hours Rendered', 'c'=>'#1e40af','bg'=>'rgba(30,64,175,.10)',  'icon'=>'hourglass-split',      'sub'=>'This month'],
+              ['val'=>$netPayVal,             'label'=>'Latest Net Pay', 'c'=>'#059669','bg'=>'rgba(5,150,105,.10)',  'icon'=>'wallet2',              'sub'=>'Latest payslip'],
             ];
           @endphp
           @foreach($kpis as $idx => $k)
-          <div class="col-4 s{{ $idx }}">
+          <div class="col-12 col-sm-6 col-lg-3 s{{ $idx }}">
             <div class="kpi" style="--kpi-c:{{ $k['c'] }};--kpi-bg:{{ $k['bg'] }};">
               <div class="kpi-accent"></div>
               <div class="kpi-header">
                 <div class="kpi-icon"><i class="bi bi-{{ $k['icon'] }}"></i></div>
                 <span class="kpi-period">{{ $k['sub'] }}</span>
               </div>
-              <div class="kpi-val" style="{{ $idx > 0 ? 'color:'.$k['c'].';' : '' }}">{{ $k['val'] }}</div>
+              <div class="kpi-val" style="color:{{ $k['c'] }}; font-size: 1.4rem;">{{ $k['val'] }}</div>
               <div class="kpi-label">{{ $k['label'] }}</div>
             </div>
           </div>
@@ -1046,27 +1232,27 @@
                   <div class="ct-icon" style="background:rgba(37,99,235,.1);color:var(--brand);">
                     <i class="bi bi-calendar3"></i>
                   </div>
-                  Attendance Calendar — {{ now()->format('F Y') }}
+                  Attendance Calendar
                 </div>
-                <div style="font-size:.62rem;color:var(--text-3);font-weight:600;">
-                  <i class="bi bi-clock" style="font-size:.6rem;"></i>
-                  {{ now()->format('l, M j') }}
+                <div class="d-flex align-items-center gap-2">
+                  <a href="{{ $calPrevUrl }}" class="btn-ghost" title="Previous month">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                  <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.78rem;color:var(--text);min-width:96px;text-align:center;">
+                    {{ $calCursor->format('F Y') }}
+                  </div>
+                  @if($isCurrentCalMonth)
+                    <span class="btn-ghost" style="opacity:.35;cursor:not-allowed;" title="Already at the current month">
+                      <i class="bi bi-chevron-right"></i>
+                    </span>
+                  @else
+                    <a href="{{ $calNextUrl }}" class="btn-ghost" title="Next month">
+                      <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="{{ $calTodayUrl }}" class="btn-outline btn-sm" style="margin-left:2px;">Today</a>
+                  @endif
                 </div>
               </div>
-
-              @php
-                $calYear   = now()->year;
-                $calMonth  = now()->month;
-                $todayDay  = now()->day;
-                $daysInMo  = now()->daysInMonth;
-                $startDow  = \Carbon\Carbon::create($calYear, $calMonth, 1)->dayOfWeek; // 0=Sun
-
-                /* Build per-day attendance lookup for current month */
-                $attByDay  = collect($attendances ?? [])->filter(function($a) use ($calYear, $calMonth) {
-                  $d = \Carbon\Carbon::parse($a->date);
-                  return $d->year === $calYear && $d->month === $calMonth;
-                })->keyBy(fn($a) => (int)\Carbon\Carbon::parse($a->date)->format('j'));
-              @endphp
 
               <div class="att-cal-wrap">
                 <!-- Day-of-week headers -->
@@ -1084,12 +1270,12 @@
 
                   @for($d = 1; $d <= $daysInMo; $d++)
                     @php
+                      $cellDate   = \Carbon\Carbon::create($calYear, $calMonth, $d);
                       $att        = $attByDay[$d] ?? null;
                       $status     = $att ? strtolower($att->status ?? 'present') : null;
-                      $isFuture   = $d > $todayDay;
-                      $isToday    = $d === $todayDay;
-                      $dayOfWeek  = \Carbon\Carbon::create($calYear, $calMonth, $d)->dayOfWeek;
-                      $isWeekend  = in_array($dayOfWeek, [0, 6]);
+                      $isToday    = $cellDate->isToday();
+                      $isFuture   = $cellDate->isFuture() && !$isToday;
+                      $isWeekend  = in_array($cellDate->dayOfWeek, [0, 6]);
                       $timeIn     = $att && $att->time_in ? \Carbon\Carbon::parse($att->time_in)->format('h:i') : null;
 
                       $cellClass  = 'cal-cell';
@@ -1097,6 +1283,7 @@
                       elseif ($isFuture)        $cellClass .= ' cal-future-day';
                       elseif ($status)          $cellClass .= ' cal-'.$status;
                       elseif ($isWeekend)       $cellClass .= ' cal-weekend-empty';
+                      else                      $cellClass .= ' cal-no-record';
 
                       /* tooltip text */
                       if ($att) {
@@ -1108,10 +1295,10 @@
                       } elseif ($isFuture) {
                         $tooltip = 'Upcoming';
                       } else {
-                        $tooltip = 'No record';
+                        $tooltip = 'No attendance record';
                       }
                     @endphp
-                    <div class="{{ $cellClass }}" title="{{ $tooltip }}">
+                    <button type="button" class="{{ $cellClass }}" @if($isFuture) disabled @endif>
                       <span class="cal-num">{{ $d }}</span>
                       @if($timeIn && !$isFuture)
                         <span class="cal-time-in">{{ $timeIn }}</span>
@@ -1119,7 +1306,8 @@
                       @if($status && !$isFuture)
                         <span class="cal-status-dot"></span>
                       @endif
-                    </div>
+                      <span class="cal-tip" role="tooltip">{{ $tooltip }}</span>
+                    </button>
                   @endfor
                 </div>
               </div>
@@ -1140,6 +1328,9 @@
                 </div>
                 <div class="cal-legend-item">
                   <span class="cal-legend-swatch" style="background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.25);"></span>On Leave
+                </div>
+                <div class="cal-legend-item">
+                  <span class="cal-legend-swatch" style="background:transparent;border:1.5px dashed var(--border);"></span>No Record
                 </div>
               </div>
             </div>
@@ -1773,6 +1964,25 @@ function tick() {
     d.toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' });
 }
 setInterval(tick, 1000); tick();
+
+/* ═══════════════════════════════════════════
+   ATTENDANCE CALENDAR — TAP-TO-SHOW TOOLTIP
+   (hover already shows it via CSS; this adds a tap
+   toggle for touch devices where :hover is unreliable)
+═══════════════════════════════════════════ */
+document.querySelectorAll('.cal-cell:not(.cal-empty)').forEach(cell => {
+  if (cell.disabled) return;
+  cell.addEventListener('click', () => {
+    const wasOpen = cell.classList.contains('show-tip');
+    document.querySelectorAll('.cal-cell.show-tip').forEach(c => c.classList.remove('show-tip'));
+    if (!wasOpen) cell.classList.add('show-tip');
+  });
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.cal-cell')) {
+    document.querySelectorAll('.cal-cell.show-tip').forEach(c => c.classList.remove('show-tip'));
+  }
+});
 
 /* ═══════════════════════════════════════════
    ATTENDANCE TABLE SEARCH
