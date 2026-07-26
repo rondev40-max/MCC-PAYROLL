@@ -228,6 +228,10 @@ Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationControl
 
     Route::get('/payroll-history', [AdminController::class, 'payrollHistory'])->name('payroll.history');
     Route::get('/payroll-history/export', [AdminController::class, 'exportPayrollHistory'])->name('payroll.export');
+
+    // General Settings System Routes
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
 });
 
 

@@ -11,8 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop if exists to ensure clean slate
+        Schema::dropIfExists('settings');
+
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
+            $table->string('key')->unique()->index();
+            $table->text('value')->nullable();
+            $table->string('group')->default('general');
             $table->timestamps();
         });
     }
