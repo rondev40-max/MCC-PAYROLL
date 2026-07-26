@@ -13,6 +13,8 @@ class FulltimeTimesheet extends Model
         'designation',
         'prov_abr',
         'department',
+        'month',
+        'year',
         'date',
         'period',
         'days',
