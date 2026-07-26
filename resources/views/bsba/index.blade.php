@@ -237,11 +237,15 @@
         font-size: 10px;
         color: #666;
       }
+      .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
+      .sidebar-shift { margin-left: 0 !important; }
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
 <body>
-
+  @include('layouts.sidebar')
+  <div class="sidebar-shift">
   <div class="main-content">
     <!-- Print Header (hidden on screen, visible on print) -->
     <div class="print-header" style="display: none;">
@@ -519,6 +523,7 @@ devtools.detect(function(status){
   }
 });
 </script>
+</div>
 </body>
 </html>
 
