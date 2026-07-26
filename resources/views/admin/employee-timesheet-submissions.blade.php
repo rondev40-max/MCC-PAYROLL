@@ -7,8 +7,15 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
+    .sidebar-shift { margin-left: 0 !important; }
+  </style>
+  @include('layouts.sidebar-styles')
 </head>
 <body>
+  @include('layouts.sidebar')
+  <div class="sidebar-shift">
   <div class="container-fluid py-4">
     <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
       <div>
@@ -100,6 +107,7 @@
       </div>
     </div>
   </div>
+</div>
 </body>
 </html>
 

@@ -147,10 +147,14 @@
     .badge {
       font-size: 0.75rem;
     }
+    .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
+    .sidebar-shift { margin-left: 0 !important; }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
 <body>
-
+  @include('layouts.sidebar')
+  <div class="sidebar-shift">
   <div class="main-content">
     <!-- Back button with icon -->
     <a href="{{ route('dashboard') }}" class="icon-btn btn-back" title="Back to Dashboard">
@@ -266,6 +270,7 @@ devtools.detect(function(status){
   }
 });
 </script>
+</div>
 </body>
 </html>
 
