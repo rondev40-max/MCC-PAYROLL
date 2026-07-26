@@ -257,6 +257,9 @@
         <button type="button" class="settings-tab-btn" id="btn-payroll" onclick="switchSettingsTab('payroll')">
           <i class="bi bi-wallet2"></i>Payroll Defaults
         </button>
+        <button type="button" class="settings-tab-btn" id="btn-logs" onclick="switchSettingsTab('logs')">
+          <i class="bi bi-journal-text"></i>Activity Logs
+        </button>
       </nav>
 
       <!-- Right aligned Settings Content card -->
@@ -406,6 +409,46 @@
                 </select>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Activity Logs -->
+        <div class="settings-section d-none" id="sec-logs">
+          <div class="settings-section-title">
+            <i class="bi bi-journal-text text-info"></i>
+            <span>📋 Recent System Activity Logs</span>
+          </div>
+          <p class="settings-section-subtitle">Audit history of recent actions executed on the payroll system.</p>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle" style="font-size: .8rem;">
+              <thead class="table-light">
+                <tr>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse ($logs as $log)
+                  <tr>
+                    <td>
+                      <div class="fw-bold">{{ $log->causer->name ?? 'System' }}</div>
+                      <small class="text-muted">{{ $log->causer->email ?? '' }}</small>
+                    </td>
+                    <td>
+                      <span class="badge bg-{{ $log->event === 'updated' ? 'primary' : ($log->event === 'deleted' ? 'danger' : 'success') }}" style="font-size:.65rem; padding: 2px 6px;">{{ ucfirst($log->event ?? 'Log') }}</span>
+                      <span class="ms-1 fw-semibold text-secondary" style="color: var(--text-2) !important;">{{ $log->description }}</span>
+                    </td>
+                    <td class="text-nowrap text-muted">{{ $log->created_at->diffForHumans() }}</td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="3" class="text-center py-4 text-muted">No activities logged yet.</td>
+                  </tr>
+                @endforelse
+              </tbody>
+            </table>
           </div>
         </div>
 

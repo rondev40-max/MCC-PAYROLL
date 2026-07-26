@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Setting;
+use Spatie\Activitylog\Models\Activity;
 
 class SettingsController extends Controller
 {
@@ -16,7 +17,13 @@ class SettingsController extends Controller
         // Load all settings grouped by group name
         $settings = Setting::all()->groupBy('group');
 
-        return view('admin.settings', compact('settings'));
+        // Fetch the latest 10 system activity logs for auditing settings/actions
+        $logs = Activity::with('causer')
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('admin.settings', compact('settings', 'logs'));
     }
 
     /**
@@ -54,6 +61,12 @@ class SettingsController extends Controller
                 Setting::set($checkbox, '0', $group);
             }
         }
+
+        // Log the settings update activity in Spatie Activity Log
+        activity()
+            ->causedBy(auth()->user())
+            ->event('updated')
+            ->log('Updated system configuration and payroll defaults');
 
         return redirect()->route('admin.settings.index')->with('success', 'Settings updated successfully!');
     }
