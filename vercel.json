@@ -18,7 +18,7 @@
             "dest": "/public/$1$2"
         },
         {
-            "src": "/(.*)\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|map|html)$",
+            "src": "/(.*)\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|map|html|apk)$",
             "dest": "/public/$1.$2"
         },
         {
