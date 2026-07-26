@@ -275,7 +275,7 @@
       display: flex;
       justify-content: center;
       gap: 20px;
-      max-width: 760px;
+      max-width: 1100px;
       margin: 0 auto;
       animation: fadeUp 0.7s ease-out 0.12s both;
     }
@@ -599,6 +599,29 @@
             Sign in
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </span>
+        </a>
+
+        <!-- Download Mobile App Portal Card -->
+        <a href="{{ asset('downloads/mcc-employee-app.apk') }}" class="portal-card" id="portal-download" download>
+          <div class="portal-icon" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </div>
+          <h3>Download App</h3>
+          <p>Get our native Android app to clock in, submit timesheets, and view payslips on-the-go.</p>
+          <div class="portal-chips">
+            <span class="portal-chip" style="background: rgba(16, 185, 129, 0.05); color: #10b981; border-color: rgba(16, 185, 129, 0.12);">Android APK</span>
+            <span class="portal-chip" style="background: rgba(16, 185, 129, 0.05); color: #10b981; border-color: rgba(16, 185, 129, 0.12);">On-The-Go</span>
+            <span class="portal-chip" style="background: rgba(16, 185, 129, 0.05); color: #10b981; border-color: rgba(16, 185, 129, 0.12);">Mobile Sign-In</span>
+          </div>
+          <span class="portal-cta" style="color: #10b981;">
+            Download APK
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 5v14M19 12l-7 7-7-7"/>
             </svg>
           </span>
         </a>
