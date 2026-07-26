@@ -339,3 +339,23 @@ Route::get('/deploy/seed', function () {
         ], 500);
     }
 });
+
+// Database Fresh Migrate Route (Securely protected by a token for Vercel/Railway)
+Route::get('/deploy/fresh', function () {
+    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+        abort(403, 'Unauthorized');
+    }
+    
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true]);
+        return response()->json([
+            'status' => 'success',
+            'output' => \Illuminate\Support\Facades\Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
