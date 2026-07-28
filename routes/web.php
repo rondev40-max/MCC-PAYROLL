@@ -214,14 +214,12 @@ Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationControl
         ->name('salary.adjustment');
 
     // Tax & Government Deductions Routes
-    Route::get('/deductions', [\App\Http\Controllers\Admin\DeductionController::class, 'index'])
+    Route::get('/deductions', [\App\Http\Controllers\Admin\DeductionsController::class, 'index'])
         ->name('deductions.index');
-    Route::post('/deductions/update-settings', [\App\Http\Controllers\Admin\DeductionController::class, 'updateSettings'])
-        ->name('deductions.update-settings');
-    Route::post('/deductions/apply', [\App\Http\Controllers\Admin\DeductionController::class, 'applyDeductions'])
-        ->name('deductions.apply');
-    Route::get('/deductions/summary', [\App\Http\Controllers\Admin\DeductionController::class, 'summary'])
-        ->name('deductions.summary');
+    Route::put('/deductions/{setting}', [\App\Http\Controllers\Admin\DeductionsController::class, 'update'])
+        ->name('deductions.update');
+    Route::patch('/deductions/{setting}/toggle', [\App\Http\Controllers\Admin\DeductionsController::class, 'toggle'])
+        ->name('deductions.toggle');
 
     // ✅ Evaluation Results - ADMIN ONLY
     Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationController::class, 'evaluationResults'])->name('evaluation.results');
