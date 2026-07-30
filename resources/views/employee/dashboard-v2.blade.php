@@ -1701,7 +1701,7 @@
                 <div style="font-size:.7rem;opacity:.65;color:#fff;margin-top:3px;position:relative;z-index:1;">{{ $employee->position ?? 'Employee' }}</div>
                 <div style="margin-top:.5rem;position:relative;z-index:1;">
                   <span style="background:rgba(255,255,255,.14);border-radius:20px;padding:.18rem .9rem;font-size:.64rem;color:rgba(255,255,255,.8);font-weight:700;">
-                    ID: {{ $employee->employee_id ?? $employee->id }}
+                    ID: {{ $employee->employee_id ?? $employee?->id ?? 'N/A' }}
                   </span>
                 </div>
               </div>

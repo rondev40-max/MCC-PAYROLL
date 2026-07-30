@@ -95,7 +95,9 @@ class EmployeeController extends Controller
         $announcements = Announcement::orderByDesc('created_at')->take(5)->get();
         $payslips    = PayslipHistory::where('email', $user->email)
             ->orderByDesc('sent_at')->take(3)->get();
-        $employee    = Employee::where('email', $user->email)->first();
+        $employee    = Employee::where('email', $user->email)
+            ->orWhere('id', $employeeId)
+            ->first();
 
         return view('employee.dashboard-v2', compact(
             'user', 'employee', 'stats', 'announcements', 'payslips', 'attendances'
@@ -205,9 +207,11 @@ class EmployeeController extends Controller
 
     public function portalProfile(Request $request)
     {
-        $user     = Auth::user();
-        $employee = Employee::where('email', $user->email)->first();
+        $user        = Auth::user();
         $employeeId  = $this->resolveEmployeeId($user);
+        $employee    = Employee::where('email', $user->email)
+            ->orWhere('id', $employeeId)
+            ->first();
         $attendances = $this->getAttendances($employeeId);
         $stats       = $this->buildStats($attendances);
 
