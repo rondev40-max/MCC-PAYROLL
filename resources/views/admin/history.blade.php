@@ -36,15 +36,9 @@
         padding-bottom: 0.4rem;
         font-size: 0.9rem;
     }
-
-    .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
-    .sidebar-shift { margin-left: 0 !important; }
   </style>
-  @include('layouts.sidebar-styles')
 </head>
 <body class="bg-light">
-  @include('layouts.sidebar')
-  <div class="sidebar-shift">
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>History Records</h3>
@@ -351,6 +345,5 @@ devtools.detect(function(status){
   }
 });
 </script>
-</div>
 </body>
 </html>

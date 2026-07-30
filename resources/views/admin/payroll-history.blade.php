@@ -147,14 +147,9 @@
         background-color: #dc3545;
         padding: 4px 8px;
     }
-    .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
-    .sidebar-shift { margin-left: 0 !important; }
   </style>
-  @include('layouts.sidebar-styles')
 </head>
 <body>
-  @include('layouts.sidebar')
-  <div class="sidebar-shift">
 <div class="container-fluid mt-4">
     {{-- Messages --}}
     @if (session('success'))
@@ -400,6 +395,5 @@ devtools.detect(function(status){
   }
 });
 </script>
-</div>
 </body>
 </html>

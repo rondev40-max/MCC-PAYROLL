@@ -417,22 +417,14 @@
       .page-header, .filter-section, .header-actions, .action-buttons { display: none !important; }
       .table-section { border: none; box-shadow: none; }
       .page-footer { display: none; }
-      .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
-      .sidebar-shift { margin-left: 0 !important; }
     }
   </style>
-  @include('layouts.sidebar-styles')
 </head>
 <body>
-  @include('layouts.sidebar')
-  <div class="sidebar-shift">
 
   <div class="page-header">
     <div class="header-content">
       <div class="header-title">
-        <button class="btn btn-outline d-lg-none" id="sidebarMobileBtn" aria-label="Menu" onclick="toggleSidebar()" style="padding:.4rem .6rem;">
-          <i class="bi bi-list" style="font-size:1.1rem;"></i>
-        </button>
         <div class="icon-chip"><i class="bi bi-building"></i></div>
         <div>
           <h1>Master List</h1>
@@ -702,6 +694,5 @@
       }, 400);
     });
   </script>
-</div>
 </body>
 </html>

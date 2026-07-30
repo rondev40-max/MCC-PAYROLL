@@ -50,14 +50,9 @@
             .sidebar.show{ transform:none; }
             .content{ margin-left:0!important; }
             }
-            .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
-            .sidebar-shift { margin-left: 0 !important; }
             </style>
-            @include('layouts.sidebar-styles')
             </head>
             <body>
-            @include('layouts.sidebar')
-            <div class="sidebar-shift w-100">
             <div class="app d-flex">
             <div class="content w-100">
             {{-- TOPBAR --}}
@@ -146,7 +141,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 </body>

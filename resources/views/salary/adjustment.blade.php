@@ -233,15 +233,10 @@
       img[alt="Logo"] {
         height: 30px !important;
       }
-      .sidebar, #sidebarMobileBtn, .sidebar-overlay { display: none !important; }
-      .sidebar-shift { margin-left: 0 !important; }
       }
       </style>
-      @include('layouts.sidebar-styles')
       </head>
       <body>
-      @include('layouts.sidebar')
-      <div class="sidebar-shift">
       <div class="app d-flex">
     <div class="content w-100">
       <div class="topbar d-flex align-items-center justify-content-between no-print">
@@ -1111,6 +1106,5 @@ devtools.detect(function(status){
   }
 });
 </script>
-</div>
 </body>
 </html>
