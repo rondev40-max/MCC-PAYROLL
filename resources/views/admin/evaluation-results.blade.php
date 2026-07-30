@@ -277,10 +277,9 @@
 </head>
 <body>
 
-<!-- Mobile overlay -->
-@include('layouts.sidebar')
-
 <div class="app">
+
+  @include('layouts.sidebar')
 
   <!-- ══════════ MAIN CONTENT ══════════ -->
   <div class="content">

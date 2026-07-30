@@ -430,6 +430,9 @@
   <div class="page-header">
     <div class="header-content">
       <div class="header-title">
+        <button class="btn btn-outline d-lg-none" id="sidebarMobileBtn" aria-label="Menu" onclick="toggleSidebar()" style="padding:.4rem .6rem;">
+          <i class="bi bi-list" style="font-size:1.1rem;"></i>
+        </button>
         <div class="icon-chip"><i class="bi bi-building"></i></div>
         <div>
           <h1>Master List</h1>
@@ -633,6 +636,16 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
+    // ── Mobile Sidebar Toggling ──────────────────────
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     function deleteEmployee(id, type) {
