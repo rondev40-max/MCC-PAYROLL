@@ -12,12 +12,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendances', function (Blueprint $table) {
-            $table->foreignId('employee_id')->constrained()->onDelete('cascade');
-            $table->date('date');
-            $table->time('time_in')->nullable();
-            $table->time('time_out')->nullable();
-            $table->enum('status', ['present', 'absent', 'late', 'half_day'])->default('absent');
-            $table->text('remarks')->nullable();
+            if (!Schema::hasColumn('attendances', 'employee_id')) {
+                $table->foreignId('employee_id')->constrained()->onDelete('cascade');
+            }
+            if (!Schema::hasColumn('attendances', 'date')) {
+                $table->date('date');
+            }
+            if (!Schema::hasColumn('attendances', 'time_in')) {
+                $table->time('time_in')->nullable();
+            }
+            if (!Schema::hasColumn('attendances', 'time_out')) {
+                $table->time('time_out')->nullable();
+            }
+            if (!Schema::hasColumn('attendances', 'status')) {
+                $table->enum('status', ['present', 'absent', 'late', 'half_day'])->default('absent');
+            }
+            if (!Schema::hasColumn('attendances', 'remarks')) {
+                $table->text('remarks')->nullable();
+            }
         });
     }
 

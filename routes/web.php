@@ -71,7 +71,7 @@ Route::post('/attendance/attendlog', [LoginController::class, 'authenticate'])->
 Route::middleware(['auth'])->group(function () {
 
     // LOGOUT FIX
-    Route::post('/logout', function (Request $request) {
+    Route::post('/logout', function () {
         $user = Auth::user();
         Auth::logout();
         session()->invalidate();
@@ -156,9 +156,6 @@ Route::get('/csrf-refresh', function () {
 
 Route::middleware(['auth.admin'])->prefix('admin')->name('admin.')->group(function () {
 
-Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationController::class, 'evaluationResults'])
-        ->name('evaluation.results');
-    
     // Admin dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
@@ -304,7 +301,7 @@ Route::get('/terms', function () {
 
 // Database Migration Route (Securely protected and session-exempt for Vercel/Railway)
 Route::get('/deploy/migrate', function () {
-    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+    if (!env('DEPLOYMENT_TOKEN') || request()->query('token') !== env('DEPLOYMENT_TOKEN')) {
         abort(403, 'Unauthorized');
     }
     
@@ -324,7 +321,7 @@ Route::get('/deploy/migrate', function () {
 
 // Database Seed Route (Securely protected and session-exempt for Vercel/Railway)
 Route::get('/deploy/seed', function () {
-    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+    if (!env('DEPLOYMENT_TOKEN') || request()->query('token') !== env('DEPLOYMENT_TOKEN')) {
         abort(403, 'Unauthorized');
     }
     
@@ -344,7 +341,7 @@ Route::get('/deploy/seed', function () {
 
 // Database Fresh Migrate Route (Securely protected and session-exempt for Vercel/Railway)
 Route::get('/deploy/fresh', function () {
-    if (request()->query('token') !== env('DEPLOYMENT_TOKEN', 'some-very-long-and-secure-token-here')) {
+    if (!env('DEPLOYMENT_TOKEN') || request()->query('token') !== env('DEPLOYMENT_TOKEN')) {
         abort(403, 'Unauthorized');
     }
     
