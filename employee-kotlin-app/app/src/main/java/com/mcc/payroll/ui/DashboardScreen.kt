@@ -91,13 +91,13 @@ fun DashboardContent(data: DashboardResponse) {
             ) {
                 Column {
                     Text(
-                        text = "Hello, ${data.employee_name}!",
+                        text = "Hello, ${data.employee?.name ?: data.user.name}!",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color(0xFF0F172A)
                     )
                     Text(
-                        text = data.welcome_message,
+                        text = "Welcome to your Employee Dashboard",
                         fontSize = 12.sp,
                         color = Color(0xFF64748B),
                         modifier = Modifier.padding(top = 2.dp)
@@ -143,7 +143,7 @@ fun DashboardContent(data: DashboardResponse) {
                             color = Color(0xFF93C5FD)
                         )
                         Text(
-                            text = data.department ?: "N/A",
+                            text = data.employee?.department ?: "N/A",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -157,7 +157,7 @@ fun DashboardContent(data: DashboardResponse) {
                             color = Color(0xFF93C5FD)
                         )
                         Text(
-                            text = data.position ?: "Staff Member",
+                            text = data.employee?.position ?: data.employee?.designation ?: "Staff Member",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -172,13 +172,13 @@ fun DashboardContent(data: DashboardResponse) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "ESTIMATED MONTHLY SALARY",
+                                text = "HOURLY/BASIC SALARY",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF93C5FD)
                             )
                             Text(
-                                text = "₱${String.format("%,.2f", data.monthly_salary ?: 0.0)}",
+                                text = "₱${String.format("%,.2f", data.employee?.hourly_salary ?: data.employee?.basic_salary ?: 0.0)}",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color.White

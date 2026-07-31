@@ -49,6 +49,7 @@ class UserController extends Controller
             'password'  => Hash::make($request->password),
             'role'      => Role::ADMIN,
             'status'    => 'active', // IDAGDAG: Set default status to 'active'
+            'email_verified_at' => now(), // admin-vetted account, no self-verification needed
         ]);
 
         return redirect()->route('admin.user-management')->with('success', 'New Administrator account created successfully!');

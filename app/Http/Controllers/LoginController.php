@@ -51,6 +51,13 @@ class LoginController extends Controller
             return back()->with('error', 'Access denied. Incorrect user type selected for your role.')->withInput();
         }
 
+        // SECURITY: block login until the account's email has been verified.
+        // Admin accounts created via /admin/users are marked verified at creation time,
+        // so this only affects self-registered accounts that haven't clicked the link yet.
+        if (!$user->email_verified_at) {
+            return back()->with('error', 'Please verify your email before logging in. Check your inbox for the verification link.')->withInput();
+        }
+
 
         // =========================================================
         // 4. LOGIN (OTP DISABLED)

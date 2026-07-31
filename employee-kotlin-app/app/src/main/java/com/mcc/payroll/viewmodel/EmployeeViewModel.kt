@@ -109,7 +109,7 @@ class EmployeeViewModel(application: Application) : AndroidViewModel(application
             try {
                 val response = api.getPayslips(bearerToken)
                 if (response.isSuccessful && response.body() != null) {
-                    payslipsState = UiState.Success(response.body()!!)
+                    payslipsState = UiState.Success(response.body()!!.payslips)
                 } else {
                     payslipsState = UiState.Error(response.message())
                 }

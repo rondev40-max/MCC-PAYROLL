@@ -84,8 +84,14 @@ Route::middleware(['auth'])->group(function () {
     // Keeping /evaluation route could break admin/employee navigation consistency.
     // Route::get('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'showEmployeeForm'])->name('evaluation.form');
     Route::post('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'storeEvaluation'])->name('evaluation.store');
+});
 
-
+// --- ADMIN-ONLY DATA ROUTES ---
+// SECURITY FIX: this used to be gated by plain 'auth', which meant ANY
+// logged-in account (including self-registered 'employee' or
+// 'attendance_checker' roles) could reach master-list, employee records,
+// and every timesheet CRUD route directly by URL. Restricted to admins.
+Route::middleware(['auth', 'auth.admin'])->group(function () {
 
     // GENERIC DASHBOARD
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

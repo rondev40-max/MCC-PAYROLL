@@ -25,7 +25,10 @@ class RegisterController extends Controller
                 'confirmed',
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/'
             ],
-            'role' => 'required|in:super_admin,admin,attendance_checker,employee', // ✅ employee added
+            // SECURITY: only non-privileged, self-service roles may be chosen here.
+            // 'admin' and 'super_admin' accounts must be created via the protected
+            // /admin/users (auth.superadmin) route, never through public registration.
+            'role' => 'required|in:attendance_checker,employee',
         ];
 
         // Add course validation only if role is attendance_checker

@@ -143,13 +143,12 @@ fun ProfileContent(profile: ProfileResponse, onLogout: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     ProfileField(label = "Employee Role", value = profile.user.role.uppercase())
-                    ProfileField(label = "Designation/Rank", value = profile.designation ?: "Staff")
-                    ProfileField(label = "Assigned Department", value = profile.department ?: "General")
+                    ProfileField(label = "Designation/Rank", value = profile.employee?.position ?: profile.employee?.designation ?: "Staff")
+                    ProfileField(label = "Assigned Department", value = profile.employee?.department ?: "General")
                     ProfileField(
-                        label = "Calculated Daily Rate", 
-                        value = "₱${String.format("%,.2f", profile.daily_rate ?: 0.0)}"
+                        label = "Hourly/Basic Salary", 
+                        value = "₱${String.format("%,.2f", profile.employee?.hourly_salary ?: profile.employee?.basic_salary ?: 0.0)}"
                     )
-                    ProfileField(label = "Last Seen/Logged", value = profile.last_seen ?: "Just now")
                 }
             }
         }

@@ -106,26 +106,26 @@ fun PayslipItem(payslip: Payslip) {
         ) {
             Column {
                 Text(
-                    text = "Cut-Off Period: ${payslip.period}",
+                    text = "Cut-Off Period: ${payslip.period ?: "N/A"}",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0F172A)
                 )
                 Text(
-                    text = "${payslip.month} ${payslip.year}",
+                    text = "${payslip.month ?: ""} ${payslip.year ?: ""}".trim(),
                     fontSize = 12.sp,
                     color = Color(0xFF64748B),
                     modifier = Modifier.padding(top = 2.dp)
                 )
                 Text(
-                    text = "Issued on ${payslip.sent_at}",
+                    text = "Issued on ${payslip.sent_at ?: "Unknown"}",
                     fontSize = 10.sp,
                     color = Color(0xFF94A3B8),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
             Text(
-                text = "₱${String.format("%,.2f", payslip.net_pay)}",
+                text = "₱${String.format("%,.2f", payslip.net_pay ?: 0.0)}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF16A34A) // var(--accent) green equivalent
