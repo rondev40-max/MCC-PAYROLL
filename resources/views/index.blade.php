@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
 
@@ -24,58 +24,69 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8f9fc;
-      --bg-glass: rgba(255, 255, 255, 0.65);
-      --bg-glass-border: rgba(0, 0, 0, 0.06);
+      /* Paper / ledger palette */
+      --bg-primary: #FAF7EF;
+      --bg-secondary: #F1ECDD;
+      --bg-glass: rgba(250, 247, 239, 0.72);
+      --bg-glass-border: rgba(27, 36, 32, 0.07);
 
-      --text-primary: #0f1729;
-      --text-secondary: #5a6478;
-      --text-tertiary: #8892a4;
+      --text-primary: #1B2420;
+      --text-secondary: #5B6455;
+      --text-tertiary: #8B9285;
 
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --accent-soft: rgba(37, 99, 235, 0.08);
-      --accent-glow: rgba(37, 99, 235, 0.15);
+      --accent: #A9762F;       /* brass */
+      --accent-hover: #8F6425;
+      --accent-soft: rgba(169, 118, 47, 0.10);
+      --accent-glow: rgba(169, 118, 47, 0.20);
 
-      --border: rgba(0, 0, 0, 0.06);
-      --border-hover: rgba(0, 0, 0, 0.12);
+      --pine: #1F3D2B;         /* ledger green, secondary ink */
+      --pine-soft: rgba(31, 61, 43, 0.08);
 
-      --radius-sm: 10px;
-      --radius-md: 16px;
-      --radius-lg: 24px;
+      --border: rgba(27, 36, 32, 0.12);
+      --border-hover: rgba(27, 36, 32, 0.22);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
       --radius-pill: 999px;
 
-      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-      --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.10);
-      --shadow-card-hover: 0 12px 32px rgba(37, 99, 235, 0.12);
+      --shadow-xs: 0 1px 2px rgba(20, 24, 18, 0.05);
+      --shadow-sm: 0 2px 8px rgba(20, 24, 18, 0.06);
+      --shadow-md: 0 10px 26px rgba(20, 24, 18, 0.10);
+      --shadow-lg: 0 24px 56px rgba(20, 24, 18, 0.14);
+      --shadow-card-hover: 0 14px 34px rgba(169, 118, 47, 0.18);
 
+      --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
       --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
     }
 
     [data-theme="dark"] {
-      --bg-primary: #0c111c;
-      --bg-secondary: #111827;
-      --bg-glass: rgba(17, 24, 39, 0.75);
-      --bg-glass-border: rgba(255, 255, 255, 0.06);
+      --bg-primary: #10140F;
+      --bg-secondary: #161B12;
+      --bg-glass: rgba(16, 20, 15, 0.78);
+      --bg-glass-border: rgba(243, 239, 227, 0.07);
 
-      --text-primary: #f0f2f7;
-      --text-secondary: #9ca3b4;
-      --text-tertiary: #6b7280;
+      --text-primary: #F3EFE3;
+      --text-secondary: #B5BBA9;
+      --text-tertiary: #767E6C;
 
-      --accent-soft: rgba(37, 99, 235, 0.12);
-      --accent-glow: rgba(37, 99, 235, 0.20);
+      --accent: #CC9A50;
+      --accent-hover: #E0AD62;
+      --accent-soft: rgba(204, 154, 80, 0.12);
+      --accent-glow: rgba(204, 154, 80, 0.24);
 
-      --border: rgba(255, 255, 255, 0.06);
-      --border-hover: rgba(255, 255, 255, 0.12);
+      --pine: #6FA381;
+      --pine-soft: rgba(111, 163, 129, 0.10);
 
-      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
-      --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.35);
-      --shadow-card-hover: 0 12px 32px rgba(37, 99, 235, 0.2);
+      --border: rgba(243, 239, 227, 0.09);
+      --border-hover: rgba(243, 239, 227, 0.18);
+
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.45);
+      --shadow-card-hover: 0 14px 34px rgba(204, 154, 80, 0.22);
     }
 
     html {
@@ -118,15 +129,16 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 clamp(16px, 4vw, 40px); height: 64px;
       background: var(--bg-glass);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
       border-bottom: 1px solid var(--bg-glass-border);
       transition: background 0.35s ease;
     }
 
     .topbar-brand {
       display: flex; align-items: center; gap: 10px;
-      font-weight: 700; font-size: 0.92rem;
+      font-family: var(--font-display);
+      font-weight: 600; font-size: 1rem;
       color: var(--text-primary); letter-spacing: -0.01em;
     }
     .topbar-brand img {
@@ -167,12 +179,12 @@
     /* ===================== HERO ===================== */
     .hero {
       position: relative;
-      min-height: 60vh;
+      min-height: 62vh;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      padding: calc(64px + 56px) 24px 80px;
+      padding: calc(64px + 56px) 24px 96px;
       isolation: isolate;
     }
 
@@ -180,7 +192,7 @@
       content: "";
       position: absolute; inset: 0;
       background: url('{{ asset('images/mcc.jpg') }}') no-repeat center center/cover;
-      filter: blur(2px) brightness(0.32) saturate(1.2);
+      filter: blur(2px) brightness(0.3) saturate(1.05) sepia(0.12);
       transform: scale(1.04);
       z-index: -2;
     }
@@ -190,8 +202,8 @@
       position: absolute; inset: 0;
       background: linear-gradient(
         180deg,
-        rgba(12, 17, 28, 0.25) 0%,
-        rgba(12, 17, 28, 0.72) 100%
+        rgba(16, 20, 15, 0.35) 0%,
+        rgba(16, 20, 15, 0.82) 100%
       );
       z-index: -1;
     }
@@ -208,45 +220,57 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      color: rgba(255,255,255,0.8);
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.15);
-      padding: 6px 14px; border-radius: var(--radius-pill);
-      backdrop-filter: blur(8px); margin-bottom: 22px;
+    /* Punch-clock readout — the signature element */
+    .punch-clock {
+      display: inline-flex; align-items: center; gap: 12px;
+      font-family: var(--font-mono);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.16);
+      backdrop-filter: blur(8px);
+      padding: 10px 18px; border-radius: var(--radius-sm);
+      margin-bottom: 26px;
     }
-    .hero-badge .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #34d399;
-      box-shadow: 0 0 6px 1px rgba(52,211,153,0.6);
+    .punch-clock .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #7FD9A6;
+      box-shadow: 0 0 6px 1px rgba(127,217,166,0.6);
       animation: pulse-dot 2.4s ease-in-out infinite;
+      flex-shrink: 0;
     }
     @keyframes pulse-dot {
-      0%, 100% { box-shadow: 0 0 6px 1px rgba(52,211,153,0.6); }
-      50%       { box-shadow: 0 0 10px 3px rgba(52,211,153,0.9); }
+      0%, 100% { box-shadow: 0 0 6px 1px rgba(127,217,166,0.6); }
+      50%       { box-shadow: 0 0 10px 3px rgba(127,217,166,0.9); }
+    }
+    .punch-clock-time {
+      font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em;
+      color: #fff; font-variant-numeric: tabular-nums;
+    }
+    .punch-clock-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+    .punch-clock-date {
+      font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
     }
 
     .hero h1 {
-      font-size: clamp(1.7rem, 3.8vw, 2.65rem);
-      font-weight: 800; letter-spacing: -0.03em;
-      line-height: 1.12; margin-bottom: 14px;
+      font-family: var(--font-display);
+      font-size: clamp(1.9rem, 4vw, 2.9rem);
+      font-weight: 600; letter-spacing: -0.01em;
+      line-height: 1.15; margin-bottom: 14px;
     }
 
     .hero p {
       font-size: clamp(0.88rem, 1.5vw, 1rem);
-      color: rgba(255,255,255,0.7); line-height: 1.68;
-      max-width: 440px; margin: 0 auto 28px;
+      color: rgba(255,255,255,0.72); line-height: 1.68;
+      max-width: 440px; margin: 0 auto 30px;
     }
 
     /* Scroll hint */
     .scroll-hint {
       display: flex; flex-direction: column;
       align-items: center; gap: 6px;
-      opacity: 0.5; font-size: 0.7rem;
-      letter-spacing: 0.04em; text-transform: uppercase;
+      opacity: 0.5; font-size: 0.68rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      font-family: var(--font-mono);
       color: rgba(255,255,255,0.7);
       animation: fadeUp 0.7s ease-out 0.5s both;
     }
@@ -266,44 +290,35 @@
     .portals-section {
       position: relative;
       z-index: 10;
-      margin-top: -48px;
-      padding: 0 clamp(16px, 4vw, 40px) 52px;
+      margin-top: -56px;
+      padding: 0 clamp(16px, 4vw, 40px) 56px;
     }
 
-    /* Two-card centred layout */
     .portals-grid {
       display: flex;
       justify-content: center;
-      gap: 20px;
+      gap: 22px;
       max-width: 1100px;
       margin: 0 auto;
       animation: fadeUp 0.7s ease-out 0.12s both;
     }
 
+    /* Ticket / pass styled portal card */
     .portal-card {
       position: relative;
       display: flex;
       flex-direction: column;
-      padding: 32px 28px 28px;
+      padding: 26px 26px 24px;
       border-radius: var(--radius-lg);
       background: var(--bg-primary);
       border: 1px solid var(--border);
       box-shadow: var(--shadow-md);
       text-decoration: none;
       transition: all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      overflow: hidden;
       isolation: isolate;
-      /* Each card takes equal width, never collapsing too narrow */
       flex: 1 1 0;
       min-width: 0;
       max-width: 340px;
-    }
-
-    .portal-card::before {
-      content: "";
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: var(--accent); opacity: 0;
-      transition: opacity 0.28s ease;
     }
 
     .portal-card:hover {
@@ -311,52 +326,65 @@
       box-shadow: var(--shadow-card-hover);
       border-color: var(--accent-glow);
     }
-    .portal-card:hover::before { opacity: 1; }
 
-    /* Primary / "Most used" card */
-    .portal-card.primary::before { opacity: 1; }
     .portal-card.primary {
-      border-color: rgba(37, 99, 235, 0.18);
-      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--accent-soft) 100%);
+      border-color: rgba(169, 118, 47, 0.28);
+      background: linear-gradient(160deg, var(--bg-primary) 0%, var(--accent-soft) 100%);
     }
 
+    .portal-pass-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .portal-pass-code {
+      font-family: var(--font-mono);
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-tertiary);
+    }
     .portal-card .tag {
-      position: absolute; top: 18px; right: 18px;
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em;
       text-transform: uppercase; background: var(--accent); color: #fff;
       padding: 3px 9px; border-radius: var(--radius-pill);
     }
 
     .portal-icon {
-      width: 48px; height: 48px; border-radius: var(--radius-sm);
+      width: 46px; height: 46px; border-radius: var(--radius-sm);
       background: var(--accent-soft);
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 18px; transition: background 0.25s ease;
+      margin-bottom: 16px; transition: background 0.25s ease;
     }
     .portal-card:hover .portal-icon { background: var(--accent-glow); }
-    .portal-icon svg { width: 22px; height: 22px; stroke: var(--accent); }
+    .portal-icon svg { width: 21px; height: 21px; stroke: var(--accent); }
 
     .portal-card h3 {
-      font-size: 1.05rem; font-weight: 700;
+      font-family: var(--font-display);
+      font-size: 1.12rem; font-weight: 600;
       margin-bottom: 6px; color: var(--text-primary);
-      letter-spacing: -0.01em;
+      letter-spacing: -0.005em;
     }
 
     .portal-card p {
       font-size: 0.84rem; color: var(--text-secondary);
-      line-height: 1.58; margin-bottom: 20px; flex-grow: 1;
+      line-height: 1.58; margin-bottom: 18px; flex-grow: 1;
     }
 
-    /* Access chips below the description */
-    .portal-chips {
-      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+    /* Tear-line, like a ticket stub, before the CTA */
+    .portal-tear {
+      position: relative;
+      height: 1px;
+      margin: 0 -26px 16px;
+      background-image: linear-gradient(to right, var(--border) 60%, transparent 0%);
+      background-size: 10px 1px;
+      background-repeat: repeat-x;
     }
-    .portal-chip {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
-      color: var(--text-tertiary); background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      padding: 3px 9px; border-radius: var(--radius-pill);
+    .portal-tear::before, .portal-tear::after {
+      content: "";
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--bg-secondary);
     }
+    .portal-tear::before { left: -8px; }
+    .portal-tear::after { right: -8px; }
 
     .portal-cta {
       display: inline-flex; align-items: center; gap: 5px;
@@ -365,23 +393,9 @@
     .portal-cta svg { width: 14px; height: 14px; transition: transform 0.2s ease; }
     .portal-card:hover .portal-cta svg { transform: translateX(3px); }
 
-    /* ===================== DIVIDER ===================== */
-    .section-divider {
-      display: flex; align-items: center; gap: 16px;
-      max-width: 860px; margin: 0 auto;
-      padding: 0 clamp(16px, 4vw, 40px) 40px;
-    }
-    .section-divider-line {
-      flex: 1; height: 1px; background: var(--border);
-    }
-    .section-divider-label {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-tertiary); white-space: nowrap;
-    }
-
     /* ===================== FEATURES STRIP ===================== */
     .features-strip {
-      padding: 48px clamp(16px, 4vw, 40px) 56px;
+      padding: 52px clamp(16px, 4vw, 40px) 56px;
       border-top: 1px solid var(--border);
       background: var(--bg-secondary);
     }
@@ -392,13 +406,15 @@
     }
 
     .features-strip-label {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--pine); margin-bottom: 10px;
     }
     .features-strip-heading {
-      font-size: clamp(1.1rem, 2vw, 1.4rem); font-weight: 700;
-      color: var(--text-primary); letter-spacing: -0.02em;
-      margin-bottom: 28px; line-height: 1.2;
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2vw, 1.55rem); font-weight: 600;
+      color: var(--text-primary); letter-spacing: -0.01em;
+      margin-bottom: 30px; line-height: 1.25;
     }
 
     .features-list {
@@ -443,7 +459,7 @@
       margin-right: auto;
       padding: 16px 20px;
       border-radius: var(--radius-md);
-      border: 1px solid rgba(37, 99, 235, 0.18);
+      border: 1px solid var(--accent-glow);
       background: var(--accent-soft);
       display: flex;
       align-items: center;
@@ -459,6 +475,7 @@
       font-size: 0.82rem; line-height: 1.55; color: var(--text-secondary);
     }
     .notice-banner-text strong { color: var(--text-primary); font-weight: 650; }
+    .notice-banner-text a { color: var(--accent); font-weight: 600; }
 
     /* ===================== FOOTER ===================== */
     .site-footer {
@@ -484,10 +501,11 @@
       .features-list { grid-template-columns: 1fr 1fr; }
       .site-footer { flex-direction: column; gap: 8px; text-align: center; }
       .notice-banner { flex-direction: column; text-align: center; }
+      .punch-clock { flex-wrap: wrap; justify-content: center; padding: 10px 16px; }
     }
 
     @media (max-width: 480px) {
-      .hero { padding-top: calc(64px + 36px); padding-bottom: 56px; }
+      .hero { padding-top: calc(64px + 36px); padding-bottom: 64px; }
       .features-list { grid-template-columns: 1fr; }
       .topbar-brand span {
         position: absolute; width: 1px; height: 1px; padding: 0;
@@ -499,7 +517,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .hero-inner, .portals-grid { animation: none; }
-      .hero-badge .dot { animation: none; }
+      .punch-clock .dot { animation: none; }
       .scroll-hint-line { animation: none; }
     }
   </style>
@@ -541,9 +559,11 @@
     <!-- ===================== HERO ===================== -->
     <section class="hero">
       <div class="hero-inner">
-        <div class="hero-badge">
+        <div class="punch-clock" aria-live="off">
           <span class="dot"></span>
-          System Online
+          <span class="punch-clock-time" id="punchTime">--:--:-- --</span>
+          <span class="punch-clock-divider"></span>
+          <span class="punch-clock-date" id="punchDate">Loading&hellip;</span>
         </div>
         <h1>Madridejos Community College</h1>
         <p>Payroll management, attendance tracking, and payslip generation — all in one secure platform.</p>
@@ -559,7 +579,10 @@
       <div class="portals-grid">
 
         <a href="{{ url('/employee/login') }}" class="portal-card primary" id="portal-employee">
-          <span class="tag">Most used</span>
+          <div class="portal-pass-row">
+            <span class="portal-pass-code">PASS · EMP</span>
+            <span class="tag">Most used</span>
+          </div>
           <div class="portal-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="8" r="4"/>
@@ -568,11 +591,7 @@
           </div>
           <h3>Employee Portal</h3>
           <p>Access your payslips, review attendance records, and submit timesheet entries.</p>
-          <div class="portal-chips">
-            <span class="portal-chip">Payslips</span>
-            <span class="portal-chip">Attendance</span>
-            <span class="portal-chip">Timesheets</span>
-          </div>
+          <div class="portal-tear"></div>
           <span class="portal-cta">
             Sign in
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -582,6 +601,9 @@
         </a>
 
         <a href="{{ url('/attendance/attendlog') }}" class="portal-card" id="portal-attendance">
+          <div class="portal-pass-row">
+            <span class="portal-pass-code">PASS · ATD</span>
+          </div>
           <div class="portal-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9"/>
@@ -590,11 +612,7 @@
           </div>
           <h3>Attendance Log</h3>
           <p>Log and verify daily attendance records on-site. For designated attendance staff only.</p>
-          <div class="portal-chips">
-            <span class="portal-chip">Daily logs</span>
-            <span class="portal-chip">On-site</span>
-            <span class="portal-chip">Verification</span>
-          </div>
+          <div class="portal-tear"></div>
           <span class="portal-cta">
             Sign in
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -605,7 +623,10 @@
 
         <!-- Download Mobile App Portal Card -->
         <a href="{{ asset('downloads/mcc-employee-app.apk') }}" class="portal-card" id="portal-download" download>
-          <div class="portal-icon" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+          <div class="portal-pass-row">
+            <span class="portal-pass-code">PASS · APP</span>
+          </div>
+          <div class="portal-icon" style="background: var(--pine-soft); color: var(--pine);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
               <line x1="12" y1="18" x2="12.01" y2="18"/>
@@ -613,12 +634,8 @@
           </div>
           <h3>Download App</h3>
           <p>Get our native Android app to clock in, submit timesheets, and view payslips on-the-go.</p>
-          <div class="portal-chips">
-            <span class="portal-chip" style="background: rgba(16, 185, 129, 0.05); color: #10b981; border-color: rgba(16, 185, 129, 0.12);">Android APK</span>
-            <span class="portal-chip" style="background: rgba(16, 185, 129, 0.05); color: #10b981; border-color: rgba(16, 185, 129, 0.12);">On-The-Go</span>
-            <span class="portal-chip" style="background: rgba(16, 185, 129, 0.05); color: #10b981; border-color: rgba(16, 185, 129, 0.12);">Mobile Sign-In</span>
-          </div>
-          <span class="portal-cta" style="color: #10b981;">
+          <div class="portal-tear"></div>
+          <span class="portal-cta" style="color: var(--pine);">
             Download APK
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M12 5v14M19 12l-7 7-7-7"/>
@@ -638,7 +655,7 @@
         </svg>
       </div>
       <div class="notice-banner-text">
-        <strong>First time here?</strong> Contact your HR administrator to have your account created. Use <a href="{{ url('/register') }}" style="color: var(--accent); font-weight: 600;">Register</a> only if you were given an access code.
+        <strong>First time here?</strong> Contact your HR administrator to have your account created. Use <a href="{{ url('/register') }}">Register</a> only if you were given an access code.
       </div>
     </div>
 
@@ -730,12 +747,29 @@
       }
     });
 
+    // Live punch-clock readout in the hero
+    (function () {
+      const timeEl = document.getElementById('punchTime');
+      const dateEl = document.getElementById('punchDate');
+      function tick() {
+        const now = new Date();
+        timeEl.textContent = now.toLocaleTimeString('en-US', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+        });
+        dateEl.textContent = now.toLocaleDateString('en-US', {
+          weekday: 'short', month: 'short', day: 'numeric'
+        });
+      }
+      tick();
+      setInterval(tick, 1000);
+    })();
+
     @if(session('success'))
       Swal.fire({
         icon: 'success',
         title: 'Registration Successful!',
         text: '{{ session("success") }}',
-        confirmButtonColor: '#2563eb',
+        confirmButtonColor: '#A9762F',
         confirmButtonText: 'Continue to Login'
       });
     @endif
