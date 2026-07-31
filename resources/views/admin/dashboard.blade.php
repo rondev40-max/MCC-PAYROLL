@@ -1443,7 +1443,24 @@ function initDepartment() {
    options: {
      responsive: true,
      maintainAspectRatio: false,
-     plugins: { legend: { display: false } },
+     plugins: { 
+       legend: { display: false },
+       tooltip: {
+         callbacks: {
+           label: function(context) {
+             const label = context.dataset.label || '';
+             const value = context.raw;
+             const deptCode = context.label;
+             const deptStats = DEPARTMENT_STATS.find(d => d.code === deptCode);
+             if (deptStats && deptStats.total > 0) {
+               const percentage = Math.round((value / deptStats.total) * 100);
+               return ` ${label}: ${value} (${percentage}%)`;
+             }
+             return ` ${label}: ${value}`;
+           }
+         }
+       }
+     },
      scales: {
        x: {
          stacked: false,
