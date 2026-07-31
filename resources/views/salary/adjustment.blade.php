@@ -9,37 +9,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <style>
-    /* Theme tokens */
-    :root{
-      --brand:#3498db;
-      --brand-600:#2980b9;
-      --muted:#f5f6f8;
-      --card:#ffffff;
-      --text:#111111;
-    }
-    .night-mode {
-      --brand:#222831;
-      --brand-600:#393e46;
-      --muted:#18191a;
-      --card:#c5c8ce;
-      --text:#ffffff;
-    }
-
-    /* Base */
-    body{
-      background:var(--muted);
-      color:var(--text);
-      transition:background .3s, color .3s;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      line-height: 1.5;
-    }
-    .app{ min-height:100vh; }
-
-    /* Sidebar */
-    .sidebar{
       background: linear-gradient(180deg, var(--brand), var(--brand-600));
       color:#fff; width:260px; position:sticky; top:0; height:100vh; padding:1.25rem 1rem;
       box-shadow: 0 10px 25px rgba(52,152,219,.25);
@@ -94,6 +63,23 @@
     /* Actions */
     .delete-employee { transition: transform .2s ease, box-shadow .2s ease; }
     .delete-employee:hover { transform: scale(1.06); box-shadow: 0 4px 8px rgba(220, 53, 69, 0.25); }
+
+    /* Utilities */
+    .fade-in { opacity: 0; animation: fadeIn 0.6s forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    
+    .btn-gradient {
+      background: linear-gradient(135deg, var(--brand), var(--brand-600)) !important;
+      color: #fff !important;
+      border: none;
+      border-radius: var(--radius);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+      color: #fff !important;
+    }
 
     /* SweetAlert2 */
     .swal-delete-popup { border-radius: 15px !important; border: 2px solid #dc3545 !important; }
@@ -247,6 +233,9 @@
         </div>
         
         <div class="d-flex align-items-center gap-2">
+          <button id="themeToggle" class="dark-toggle me-2" title="Toggle Dark Mode">
+            <i class="bi bi-moon"></i>
+          </button>
           <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
           </a>
@@ -254,7 +243,7 @@
       </div>
 
       <div class="container-fluid py-4">
-        <div class="card-soft p-4">
+        <div class="card-soft fade-in p-4">
           <div class="college-header">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" style="height:80px;" onerror="this.style.display='none'"><br>
             MADRIDEJOS COMMUNITY COLLEGE <br>
@@ -366,21 +355,21 @@
           
           <div class="row mt-4 no-print">
             <div class="col-md-6">
-              <button class="btn btn-primary me-2" onclick="addEmployee()">
+              <button class="btn btn-primary btn-gradient me-2" onclick="addEmployee()">
                 <i class="bi bi-plus-circle me-1"></i>Add Employee
               </button>
-              <button class="btn btn-danger me-2" onclick="deleteSelected()" id="deleteSelectedBtn" disabled>
+              <button class="btn btn-danger btn-gradient me-2" onclick="deleteSelected()" id="deleteSelectedBtn" disabled>
                 <i class="bi bi-trash me-1"></i>Delete Selected
               </button>
             </div>
             <div class="col-md-6 text-end">
-              <button class="btn btn-info me-2" onclick="calculateTotals()">
+              <button class="btn btn-info btn-gradient me-2" onclick="calculateTotals()">
                 <i class="bi bi-calculator me-1"></i>Calculate Totals
               </button>
-              <button class="btn btn-secondary me-2" onclick="window.print()">
+              <button class="btn btn-secondary btn-gradient me-2" onclick="window.print()">
                 <i class="bi bi-printer me-1"></i>Print
               </button>
-              <button class="btn btn-success" onclick="exportToExcel()">
+              <button class="btn btn-success btn-gradient" onclick="exportToExcel()">
                 <i class="bi bi-file-earmark-excel me-1"></i>Export
               </button>
             </div>
@@ -1092,10 +1081,32 @@
       });
     });
 
-    // Theme support (basic)
+    // Theme support
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'night-mode') {
       document.body.classList.add('night-mode');
+    }
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+      // Set initial icon based on theme
+      const icon = themeToggle.querySelector('i');
+      if (document.body.classList.contains('night-mode')) {
+        icon.classList.remove('bi-moon');
+        icon.classList.add('bi-sun');
+      }
+
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('night-mode');
+        icon.classList.toggle('bi-moon');
+        icon.classList.toggle('bi-sun');
+        
+        if (document.body.classList.contains('night-mode')) {
+          localStorage.setItem('theme', 'night-mode');
+        } else {
+          localStorage.setItem('theme', 'light-mode');
+        }
+      });
     }
   </script>
 <script>
