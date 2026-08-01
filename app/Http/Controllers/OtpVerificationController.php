@@ -19,7 +19,7 @@ class OtpVerificationController extends Controller
     {
         // Ensure there is a user ID in the session before showing the form
         if (!session('2fa:user:id')) {
-            return redirect()->route('login');
+            return redirect()->route('index');
         }
         
         return view('auth.verify-otp');
@@ -46,12 +46,26 @@ class OtpVerificationController extends Controller
 
         if (!$user) {
             session()->forget('2fa:user:id');
-            return redirect()->route('login');
+            return redirect()->route('index');
         }
-        
+
+        // Hard stop regardless of what code is entered, once too many wrong
+        // guesses have been made against the current OTP.
+        if ($user->otp_locked_until && Carbon::now()->isBefore($user->otp_locked_until)) {
+            $minutesLeft = max(1, (int) ceil(Carbon::now()->diffInSeconds($user->otp_locked_until) / 60));
+            return back()->withErrors([
+                'otp' => "Too many incorrect attempts. Please try again in about {$minutesLeft} minute(s), or use \"Resend code\" for a fresh one.",
+            ]);
+        }
+
         // **CORE VERIFICATION LOGIC**
         // 1. Check if the provided OTP matches the stored OTP and is not expired.
-        if ((string)$user->otp_code === $request->otp && Carbon::now()->isBefore($user->otp_expires_at)) {
+        // hash_equals() avoids leaking timing information that could help an
+        // attacker narrow down the correct digits one at a time.
+        $otpMatches = $user->otp_code !== null
+            && hash_equals((string) $user->otp_code, (string) $request->otp);
+
+        if ($otpMatches && Carbon::now()->isBefore($user->otp_expires_at)) {
             // SUCCESS: OTP is valid and not expired
 
             // --- START: Logic for updating last login, IP, and session ID ---
@@ -65,9 +79,11 @@ class OtpVerificationController extends Controller
                 'session_id' => $request->session()->getId(), // Update Session ID
             ]);
 
-            // Clear OTP fields in the database
+            // Clear OTP fields and attempt/lock state in the database
             $user->otp_code = null;
             $user->otp_expires_at = null;
+            $user->otp_attempts = 0;
+            $user->otp_locked_until = null;
             $user->save();
 
             // Clear the 2FA tracker session
@@ -103,9 +119,27 @@ class OtpVerificationController extends Controller
             return redirect('/')->with('success', 'Login successful!');
 
         }
-        
-        // Failure: OTP is incorrect or expired
-        return back()->withErrors(['otp' => 'The verification code is invalid or has expired. Please check your email or log in again.']);
+
+        // Failure: OTP is incorrect or expired. Track the attempt and lock out
+        // after too many consecutive wrong guesses against this code.
+        $user->otp_attempts = ($user->otp_attempts ?? 0) + 1;
+
+        $maxAttempts = 5;
+
+        if ($user->otp_attempts >= $maxAttempts) {
+            $user->otp_locked_until = Carbon::now()->addMinutes(15);
+            $user->otp_attempts = 0;
+            $user->save();
+
+            return back()->withErrors([
+                'otp' => 'Too many incorrect attempts. Please try again in 15 minutes, or use "Resend code" for a fresh one.',
+            ]);
+        }
+
+        $user->save();
+
+        $remaining = $maxAttempts - $user->otp_attempts;
+        return back()->withErrors(['otp' => "The verification code is invalid or has expired. {$remaining} attempt(s) remaining before a temporary lock."]);
     }
     
     /**
@@ -117,22 +151,25 @@ class OtpVerificationController extends Controller
 
         // Check if user is being tracked in session
         if (!$userId) {
-            return redirect()->route('login')->with('error', 'Session expired. Please try to log in again.');
+            return redirect()->route('index')->with('error', 'Session expired. Please try to log in again.');
         }
 
         $user = User::find($userId);
 
         if (!$user) {
             session()->forget('2fa:user:id');
-            return redirect()->route('login')->with('error', 'User not found.');
+            return redirect()->route('index')->with('error', 'User not found.');
         }
 
         // 1. Generate NEW OTP
-        $otp = rand(100000, 999999);
-        
-        // 2. Store the NEW OTP and NEW Expiration Time (5 minutes from now)
+        $otp = random_int(100000, 999999);
+
+        // 2. Store the NEW OTP, NEW Expiration Time (5 minutes from now), and
+        //    reset attempt/lock state — a fresh code deserves a fresh budget.
         $user->otp_code = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(5);
+        $user->otp_attempts = 0;
+        $user->otp_locked_until = null;
         $user->save();
         
         try {

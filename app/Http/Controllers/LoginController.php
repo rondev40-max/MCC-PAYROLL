@@ -60,10 +60,13 @@ class LoginController extends Controller
 
 
         // =========================================================
-        // 4. LOGIN (OTP DISABLED)
+        // 4. LOGIN
         // =========================================================
 
-        // Handle attendance_checker role separately (doesn't use Laravel Auth)
+        // Attendance checker uses its own lightweight session-based login
+        // (see CheckAttendanceRole middleware) rather than Laravel Auth, and
+        // is intentionally not gated by OTP here — it's a separate, lower-
+        // privilege flow already covered by its own throttled routes.
         if ($user->role === 'attendance_checker') {
             // Set session data for attendance
             $request->session()->put([
@@ -83,28 +86,26 @@ class LoginController extends Controller
             return redirect()->route('attendance.dashboard')->with('success', 'Attendance login successful!');
         }
 
-        // For admin and employee users, use Laravel Auth
-        Auth::login($user);
+        // Admin and employee accounts require a second factor before Auth::login()
+        // is called. Generate a fresh OTP, reset any prior attempt/lock state so
+        // this new code starts clean, and hand off to OtpVerificationController.
+        $otp = random_int(100000, 999999);
 
-        // Set session data for other roles
-        $isAdmin = ($user->role === 'super_admin' || $user->role === 'admin');
-        session([
-            'user_role' => $user->role,
-            'is_admin' => $isAdmin,
-        ]);
+        $user->otp_code = $otp;
+        $user->otp_expires_at = now()->addMinutes(5);
+        $user->otp_attempts = 0;
+        $user->otp_locked_until = null;
+        $user->save();
 
-        // Regenerate session for security
-        $request->session()->regenerate();
-
-        if ($user->role === 'super_admin' || $user->role === 'admin') {
-            return redirect()->route('admin.dashboard')->with('success', 'Admin login successful!');
+        try {
+            Mail::to($user->email)->send(new OtpMail($otp));
+        } catch (\Exception $e) {
+            Log::error("OTP email failed to send for user ID: {$user->id}. Error: " . $e->getMessage());
+            return back()->with('error', 'Could not send your verification code. Please try again in a moment.')->withInput();
         }
 
-        if ($user->role === 'employee') {
-            return redirect()->route('employee.dashboard')->with('success', 'Employee login successful!');
-        }
+        $request->session()->put('2fa:user:id', $user->id);
 
-        return redirect()->intended('/')->with('success', 'Login successful!');
-
+        return redirect()->route('otp.verify.form');
     }
 }
