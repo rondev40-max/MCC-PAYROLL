@@ -9,6 +9,7 @@ use App\Http\Middleware\XFrameOptionsMiddleware;
 use App\Http\Middleware\XContentTypeOptionsMiddleware;
 use App\Http\Middleware\ReferrerPolicyMiddleware;
 use App\Http\Middleware\PermissionsPolicyMiddleware;
+use App\Http\Middleware\ForceHttps;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,7 +20,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
+        // Trust the platform's edge proxy (Vercel/Railway terminate TLS there and
+        // forward plain HTTP internally with X-Forwarded-Proto set). Without this,
+        // $request->secure() is always false behind the proxy, which breaks
+        // ForceHttps below (redirect loop) and any other secure()-dependent logic.
+        // '*' is appropriate here because the platform itself is the only path
+        // into the app — there's no way to reach it except through that edge.
+        $middleware->trustProxies(at: '*');
+
         // ✅ Global middleware (replaces $middleware array)
+        // ForceHttps runs first so nothing downstream processes a plaintext request.
+        $middleware->append(ForceHttps::class);
         $middleware->append(HstsMiddleware::class);
         $middleware->append(XFrameOptionsMiddleware::class);
         $middleware->append(XContentTypeOptionsMiddleware::class);
