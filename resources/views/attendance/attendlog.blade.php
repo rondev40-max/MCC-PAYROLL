@@ -139,14 +139,22 @@
             margin-bottom: 28px;
         }
 
+        .login-logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
         .login-logo {
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(2, 132, 199, 0.15);
             box-shadow: var(--shadow-sm);
-            margin-bottom: 16px;
+            flex-shrink: 0;
         }
 
         .login-badge {
@@ -162,7 +170,6 @@
             border: 1px solid var(--accent-ring);
             padding: 5px 12px;
             border-radius: var(--radius-pill);
-            margin-bottom: 14px;
         }
         .login-badge svg { width: 12px; height: 12px; }
 
@@ -364,7 +371,8 @@
                 border-radius: 16px;
             }
             .login-header h1 { font-size: 1.25rem; }
-            .login-logo { width: 52px; height: 52px; }
+            .login-logo { width: 48px; height: 48px; }
+            .login-logo-row { gap: 10px; }
             .back-link { top: 16px; left: 16px; }
         }
 
@@ -385,10 +393,12 @@
     <div class="login-card">
 
         <div class="login-header">
-            <img src="{{ asset('images/logo.png') }}" alt="MCC Logo" class="login-logo">
-            <div class="login-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-                Attendance Checker
+            <div class="login-logo-row">
+                <img src="{{ asset('images/logo.png') }}" alt="MCC Logo" class="login-logo">
+                <div class="login-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                    Attendance Checker
+                </div>
             </div>
             <h1>Verification access</h1>
             <p>Sign in to record logs</p>
