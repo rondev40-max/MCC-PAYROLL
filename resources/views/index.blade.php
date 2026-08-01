@@ -583,6 +583,52 @@
       font-size: 0.72rem; color: var(--text-tertiary); line-height: 1.55; margin-top: 14px;
     }
 
+    .qr-loading, .qr-fallback {
+      font-family: var(--font); font-size: 0.74rem; color: var(--text-tertiary);
+      text-align: center; line-height: 1.5; padding: 0 10px;
+    }
+    .qr-loading {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .qr-spinner {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      animation: qr-spin 0.8s linear infinite;
+    }
+    @keyframes qr-spin { to { transform: rotate(360deg); } }
+
+    /* ===================== ANNOUNCEMENT STRIP ===================== */
+    .announce-bar {
+      display: flex; align-items: center; gap: 12px;
+      max-width: 1100px; margin: 0 auto 20px;
+      padding: 12px 18px; border-radius: var(--radius-md);
+      background: var(--pine-soft);
+      border-left: 3px solid var(--pine);
+      animation: fadeUp 0.7s ease-out 0.05s both;
+    }
+    .announce-tag {
+      flex-shrink: 0;
+      font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      background: var(--pine); color: #fff;
+      padding: 3px 9px; border-radius: var(--radius-pill);
+    }
+    .announce-text {
+      flex: 1 1 auto; min-width: 0;
+      font-size: 0.82rem; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .announce-text strong { color: var(--text-primary); font-weight: 650; }
+    .announce-date {
+      flex-shrink: 0;
+      font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-tertiary);
+    }
+    @media (max-width: 640px) {
+      .announce-bar { flex-wrap: wrap; }
+      .announce-text { white-space: normal; }
+      .announce-date { width: 100%; }
+    }
+
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 640px) {
       .portals-grid {
@@ -669,6 +715,15 @@
 
     <!-- ===================== PORTAL CARDS ===================== -->
     <div class="portals-section">
+
+      @if(isset($announcement) && $announcement)
+        <div class="announce-bar">
+          <span class="announce-tag">{{ ucfirst($announcement->type ?? 'General') }}</span>
+          <span class="announce-text"><strong>{{ $announcement->title }}</strong> — {{ Str::limit($announcement->message, 100) }}</span>
+          <span class="announce-date">{{ $announcement->created_at->diffForHumans() }}</span>
+        </div>
+      @endif
+
       <div class="portals-grid">
 
         <a href="{{ url('/employee/login') }}" class="portal-card primary" id="portal-employee">
@@ -843,7 +898,12 @@
       <p class="qr-sub">Scan with your phone to install</p>
 
       <div class="qr-box">
-        <div id="qrCanvasWrap"></div>
+        <div id="qrCanvasWrap">
+          <div class="qr-loading" id="qrLoading">
+            <span class="qr-spinner"></span>
+            Generating QR code&hellip;
+          </div>
+        </div>
       </div>
 
       <div class="qr-modal-tear"></div>
@@ -901,16 +961,25 @@
       let lastFocused = null;
 
       function openModal() {
-        if (!qrGenerated && window.QRCode) {
-          new QRCode(qrWrap, {
-            text: apkUrl,
-            width: 176,
-            height: 176,
-            colorDark: '#1B2420',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.M
-          });
-          qrGenerated = true;
+        if (!qrGenerated) {
+          if (window.QRCode) {
+            try {
+              qrWrap.innerHTML = '';
+              new QRCode(qrWrap, {
+                text: apkUrl,
+                width: 176,
+                height: 176,
+                colorDark: '#1B2420',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+              });
+              qrGenerated = true;
+            } catch (err) {
+              qrWrap.innerHTML = '<span class="qr-fallback">Couldn\'t generate the QR code. Use the button below to download directly.</span>';
+            }
+          } else {
+            qrWrap.innerHTML = '<span class="qr-fallback">QR code unavailable right now. Use the button below to download directly.</span>';
+          }
         }
         lastFocused = document.activeElement;
         overlay.classList.add('open');

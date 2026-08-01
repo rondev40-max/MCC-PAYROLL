@@ -21,13 +21,16 @@ use App\Http\Controllers\EducationController; // Course Attendance
 use App\Http\Controllers\VerificationController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\SalaryController;
+use App\Models\Announcement;
 
 // --- PUBLIC & AUTHENTICATION ROUTES ---
 
 // Main Landing Page (Login Form)
 Route::get('/', function () {
-    return view('index');
-})->name('index'); 
+    return view('index', [
+        'announcement' => Announcement::latest()->first(),
+    ]);
+})->name('index');
 
 // Handle Login Submission
 Route::post('/', [LoginController::class, 'authenticate'])->name('login.submit');
