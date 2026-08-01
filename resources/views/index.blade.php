@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   {{-- Applies saved theme before first paint --}}
   <script>
@@ -319,6 +320,13 @@
       flex: 1 1 0;
       min-width: 0;
       max-width: 340px;
+      /* reset in case this card is a <button> rather than an <a> */
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
     }
 
     .portal-card:hover {
@@ -490,6 +498,91 @@
     .footer-links a { color: var(--text-secondary); transition: color 0.2s ease; }
     .footer-links a:hover { color: var(--accent); }
 
+    /* ===================== QR MODAL ===================== */
+    .qr-modal-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(15, 18, 13, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .qr-modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .qr-modal {
+      position: relative;
+      width: 100%; max-width: 340px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 30px 26px 26px;
+      text-align: center;
+      transform: translateY(14px) scale(0.97);
+      transition: transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .qr-modal-overlay.open .qr-modal { transform: translateY(0) scale(1); }
+
+    .qr-modal-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1px solid var(--border); background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-secondary); transition: all 0.2s ease;
+    }
+    .qr-modal-close:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--border-hover); }
+    .qr-modal-close svg { width: 15px; height: 15px; }
+
+    .qr-modal-pass-code {
+      font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary);
+      margin-bottom: 14px;
+    }
+
+    .qr-modal h3 {
+      font-family: var(--font-display); font-size: 1.22rem; font-weight: 600;
+      color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.005em;
+    }
+    .qr-modal p.qr-sub {
+      font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 22px;
+    }
+
+    .qr-box {
+      display: inline-flex; background: #fff; padding: 14px;
+      border-radius: var(--radius-md); border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm); margin-bottom: 20px;
+    }
+    #qrCanvasWrap { width: 176px; height: 176px; display: flex; align-items: center; justify-content: center; }
+    #qrCanvasWrap img, #qrCanvasWrap canvas { display: block; width: 176px !important; height: 176px !important; }
+
+    .qr-modal-tear {
+      position: relative; height: 1px; margin: 0 -26px 20px;
+      background-image: linear-gradient(to right, var(--border) 60%, transparent 0%);
+      background-size: 10px 1px; background-repeat: repeat-x;
+    }
+    .qr-modal-tear::before, .qr-modal-tear::after {
+      content: ""; position: absolute; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%; background: var(--bg-primary);
+    }
+    .qr-modal-tear::before { left: -8px; }
+    .qr-modal-tear::after { right: -8px; }
+
+    .qr-download-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; background: var(--accent); color: #fff;
+      font-size: 0.86rem; font-weight: 650; padding: 13px 20px;
+      border-radius: var(--radius-pill); border: none; cursor: pointer;
+      text-decoration: none; transition: background 0.2s ease;
+    }
+    .qr-download-btn:hover { background: var(--accent-hover); }
+    .qr-download-btn svg { width: 15px; height: 15px; }
+
+    .qr-note {
+      font-size: 0.72rem; color: var(--text-tertiary); line-height: 1.55; margin-top: 14px;
+    }
+
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 640px) {
       .portals-grid {
@@ -622,7 +715,7 @@
         </a>
 
         <!-- Download Mobile App Portal Card -->
-        <a href="{{ asset('downloads/mcc-employee-app.apk') }}" class="portal-card" id="portal-download" download>
+        <button type="button" class="portal-card" id="portal-download" aria-haspopup="dialog" aria-controls="qrModal">
           <div class="portal-pass-row">
             <span class="portal-pass-code">PASS · APP</span>
           </div>
@@ -636,12 +729,15 @@
           <p>Get our native Android app to clock in, submit timesheets, and view payslips on-the-go.</p>
           <div class="portal-tear"></div>
           <span class="portal-cta" style="color: var(--pine);">
-            Download APK
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M12 5v14M19 12l-7 7-7-7"/>
+            Get the app
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="6" height="6" rx="1"/>
+              <rect x="14" y="4" width="6" height="6" rx="1"/>
+              <rect x="4" y="14" width="6" height="6" rx="1"/>
+              <path d="M14 14h3M14 17h6M20 14v6M17 20h3"/>
             </svg>
           </span>
-        </a>
+        </button>
 
       </div>
     </div>
@@ -733,6 +829,36 @@
     </div>
   </footer>
 
+  <!-- ===================== QR DOWNLOAD MODAL ===================== -->
+  <div class="qr-modal-overlay" id="qrModalOverlay">
+    <div class="qr-modal" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+      <button type="button" class="qr-modal-close" id="qrModalClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <div class="qr-modal-pass-code">PASS · APP</div>
+      <h3 id="qrModalTitle">Works better in the app</h3>
+      <p class="qr-sub">Scan with your phone to install</p>
+
+      <div class="qr-box">
+        <div id="qrCanvasWrap"></div>
+      </div>
+
+      <div class="qr-modal-tear"></div>
+
+      <a href="{{ asset('downloads/mcc-employee-app.apk') }}" class="qr-download-btn" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 5v14M19 12l-7 7-7-7"/>
+        </svg>
+        Download APK directly
+      </a>
+
+      <div class="qr-note">Android only. You may need to allow installs from unknown sources in your phone's settings.</div>
+    </div>
+  </div>
+
   <script>
     // Dark mode toggle
     document.getElementById('themeToggle').addEventListener('click', function () {
@@ -762,6 +888,50 @@
       }
       tick();
       setInterval(tick, 1000);
+    })();
+
+    // QR download modal
+    (function () {
+      const apkUrl = "{{ asset('downloads/mcc-employee-app.apk') }}";
+      const trigger = document.getElementById('portal-download');
+      const overlay = document.getElementById('qrModalOverlay');
+      const closeBtn = document.getElementById('qrModalClose');
+      const qrWrap = document.getElementById('qrCanvasWrap');
+      let qrGenerated = false;
+      let lastFocused = null;
+
+      function openModal() {
+        if (!qrGenerated && window.QRCode) {
+          new QRCode(qrWrap, {
+            text: apkUrl,
+            width: 176,
+            height: 176,
+            colorDark: '#1B2420',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+          qrGenerated = true;
+        }
+        lastFocused = document.activeElement;
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        closeBtn.focus();
+      }
+
+      function closeModal() {
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+        if (lastFocused) lastFocused.focus();
+      }
+
+      trigger.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
+      });
     })();
 
     @if(session('success'))
