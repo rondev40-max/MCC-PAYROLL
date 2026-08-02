@@ -459,6 +459,140 @@
       font-size: 0.76rem; color: var(--text-tertiary); line-height: 1.45;
     }
 
+    /* ===================== TRUST STRIP ===================== */
+    .trust-strip {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 10px; max-width: 860px; margin: 0 auto 44px;
+      padding: 0 clamp(16px, 4vw, 40px);
+    }
+    .trust-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      padding: 8px 14px; border-radius: var(--radius-pill);
+    }
+    .trust-badge svg { width: 14px; height: 14px; stroke: var(--pine); flex-shrink: 0; }
+
+    /* ===================== HOW IT WORKS ===================== */
+    .how-it-works {
+      padding: 8px clamp(16px, 4vw, 40px) 56px;
+      background: var(--bg-primary);
+    }
+    .how-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+    .how-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-top: 34px;
+      position: relative;
+    }
+    .how-step { position: relative; padding: 0 10px; }
+    .how-step-num {
+      font-family: var(--font-display);
+      font-size: 2.1rem; font-weight: 600;
+      color: var(--accent-glow);
+      -webkit-text-stroke: 1.5px var(--accent);
+      line-height: 1; margin-bottom: 14px;
+    }
+    .how-step h4 {
+      font-size: 0.94rem; font-weight: 650; color: var(--text-primary); margin-bottom: 6px;
+    }
+    .how-step p {
+      font-size: 0.82rem; color: var(--text-secondary); line-height: 1.55;
+    }
+    .how-step:not(:last-child)::after {
+      content: "";
+      position: absolute; top: 18px; left: calc(100% + 4px);
+      width: calc(22px - 4px); height: 1px;
+      background-image: linear-gradient(to right, var(--border) 60%, transparent 0%);
+      background-size: 8px 1px; background-repeat: repeat-x;
+      display: none;
+    }
+    @media (min-width: 641px) {
+      .how-step:not(:last-child)::after { display: block; }
+    }
+
+    /* ===================== ABOUT MCC ===================== */
+    .about-section {
+      padding: 8px clamp(16px, 4vw, 40px) 56px;
+    }
+    .about-inner {
+      max-width: 1000px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1.1fr;
+      gap: 40px; align-items: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+    }
+    .about-photo {
+      width: 100%; aspect-ratio: 4/3; object-fit: cover;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+    .about-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--pine); margin-bottom: 10px;
+    }
+    .about-text h3 {
+      font-family: var(--font-display);
+      font-size: clamp(1.15rem, 2vw, 1.4rem); font-weight: 600;
+      color: var(--text-primary); margin-bottom: 12px; line-height: 1.3;
+    }
+    .about-text p {
+      font-size: 0.86rem; color: var(--text-secondary); line-height: 1.68;
+    }
+    @media (max-width: 720px) {
+      .about-inner { grid-template-columns: 1fr; padding: 22px; gap: 22px; }
+    }
+
+    /* ===================== FAQ ===================== */
+    .faq-section {
+      padding: 8px clamp(16px, 4vw, 40px) 56px;
+    }
+    .faq-inner { max-width: 720px; margin: 0 auto; }
+    .faq-heading-block { text-align: center; margin-bottom: 28px; }
+    .faq-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+    .faq-item.open { border-color: var(--accent-glow); }
+
+    .faq-question {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      background: none; border: none;
+      font: inherit; text-align: left; cursor: pointer;
+      font-size: 0.88rem; font-weight: 650; color: var(--text-primary);
+    }
+    .faq-question:hover { color: var(--accent); }
+    .faq-chevron {
+      flex-shrink: 0; width: 18px; height: 18px;
+      stroke: var(--text-tertiary);
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); stroke: var(--accent); }
+
+    .faq-answer-wrap {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .faq-answer {
+      padding: 0 20px 18px;
+      font-size: 0.83rem; color: var(--text-secondary); line-height: 1.6;
+    }
+    .faq-answer a { color: var(--accent); font-weight: 600; }
+
+
     /* ===================== NOTICE BANNER ===================== */
     .notice-banner {
       margin: 0 clamp(16px, 4vw, 40px) 40px;
@@ -705,6 +839,8 @@
       .punch-clock { flex-wrap: wrap; justify-content: center; padding: 10px 16px; }
       .contact-grid { grid-template-columns: 1fr; }
       .contact-card { text-align: left; }
+      .how-steps { grid-template-columns: 1fr; gap: 26px; }
+      .how-step:not(:last-child)::after { display: none; }
     }
 
     @media (max-width: 480px) {
@@ -743,7 +879,10 @@
     .site-footer,
     .features-strip,
     .qr-modal,
-    .punch-clock {
+    .punch-clock,
+    .trust-badge,
+    .about-inner,
+    .faq-item {
       transition: background 0.35s ease, background-color 0.35s ease,
                   border-color 0.35s ease, color 0.35s ease,
                   box-shadow 0.35s ease, transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -910,6 +1049,47 @@
       </div>
     </div>
 
+    <!-- ===================== TRUST STRIP ===================== -->
+    <div class="trust-strip reveal">
+      <span class="trust-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Role-based access
+      </span>
+      <span class="trust-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 12l2 2 4-4"/></svg>
+        Encrypted sessions
+      </span>
+      <span class="trust-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.5-7.14"/><path d="M21 4v5h-5"/></svg>
+        Regular backups
+      </span>
+    </div>
+
+    <!-- ===================== HOW IT WORKS ===================== -->
+    <section class="how-it-works">
+      <div class="how-inner">
+        <div class="about-label reveal">Getting started</div>
+        <div class="features-strip-heading reveal">Three steps, and you're clocked in.</div>
+        <div class="how-steps">
+          <div class="how-step reveal">
+            <div class="how-step-num">01</div>
+            <h4>Choose your portal</h4>
+            <p>Pick Employee or Attendance above, based on your role.</p>
+          </div>
+          <div class="how-step reveal">
+            <div class="how-step-num">02</div>
+            <h4>Sign in securely</h4>
+            <p>Log in with your email and password — verified in seconds.</p>
+          </div>
+          <div class="how-step reveal">
+            <div class="how-step-num">03</div>
+            <h4>Track &amp; get paid</h4>
+            <p>Log attendance, submit timesheets, and download payslips.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===================== FEATURES STRIP ===================== -->
     <section class="features-strip">
       <div class="features-strip-inner">
@@ -973,6 +1153,72 @@
       </div>
     </section>
 
+    <!-- ===================== ABOUT MCC ===================== -->
+    <section class="about-section">
+      <div class="about-inner reveal">
+        <img src="{{ asset('images/mcc.jpg') }}" alt="Madridejos Community College campus" class="about-photo">
+        <div class="about-text">
+          <div class="about-label">About the institution</div>
+          <h3>Serving Madridejos, one graduate at a time.</h3>
+          <p>Madridejos Community College offers programs across Information Technology, Business Administration, Hospitality Management, and Education. This system supports the faculty and staff who keep the campus running — from attendance and timekeeping to payroll and payslips.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="faq-section">
+      <div class="faq-inner">
+        <div class="faq-heading-block">
+          <div class="about-label reveal">Common questions</div>
+          <div class="features-strip-heading reveal">Frequently asked questions</div>
+        </div>
+
+        <div class="faq-list">
+
+          <div class="faq-item reveal" data-faq>
+            <button type="button" class="faq-question" aria-expanded="false">
+              How do I create an account?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="faq-answer-wrap">
+              <div class="faq-answer">Accounts are created by your HR administrator. If you were issued an access code, use the <a href="{{ url('/register') }}">Register</a> page to activate it — otherwise, contact HR directly.</div>
+            </div>
+          </div>
+
+          <div class="faq-item reveal" data-faq>
+            <button type="button" class="faq-question" aria-expanded="false">
+              I forgot my password. What do I do?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="faq-answer-wrap">
+              <div class="faq-answer">Attendance Checker accounts can reset their own password from the Attendance login page. Employee and Admin accounts don't have self-service reset yet — contact HR to have your password reset manually.</div>
+            </div>
+          </div>
+
+          <div class="faq-item reveal" data-faq>
+            <button type="button" class="faq-question" aria-expanded="false">
+              When are payslips available?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="faq-answer-wrap">
+              <div class="faq-answer">Payslips are released each pay period and sent to the email on file. You can also view and download past payslips anytime from the Employee Portal.</div>
+            </div>
+          </div>
+
+          <div class="faq-item reveal" data-faq>
+            <button type="button" class="faq-question" aria-expanded="false">
+              Is my payroll data secure?
+              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="faq-answer-wrap">
+              <div class="faq-answer">Access is role-based, so employees can only view their own records, and admin actions are logged. All connections are encrypted end to end.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <!-- ===================== CONTACT HR ===================== -->
     <section class="contact-section">
       <div class="contact-inner">
@@ -991,7 +1237,7 @@
             </div>
             <div class="contact-card-text">
               <h4>Email</h4>
-              <a href="mailto:wendelldenorte@gmail.com">wendelldenorte@gmail.com</a>
+              <a href="mailto:hr@mcc.edu.ph">hr@mcc.edu.ph</a>
               <span class="hint">Replies within 1–2 business days</span>
             </div>
           </div>
@@ -1004,7 +1250,7 @@
             </div>
             <div class="contact-card-text">
               <h4>Phone</h4>
-              <a href="tel:+639638620157">+639638620157</a>
+              <a href="tel:+63000000000">(000) 000-0000</a>
               <span class="hint">Mon–Fri, 8:00 AM – 5:00 PM</span>
             </div>
           </div>
@@ -1089,6 +1335,37 @@
         localStorage.setItem('mcc-theme', 'dark');
       }
     });
+
+    // FAQ accordion
+    (function () {
+      document.querySelectorAll('[data-faq]').forEach(function (item) {
+        const btn = item.querySelector('.faq-question');
+        const wrap = item.querySelector('.faq-answer-wrap');
+
+        btn.addEventListener('click', function () {
+          const isOpen = item.classList.contains('open');
+
+          // close any other open item (accordion behavior)
+          document.querySelectorAll('[data-faq].open').forEach(function (other) {
+            if (other !== item) {
+              other.classList.remove('open');
+              other.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+              other.querySelector('.faq-answer-wrap').style.maxHeight = null;
+            }
+          });
+
+          if (isOpen) {
+            item.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+            wrap.style.maxHeight = null;
+          } else {
+            item.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+            wrap.style.maxHeight = wrap.scrollHeight + 'px';
+          }
+        });
+      });
+    })();
 
     // Scroll reveal for below-the-fold sections
     (function () {
