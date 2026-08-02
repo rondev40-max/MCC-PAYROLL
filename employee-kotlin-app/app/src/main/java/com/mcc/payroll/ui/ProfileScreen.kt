@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -89,7 +90,6 @@ fun ProfileContent(profile: ProfileResponse, onLogout: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Profile Card Header
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -100,7 +100,6 @@ fun ProfileContent(profile: ProfileResponse, onLogout: () -> Unit) {
                     modifier = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Profile Initial Badge
                     Box(
                         modifier = Modifier
                             .size(54.dp)
@@ -134,30 +133,37 @@ fun ProfileContent(profile: ProfileResponse, onLogout: () -> Unit) {
                 }
             }
 
-            // Profile Detail Info
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        QuickStatChip(label = "Present", value = (profile.stats?.present_days ?: 0).toString())
+                        QuickStatChip(label = "Late", value = (profile.stats?.late_days ?: 0).toString())
+                        QuickStatChip(label = "Absent", value = (profile.stats?.absent_days ?: 0).toString())
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     ProfileField(label = "Employee Role", value = profile.user.role.uppercase())
                     ProfileField(label = "Designation/Rank", value = profile.employee?.position ?: profile.employee?.designation ?: "Staff")
                     ProfileField(label = "Assigned Department", value = profile.employee?.department ?: "General")
                     ProfileField(
-                        label = "Hourly/Basic Salary", 
+                        label = "Hourly/Basic Salary",
                         value = "₱${String.format("%,.2f", profile.employee?.hourly_salary ?: profile.employee?.basic_salary ?: 0.0)}"
                     )
                 }
             }
         }
 
-        // Logout Actions
         Button(
             onClick = onLogout,
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)), // red accent logout
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
@@ -197,5 +203,20 @@ fun ProfileField(label: String, value: String) {
             color = Color(0xFF334155),
             modifier = Modifier.padding(top = 2.dp)
         )
+    }
+}
+
+@Composable
+fun QuickStatChip(label: String, value: String) {
+    Card(
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF0F172A))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = label, fontSize = 10.sp, color = Color(0xFF64748B))
+        }
     }
 }

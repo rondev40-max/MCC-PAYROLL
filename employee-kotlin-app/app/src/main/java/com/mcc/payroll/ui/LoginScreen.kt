@@ -1,6 +1,5 @@
 package com.mcc.payroll.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -22,21 +22,21 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -47,9 +47,9 @@ import com.mcc.payroll.viewmodel.UiState
 
 @Composable
 fun LoginScreen(viewModel: EmployeeViewModel, onLoginSuccess: () -> Unit) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -117,6 +117,10 @@ fun LoginScreen(viewModel: EmployeeViewModel, onLoginSuccess: () -> Unit) {
                         placeholder = { Text("e.g. employee@mcc.edu.ph") },
                         leadingIcon = { Icon(Icons.Default.Email, "Email Icon") },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF2563EB),
                             focusedLabelColor = Color(0xFF2563EB)
@@ -132,8 +136,27 @@ fun LoginScreen(viewModel: EmployeeViewModel, onLoginSuccess: () -> Unit) {
                         onValueChange = { password = it },
                         label = { Text("Password") },
                         leadingIcon = { Icon(Icons.Default.Lock, "Lock Icon") },
+                        trailingIcon = {
+                            TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Text(
+                                    text = if (passwordVisible) "Hide" else "Show",
+                                    color = Color(0xFF2563EB),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (email.isNotBlank() && password.isNotBlank()) {
+                                    viewModel.login(email, password, onLoginSuccess)
+                                }
+                            }
+                        ),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF2563EB),

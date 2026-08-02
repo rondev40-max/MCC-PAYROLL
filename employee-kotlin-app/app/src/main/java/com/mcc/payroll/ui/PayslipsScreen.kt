@@ -62,12 +62,59 @@ fun PayslipsScreen(viewModel: EmployeeViewModel) {
                 is UiState.Success -> {
                     if (state.data.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(text = "No payslips issued yet.", color = Color.Gray, fontSize = 14.sp)
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                            ) {
+                                Text(
+                                    text = "No payslips issued yet.",
+                                    color = Color.Gray,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(20.dp)
+                                )
+                            }
                         }
                     } else {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = "Available payslips",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF64748B)
+                                            )
+                                            Text(
+                                                text = "${state.data.size}",
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color(0xFF0F172A),
+                                                modifier = Modifier.padding(top = 2.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = "₱${String.format("%,.2f", state.data.sumOf { it.net_pay ?: 0.0 })}",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFF16A34A)
+                                        )
+                                    }
+                                }
+                            }
+                            item { Spacer(modifier = Modifier.height(4.dp)) }
                             items(state.data) { payslip ->
                                 PayslipItem(payslip = payslip)
                             }
@@ -104,7 +151,7 @@ fun PayslipItem(payslip: Payslip) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Cut-Off Period: ${payslip.period ?: "N/A"}",
                     fontSize = 14.sp,
@@ -128,7 +175,7 @@ fun PayslipItem(payslip: Payslip) {
                 text = "₱${String.format("%,.2f", payslip.net_pay ?: 0.0)}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF16A34A) // var(--accent) green equivalent
+                color = Color(0xFF16A34A)
             )
         }
     }

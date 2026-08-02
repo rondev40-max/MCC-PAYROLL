@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -122,8 +123,10 @@ fun AppBottomNavigation(navController: NavHostController, currentRoute: String?)
     )
 
     NavigationBar(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         containerColor = Color.White,
-        tonalElevation = 8.dp()
+        tonalElevation = 8.dp(),
+        shape = RoundedCornerShape(24.dp)
     ) {
         items.forEach { screen ->
             NavigationBarItem(

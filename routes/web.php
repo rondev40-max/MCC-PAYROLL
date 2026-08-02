@@ -21,16 +21,13 @@ use App\Http\Controllers\EducationController; // Course Attendance
 use App\Http\Controllers\VerificationController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\SalaryController;
-use App\Models\Announcement;
 
 // --- PUBLIC & AUTHENTICATION ROUTES ---
 
 // Main Landing Page (Login Form)
 Route::get('/', function () {
-    return view('index', [
-        'announcement' => Announcement::latest()->first(),
-    ]);
-})->name('index');
+    return view('index');
+})->name('index'); 
 
 // Handle Login Submission
 Route::post('/', [LoginController::class, 'authenticate'])->name('login.submit');
@@ -38,8 +35,8 @@ Route::post('/', [LoginController::class, 'authenticate'])->name('login.submit')
 
 // OTP Verification Routes
 Route::get('/otp/verify', [OtpVerificationController::class, 'showVerificationForm'])->name('otp.verify.form');
-Route::post('/otp/verify', [OtpVerificationController::class, 'verify'])->name('otp.verify');
-Route::get('/otp/resend', [OtpVerificationController::class, 'resendOtp'])->name('otp.resend');
+Route::post('/otp/verify', [OtpVerificationController::class, 'verify'])->name('otp.verify')->middleware(app()->environment('production') ? 'throttle:5,1' : []);
+Route::get('/otp/resend', [OtpVerificationController::class, 'resendOtp'])->name('otp.resend')->middleware(app()->environment('production') ? 'throttle:3,1' : []);
 
 // Registration Routes
 Route::get('/register', function () {
@@ -309,11 +306,16 @@ Route::get('/terms', function () {
 })->name('terms');
 
 // Database Migration Route (Securely protected and session-exempt for Vercel/Railway)
-Route::get('/deploy/migrate', function () {
-    if (!env('DEPLOYMENT_TOKEN') || request()->query('token') !== env('DEPLOYMENT_TOKEN')) {
+// SECURITY: token now read from a request header (never logged in URLs/proxies/
+// browser history the way a query string is) and compared with hash_equals()
+// to avoid timing attacks. Route is POST-only so it can't be triggered by a
+// prefetch, a stray <a href>, or a crawler following links.
+Route::post('/deploy/migrate', function () {
+    $token = env('DEPLOYMENT_TOKEN');
+    if (!$token || !hash_equals($token, (string) request()->header('X-Deploy-Token'))) {
         abort(403, 'Unauthorized');
     }
-    
+
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         return response()->json([
@@ -329,11 +331,12 @@ Route::get('/deploy/migrate', function () {
 })->withoutMiddleware('web');
 
 // Database Seed Route (Securely protected and session-exempt for Vercel/Railway)
-Route::get('/deploy/seed', function () {
-    if (!env('DEPLOYMENT_TOKEN') || request()->query('token') !== env('DEPLOYMENT_TOKEN')) {
+Route::post('/deploy/seed', function () {
+    $token = env('DEPLOYMENT_TOKEN');
+    if (!$token || !hash_equals($token, (string) request()->header('X-Deploy-Token'))) {
         abort(403, 'Unauthorized');
     }
-    
+
     try {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
         return response()->json([
@@ -349,11 +352,22 @@ Route::get('/deploy/seed', function () {
 })->withoutMiddleware('web');
 
 // Database Fresh Migrate Route (Securely protected and session-exempt for Vercel/Railway)
-Route::get('/deploy/fresh', function () {
-    if (!env('DEPLOYMENT_TOKEN') || request()->query('token') !== env('DEPLOYMENT_TOKEN')) {
+// SECURITY: migrate:fresh drops every table and rebuilds the schema — it is the
+// single most destructive command in the app. It is now hard-blocked outside a
+// non-production environment, on top of the header-token + POST-only checks
+// above, so a leaked token alone can never wipe the live database. Once your
+// initial deploy is done, delete this route entirely rather than relying on
+// the env() guard indefinitely.
+Route::post('/deploy/fresh', function () {
+    if (app()->environment('production')) {
+        abort(403, 'Disabled in production. Remove this guard only if you fully understand the risk.');
+    }
+
+    $token = env('DEPLOYMENT_TOKEN');
+    if (!$token || !hash_equals($token, (string) request()->header('X-Deploy-Token'))) {
         abort(403, 'Unauthorized');
     }
-    
+
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true]);
         return response()->json([
