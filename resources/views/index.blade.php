@@ -718,10 +718,46 @@
       .scroll-hint { display: none; }
     }
 
+    /* ===================== SCROLL REVEAL ===================== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .reveal.reveal-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===================== SMOOTH THEME SWITCH ===================== */
+    /* Without this, toggling dark/light mode snaps every surface instantly
+       while only body's background/color fade — these fill that gap so the
+       whole page cross-fades together instead of flashing one element at a time. */
+    .topbar,
+    .portal-card,
+    .feature-item,
+    .contact-card,
+    .announce-bar,
+    .notice-banner,
+    .site-footer,
+    .features-strip,
+    .qr-modal,
+    .punch-clock {
+      transition: background 0.35s ease, background-color 0.35s ease,
+                  border-color 0.35s ease, color 0.35s ease,
+                  box-shadow 0.35s ease, transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .hero-inner, .portals-grid { animation: none; }
       .punch-clock .dot { animation: none; }
       .scroll-hint-line { animation: none; }
+      .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
     }
   </style>
 </head>
@@ -862,7 +898,7 @@
     </div>
 
     <!-- ===================== NOTICE BANNER ===================== -->
-    <div class="notice-banner">
+    <div class="notice-banner reveal">
       <div class="notice-banner-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
@@ -881,7 +917,7 @@
         <div class="features-strip-heading">Everything payroll, in one place.</div>
         <div class="features-list">
 
-          <div class="feature-item">
+          <div class="feature-item reveal">
             <div class="feature-dot">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="6" width="18" height="12" rx="2"/>
@@ -894,7 +930,7 @@
             </div>
           </div>
 
-          <div class="feature-item">
+          <div class="feature-item reveal">
             <div class="feature-dot">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="17" rx="2"/>
@@ -907,7 +943,7 @@
             </div>
           </div>
 
-          <div class="feature-item">
+          <div class="feature-item reveal">
             <div class="feature-dot">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
@@ -920,7 +956,7 @@
             </div>
           </div>
 
-          <div class="feature-item">
+          <div class="feature-item reveal">
             <div class="feature-dot">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="5" y="11" width="14" height="10" rx="2"/>
@@ -946,7 +982,7 @@
 
         <div class="contact-grid">
 
-          <div class="contact-card">
+          <div class="contact-card reveal">
             <div class="contact-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 6 12 13 2 6"/>
@@ -960,7 +996,7 @@
             </div>
           </div>
 
-          <div class="contact-card">
+          <div class="contact-card reveal">
             <div class="contact-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
@@ -973,7 +1009,7 @@
             </div>
           </div>
 
-          <div class="contact-card">
+          <div class="contact-card reveal">
             <div class="contact-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -1053,6 +1089,42 @@
         localStorage.setItem('mcc-theme', 'dark');
       }
     });
+
+    // Scroll reveal for below-the-fold sections
+    (function () {
+      const items = document.querySelectorAll('.reveal');
+      if (!items.length) return;
+
+      if (!('IntersectionObserver' in window)) {
+        items.forEach(el => el.classList.add('reveal-visible'));
+        return;
+      }
+
+      // Stagger cards that share a parent (feature-list, contact-grid) so they
+      // cascade in one after another instead of popping in all at once.
+      const groups = new Map();
+      items.forEach(el => {
+        const parent = el.parentElement;
+        if (!groups.has(parent)) groups.set(parent, []);
+        groups.get(parent).push(el);
+      });
+      groups.forEach(siblings => {
+        siblings.forEach((el, i) => {
+          el.style.transitionDelay = (i * 90) + 'ms';
+        });
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('reveal-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+      items.forEach(el => observer.observe(el));
+    })();
 
     // Live punch-clock readout in the hero
     (function () {
