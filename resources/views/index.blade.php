@@ -1301,7 +1301,7 @@
             </div>
             <div class="contact-card-text">
               <h4>Email</h4>
-              <a href="mailto:hr@mcc.edu.ph">hr@mcc.edu.ph</a>
+              <a href="mailto:wendelldenorte@gmail.com">wendelldenorte@gmail.com</a>
               <span class="hint">Replies within 1–2 business days</span>
             </div>
           </div>
@@ -1314,7 +1314,7 @@
             </div>
             <div class="contact-card-text">
               <h4>Phone</h4>
-              <a href="tel:+63000000000">(000) 000-0000</a>
+              <a href="tel:+639638620157">639638620157</a>
               <span class="hint">Mon–Fri, 8:00 AM – 5:00 PM</span>
             </div>
           </div>
