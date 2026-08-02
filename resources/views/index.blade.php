@@ -494,6 +494,12 @@
       font-size: 0.78rem; color: var(--text-tertiary);
       background: var(--bg-primary);
     }
+    .footer-copy {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .footer-credit {
+      font-size: 0.7rem; color: var(--text-tertiary); opacity: 0.75;
+    }
     .footer-links { display: flex; gap: 16px; }
     .footer-links a { color: var(--text-secondary); transition: color 0.2s ease; }
     .footer-links a:hover { color: var(--accent); }
@@ -877,7 +883,10 @@
 
   <!-- ===================== FOOTER ===================== -->
   <footer class="site-footer">
-    <span>&copy; {{ date('Y') }} Madridejos Community College</span>
+    <div class="footer-copy">
+      <span>&copy; {{ date('Y') }} Madridejos Community College</span>
+      <span class="footer-credit">Developed by Ronyl Parochel</span>
+    </div>
     <div class="footer-links">
       <a href="{{ url('/register') }}">Create Account</a>
       <a href="{{ url('/terms') }}">Terms</a>
