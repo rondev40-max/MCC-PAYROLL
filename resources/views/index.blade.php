@@ -51,11 +51,12 @@
       --radius-lg: 20px;
       --radius-pill: 999px;
 
-      --shadow-xs: 0 1px 2px rgba(20, 24, 18, 0.05);
-      --shadow-sm: 0 2px 8px rgba(20, 24, 18, 0.06);
-      --shadow-md: 0 10px 26px rgba(20, 24, 18, 0.10);
-      --shadow-lg: 0 24px 56px rgba(20, 24, 18, 0.14);
-      --shadow-card-hover: 0 14px 34px rgba(169, 118, 47, 0.18);
+      --shadow-xs: 0 1px 2px rgba(43, 31, 12, 0.06);
+      --shadow-sm: 0 1px 2px rgba(43, 31, 12, 0.04), 0 3px 10px rgba(43, 31, 12, 0.07);
+      --shadow-md: 0 2px 4px rgba(43, 31, 12, 0.04), 0 12px 28px rgba(43, 31, 12, 0.10);
+      --shadow-lg: 0 4px 10px rgba(43, 31, 12, 0.06), 0 28px 64px rgba(43, 31, 12, 0.16);
+      --shadow-card-hover: 0 2px 6px rgba(169, 118, 47, 0.12), 0 18px 40px rgba(169, 118, 47, 0.20);
+      --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 
       --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
       --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -83,11 +84,12 @@
       --border: rgba(243, 239, 227, 0.09);
       --border-hover: rgba(243, 239, 227, 0.18);
 
-      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.35);
-      --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.45);
-      --shadow-card-hover: 0 14px 34px rgba(204, 154, 80, 0.22);
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25), 0 3px 12px rgba(0, 0, 0, 0.28);
+      --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 12px 30px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.3), 0 28px 64px rgba(0, 0, 0, 0.5);
+      --shadow-card-hover: 0 2px 6px rgba(204, 154, 80, 0.16), 0 18px 44px rgba(204, 154, 80, 0.26);
+      --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     html {
@@ -209,6 +211,18 @@
       z-index: -1;
     }
 
+    /* Fine grain texture — a barely-there SVG noise layer that keeps the hero
+       from reading as a flat color wash. Kept subtle enough to be felt more
+       than seen. */
+    .hero-grain {
+      position: absolute; inset: 0;
+      z-index: -1;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    }
+
     .hero-inner {
       text-align: center;
       max-width: 620px;
@@ -313,7 +327,7 @@
       border-radius: var(--radius-lg);
       background: var(--bg-primary);
       border: 1px solid var(--border);
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-md), var(--shadow-inset-top);
       text-decoration: none;
       transition: all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       isolation: isolate;
@@ -331,13 +345,54 @@
 
     .portal-card:hover {
       transform: translateY(-5px);
-      box-shadow: var(--shadow-card-hover);
+      box-shadow: var(--shadow-card-hover), var(--shadow-inset-top);
       border-color: var(--accent-glow);
     }
 
     .portal-card.primary {
       border-color: rgba(169, 118, 47, 0.28);
       background: linear-gradient(160deg, var(--bg-primary) 0%, var(--accent-soft) 100%);
+      overflow: hidden;
+    }
+
+    /* Subtle light sweep across the primary card on hover — the one deliberate
+       "premium" flourish on the page, reserved for the single most-used card
+       so it reads as a highlight rather than a gimmick repeated everywhere. */
+    .portal-card.primary::before {
+      content: "";
+      position: absolute;
+      top: 0; left: -60%;
+      width: 45%; height: 100%;
+      background: linear-gradient(
+        100deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 100%
+      );
+      transform: skewX(-18deg);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 1;
+    }
+    [data-theme="dark"] .portal-card.primary::before {
+      background: linear-gradient(
+        100deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.10) 50%,
+        transparent 100%
+      );
+    }
+    .portal-card.primary:hover::before {
+      opacity: 1;
+      animation: shine-sweep 1.1s ease forwards;
+    }
+    @keyframes shine-sweep {
+      from { left: -60%; }
+      to   { left: 130%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .portal-card.primary::before { display: none; }
     }
 
     .portal-pass-row {
@@ -711,12 +766,20 @@
 
     .qr-download-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; background: var(--accent); color: #fff;
+      width: 100%; color: #fff;
+      background: linear-gradient(160deg, var(--accent) 0%, var(--accent-hover) 100%);
       font-size: 0.86rem; font-weight: 650; padding: 13px 20px;
       border-radius: var(--radius-pill); border: none; cursor: pointer;
-      text-decoration: none; transition: background 0.2s ease;
+      text-decoration: none;
+      box-shadow: 0 1px 2px rgba(169, 118, 47, 0.15), 0 8px 20px rgba(169, 118, 47, 0.22);
+      transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s ease, filter 0.2s ease;
     }
-    .qr-download-btn:hover { background: var(--accent-hover); }
+    .qr-download-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow: 0 2px 4px rgba(169, 118, 47, 0.18), 0 12px 26px rgba(169, 118, 47, 0.28);
+    }
+    .qr-download-btn:active { transform: translateY(0); }
     .qr-download-btn svg { width: 15px; height: 15px; }
 
     .qr-note {
@@ -936,6 +999,7 @@
 
     <!-- ===================== HERO ===================== -->
     <section class="hero">
+      <div class="hero-grain" aria-hidden="true"></div>
       <div class="hero-inner">
         <div class="punch-clock" aria-live="off">
           <span class="dot"></span>
