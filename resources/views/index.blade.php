@@ -635,6 +635,62 @@
       .announce-date { width: 100%; }
     }
 
+    /* ===================== CONTACT HR ===================== */
+    .contact-section {
+      padding: 56px clamp(16px, 4vw, 40px) 60px;
+      background: var(--bg-primary);
+    }
+    .contact-inner {
+      max-width: 860px; margin: 0 auto;
+      text-align: center;
+    }
+    .contact-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--pine); margin-bottom: 10px;
+    }
+    .contact-heading {
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2vw, 1.55rem); font-weight: 600;
+      color: var(--text-primary); letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+    .contact-sub {
+      font-size: 0.86rem; color: var(--text-secondary);
+      max-width: 460px; margin: 0 auto 32px; line-height: 1.6;
+    }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      text-align: left;
+    }
+    .contact-card {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 20px; border-radius: var(--radius-md);
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .contact-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-sm); }
+    .contact-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: var(--accent-soft); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .contact-icon svg { width: 18px; height: 18px; stroke: var(--accent); }
+    .contact-card-text h4 {
+      font-size: 0.84rem; font-weight: 650; color: var(--text-primary); margin-bottom: 4px;
+    }
+    .contact-card-text a, .contact-card-text span.value {
+      font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;
+      display: block;
+    }
+    .contact-card-text a:hover { color: var(--accent); }
+    .contact-card-text .hint {
+      font-size: 0.72rem; color: var(--text-tertiary); margin-top: 3px;
+    }
+
+
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 640px) {
       .portals-grid {
@@ -647,6 +703,8 @@
       .site-footer { flex-direction: column; gap: 8px; text-align: center; }
       .notice-banner { flex-direction: column; text-align: center; }
       .punch-clock { flex-wrap: wrap; justify-content: center; padding: 10px 16px; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .contact-card { text-align: left; }
     }
 
     @media (max-width: 480px) {
@@ -872,6 +930,60 @@
             <div class="feature-item-text">
               <h4>Role-Based Access</h4>
               <span>Secure, permission-level login</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CONTACT HR ===================== -->
+    <section class="contact-section">
+      <div class="contact-inner">
+        <div class="contact-label">Need help?</div>
+        <div class="contact-heading">Talk to HR</div>
+        <p class="contact-sub">Account issues, payslip questions, or anything not covered by the portals above — reach out directly.</p>
+
+        <div class="contact-grid">
+
+          <div class="contact-card">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 6 12 13 2 6"/>
+                <path d="M2 6h20v12H2z"/>
+              </svg>
+            </div>
+            <div class="contact-card-text">
+              <h4>Email</h4>
+              <a href="mailto:hr@mcc.edu.ph">hr@mcc.edu.ph</a>
+              <span class="hint">Replies within 1–2 business days</span>
+            </div>
+          </div>
+
+          <div class="contact-card">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <div class="contact-card-text">
+              <h4>Phone</h4>
+              <a href="tel:+63000000000">(000) 000-0000</a>
+              <span class="hint">Mon–Fri, 8:00 AM – 5:00 PM</span>
+            </div>
+          </div>
+
+          <div class="contact-card">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div class="contact-card-text">
+              <h4>Office</h4>
+              <span class="value">HR Office, Admin Building</span>
+              <span class="hint">Madridejos Community College</span>
             </div>
           </div>
 
