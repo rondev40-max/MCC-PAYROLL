@@ -377,7 +377,7 @@
         }
     </style>
 </head>
-<body>
+<body data-show-otp="{{ session('show_otp_modal') ? '1' : '0' }}" data-otp-info="{{ e(session('info','')) }}" data-otp-email="{{ e(old('email','')) }}">
 
     <!-- ===================== BACK LINK ===================== -->
     <a href="{{ url('/') }}" class="back-link">
@@ -646,10 +646,11 @@
         // is rendered inside the modal itself (see the <p> above the form) —
         // we intentionally don't also pop a SweetAlert here, since stacking
         // two overlays for one event just fights for focus and looks messy.
-        @if(session('show_otp_modal') || session('info'))
-            const prefill = {{ json_encode(old('email', '')) }};
+        const showOtp = document.body.dataset.showOtp === '1' || (document.body.dataset.otpInfo && document.body.dataset.otpInfo.length > 0);
+        if (showOtp) {
+            const prefill = document.body.dataset.otpEmail || '';
             showModal(prefill);
-        @endif
+        }
     })();
     </script>
 </body>
