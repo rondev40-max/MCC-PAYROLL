@@ -77,13 +77,42 @@
             <p class="success-message">{{ session('message') }}</p>
         @endif
 
-        <p style="color: #6c757d;">
-            Please enter the 6-digit verification code sent to your registered email address.
-        </p>
+        @if(!empty($sessionMissing) && $sessionMissing)
+            <p style="color: #6c757d;">
+                Waiting for access — if you already received a code by email, enter the email you used to log in and paste the 6-digit code below. 
+                If you haven't started the login flow, <a href="{{ route('index') }}">return to the login page</a> and sign in to request a code.
+            </p>
+        @else
+            <p style="color: #6c757d;">
+                Please enter the 6-digit verification code sent to your registered email address.
+            </p>
+        @endif
 
         <form method="POST" action="{{ route('otp.verify') }}">
             @csrf
             
+            @if(!empty($sessionMissing) && $sessionMissing)
+                <div class="form-group">
+                    <label for="email">Email address used to log in:</label>
+                    <input
+                        id="email"
+                        type="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        value="{{ old('email') }}"
+                        required
+                        autocomplete="email"
+                        @error('email') style="border-color: #dc3545;" @enderror
+                    >
+
+                    @error('email')
+                        <span class="error-message" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+            @endif
+
             <div class="form-group">
                 <label for="otp">One-Time Code (OTP):</label>
                 <input 
@@ -95,7 +124,6 @@
                     required 
                     autofocus
                     autocomplete="off"
-                    {{-- Kapag may error, mag-a-add ng red border --}}
                     @error('otp') style="border-color: #dc3545;" @enderror 
                 >
 
@@ -112,8 +140,7 @@
             
             <p style="font-size: 0.9em; margin-top: 20px;">
                 Didn't receive the code? 
-                {{-- Kailangan mong gumawa ng route at controller method para dito --}}
-                <a href="{{ route('otp.resend') }}">Resend Code</a>
+                <a href="{{ route('otp.resend') }}">Resend Code</a> — or <a href="{{ route('index') }}">go back to login</a> to start again.
             </p>
         </form>
 

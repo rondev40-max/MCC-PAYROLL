@@ -17,12 +17,11 @@ class OtpVerificationController extends Controller
      */
     public function showVerificationForm()
     {
-        // Ensure there is a user ID in the session before showing the form
-        if (!session('2fa:user:id')) {
-            return redirect()->route('index');
-        }
-        
-        return view('auth.verify-otp');
+        // If there's no 2FA session, show a helpful waiting/paste-code page instead
+        // of immediately redirecting. The form will allow entering email + code
+        // as a fallback when the temporary 2FA session has been lost.
+        $sessionMissing = !session('2fa:user:id');
+        return view('auth.verify-otp', ['sessionMissing' => $sessionMissing]);
     }
 
     /**
@@ -30,24 +29,35 @@ class OtpVerificationController extends Controller
      */
     public function verify(Request $request)
     {
-        // Validation: 6 digits, required, numeric
-        $request->validate([
+        // Validation: 6 digits, required, numeric. If session is missing, require an email fallback.
+        $rules = [
             'otp' => ['required', 'numeric', 'digits:6'],
-        ]);
+        ];
 
         $userId = session('2fa:user:id');
-        
-        // Check if user is being tracked in session
-        if (!$userId) {
-            return back()->withErrors(['otp' => 'Session expired. Please log in again.']);
+        $sessionMissing = !$userId;
+        if ($sessionMissing) {
+            // When the temporary 2FA session is gone, allow the user to provide their
+            // email along with the OTP so they can paste a code received earlier.
+            $rules['email'] = ['required', 'email'];
         }
 
-        $user = User::find($userId);
+        $request->validate($rules);
 
-        if (!$user) {
+        // Resolve the user either from the 2FA session or from the provided email.
+        if ($userId) {
+            $user = User::find($userId);
+        } else {
+            $user = User::where('email', $request->input('email'))->first();
+        }
+        if (!$user) {
+            if ($sessionMissing) {
+                return back()->withErrors(['email' => 'No account found for that email. Please check and try again, or go back to the login page.']);
+            }
             session()->forget('2fa:user:id');
             return redirect()->route('index');
         }
+
 
         // Hard stop regardless of what code is entered, once too many wrong
         // guesses have been made against the current OTP.
