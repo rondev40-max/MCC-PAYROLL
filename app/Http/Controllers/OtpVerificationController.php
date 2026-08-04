@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use App\Mail\OtpMail; 
 use Carbon\Carbon;
 
@@ -17,6 +18,10 @@ class OtpVerificationController extends Controller
      */
     public function showVerificationForm()
     {
+        if (!Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until'])) {
+            return redirect()->route('index')->with('warning', 'OTP verification is unavailable. Please log in again.');
+        }
+ 
         // If there's no 2FA session, show a helpful waiting/paste-code page instead
         // of immediately redirecting. The form will allow entering email + code
         // as a fallback when the temporary 2FA session has been lost.
@@ -157,8 +162,12 @@ class OtpVerificationController extends Controller
      */
     public function resendOtp(Request $request)
     {
+        if (!Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until'])) {
+            return redirect()->route('index')->with('warning', 'OTP verification is unavailable. Please log in again.');
+        }
+ 
         $userId = session('2fa:user:id');
-
+ 
         // Check if user is being tracked in session
         if (!$userId) {
             return redirect()->route('index')->with('error', 'Session expired. Please try to log in again.');
