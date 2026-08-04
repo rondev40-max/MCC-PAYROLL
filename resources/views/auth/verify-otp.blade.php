@@ -90,7 +90,7 @@
 
         <form method="POST" action="{{ route('otp.verify') }}">
             @csrf
-            
+             
             @if(!empty($sessionMissing) && $sessionMissing)
                 <div class="form-group">
                     <label for="email">Email address used to log in:</label>
@@ -104,7 +104,7 @@
                         autocomplete="email"
                         @error('email') style="border-color: #dc3545;" @enderror
                     >
-
+ 
                     @error('email')
                         <span class="error-message" role="alert">
                             <strong>{{ $message }}</strong>
@@ -112,7 +112,7 @@
                     @enderror
                 </div>
             @endif
-
+ 
             <div class="form-group">
                 <label for="otp">One-Time Code (OTP):</label>
                 <input 
@@ -126,25 +126,33 @@
                     autocomplete="off"
                     @error('otp') style="border-color: #dc3545;" @enderror 
                 >
-
+ 
                 @error('otp')
                     <span class="error-message" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
-            
+             
             <div class="form-group">
                 <button type="submit">Verify Code and Login</button>
             </div>
-            
+             
             <p style="font-size: 0.9em; margin-top: 20px;">
                 Didn't receive the code? 
                 <a href="{{ route('otp.resend') }}">Resend Code</a> — or <a href="{{ route('index') }}">go back to login</a> to start again.
             </p>
         </form>
-
+ 
     </div>
-
+ 
++    @if(session('info'))
++        <script>
++            window.addEventListener('DOMContentLoaded', function () {
++                alert({!! json_encode(session('info')) !!});
++            });
++        </script>
++    @endif
++
 </body>
 </html>

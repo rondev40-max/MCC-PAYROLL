@@ -105,7 +105,8 @@ class LoginController extends Controller
         }
 
         $request->session()->put('2fa:user:id', $user->id);
-
-        return redirect()->route('otp.verify.form');
+ 
+        return redirect()->route('otp.verify.form')
+            ->with('info', 'Enter the OTP code sent to your email to verify your login.');
     }
 }
