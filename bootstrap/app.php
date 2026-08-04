@@ -20,13 +20,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // Trust the platform's edge proxy (Vercel/Railway terminate TLS there and
-        // forward plain HTTP internally with X-Forwarded-Proto set). Without this,
-        // $request->secure() is always false behind the proxy, which breaks
-        // ForceHttps below (redirect loop) and any other secure()-dependent logic.
-        // '*' is appropriate here because the platform itself is the only path
-        // into the app — there's no way to reach it except through that edge.
-        $middleware->trustProxies(at: '*');
+        // NOTE: this app no longer runs behind Vercel/Railway's edge proxy,
+        // so there's nothing forwarding X-Forwarded-Proto that needs trusting.
+        // Hostinger terminates HTTPS directly, so $request->secure() already
+        // reflects the real connection without any proxy trust configured.
+        // Blindly trusting '*' here (any IP) is also a spoofing risk, and on
+        // this host it was the likely cause of ForceHttps below occasionally
+        // misjudging a request as insecure and injecting an extra redirect
+        // hop right after login — which silently ate the one-shot session
+        // flash data the OTP modal depends on.
 
         // ✅ Global middleware (replaces $middleware array)
         // ForceHttps runs first so nothing downstream processes a plaintext request.
