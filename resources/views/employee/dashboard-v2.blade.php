@@ -952,7 +952,8 @@
       // Hoisted derived values — computed once, up top, so nothing below depends on
       // markup order. (Previously some of these were computed inline inside whichever
       // component happened to render first, which broke silently if blocks got reordered.)
-      $unread = isset($announcements) ? $announcements->where('is_read', false)->count() : 0;
+      $readAnnouncementIds = $readAnnouncementIds ?? [];
+      $unread = isset($announcements) ? $announcements->whereNotIn('id', $readAnnouncementIds)->count() : 0;
       $newPay = isset($payslips) ? $payslips->where('viewed', false)->count() : 0;
 
       // Attendance calendar month — driven by ?month=&year= so it's navigable from the
@@ -1021,7 +1022,7 @@
       <div class="nav-label">Info</div>
       <button class="sb-link" data-tab="announcements" id="nav-announcements">
         <i class="bi bi-megaphone-fill"></i> Announcements
-        @if($unread > 0) <span class="sb-dot"></span> @endif
+        @if($unread > 0) <span class="sb-dot" id="annSbDot"></span> @endif
       </button>
       <button class="sb-link" data-tab="profile" id="nav-profile">
         <i class="bi bi-person-circle"></i> My Profile
@@ -1074,7 +1075,7 @@
 
         <div class="icon-btn" id="notifBtn" title="Announcements" style="cursor:pointer;">
           <i class="bi bi-bell" style="font-size:.82rem;"></i>
-          @if(isset($unread) && $unread > 0) <span class="n-dot"></span> @endif
+          @if(isset($unread) && $unread > 0) <span class="n-dot" id="annNDot"></span> @endif
         </div>
 
         <div class="tb-user" id="profileBtn">
@@ -1635,13 +1636,20 @@
             <div class="ph-title">Announcements</div>
             <div class="ph-sub">Official notices and updates from the administration</div>
           </div>
-          <select class="f-input" style="width:auto;font-size:.78rem;" id="annFilter" onchange="filterAnn()">
-            <option value="all">All Types</option>
-            <option value="general">General</option>
-            <option value="payroll">Payroll</option>
-            <option value="holiday">Holiday</option>
-            <option value="urgent">Urgent</option>
-          </select>
+          <div class="d-flex align-items-center gap-2">
+            @if($unread > 0)
+              <button class="btn-outline btn-sm" id="markAllReadBtn" onclick="markAllAnnouncementsRead()">
+                <i class="bi bi-check2-all"></i> Mark all as read
+              </button>
+            @endif
+            <select class="f-input" style="width:auto;font-size:.78rem;" id="annFilter" onchange="filterAnn()">
+              <option value="all">All Types</option>
+              <option value="general">General</option>
+              <option value="payroll">Payroll</option>
+              <option value="holiday">Holiday</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
         </div>
 
         <div id="annContainer">
@@ -1650,8 +1658,9 @@
             $ac = ['general'=>'#2563eb','payroll'=>'#10b981','holiday'=>'#f59e0b','urgent'=>'#ef4444'][$ann->type ?? 'general'] ?? '#2563eb';
             $ai = ['general'=>'megaphone','payroll'=>'cash-coin','holiday'=>'calendar-heart','urgent'=>'exclamation-triangle'][$ann->type ?? 'general'] ?? 'megaphone';
             $at = $ann->type ?? 'general';
+            $annIsUnread = !in_array($ann->id, $readAnnouncementIds ?? []);
           @endphp
-          <div class="ann-card" style="--ann-c:{{ $ac }};" data-type="{{ $at }}">
+          <div class="ann-card" style="--ann-c:{{ $ac }};{{ $annIsUnread ? 'cursor:pointer;' : '' }}" data-type="{{ $at }}" data-ann-id="{{ $ann->id }}" data-read="{{ $annIsUnread ? '0' : '1' }}" @if($annIsUnread) onclick="markAnnouncementRead({{ $ann->id }}, this)" @endif>
             <div class="d-flex align-items-start gap-3 mb-2">
               <div style="width:38px;height:38px;border-radius:10px;background:{{ $ac }}18;display:grid;place-items:center;flex-shrink:0;">
                 <i class="bi bi-{{ $ai }}" style="color:{{ $ac }};font-size:.9rem;"></i>
@@ -1659,8 +1668,8 @@
               <div style="flex:1;min-width:0;">
                 <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
                   <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:.87rem;color:var(--text);">{{ $ann->title }}</span>
-                  @if(!($ann->is_read ?? false))
-                    <span style="background:var(--warn);color:#fff;font-size:.54rem;font-weight:800;border-radius:4px;padding:2px 7px;letter-spacing:.3px;">UNREAD</span>
+                  @if($annIsUnread)
+                    <span class="ann-unread-tag" style="background:var(--warn);color:#fff;font-size:.54rem;font-weight:800;border-radius:4px;padding:2px 7px;letter-spacing:.3px;">UNREAD</span>
                   @endif
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -2002,6 +2011,59 @@ function filterAnn() {
   document.querySelectorAll('#annContainer .ann-card').forEach(c => {
     c.style.display = (t === 'all' || c.dataset.type === t) ? '' : 'none';
   });
+}
+
+/* ═══════════════════════════════════════════
+   ANNOUNCEMENTS — MARK AS READ
+═══════════════════════════════════════════ */
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+function _onAnnouncementsCleared() {
+  document.getElementById('annSbDot')?.remove();
+  document.getElementById('annNDot')?.remove();
+  document.getElementById('markAllReadBtn')?.remove();
+}
+
+async function markAnnouncementRead(id, cardEl) {
+  if (cardEl?.dataset.read === '1') return; // already read, avoid duplicate calls
+  try {
+    const res = await fetch(`/employee/announcements/${id}/read`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (cardEl) {
+      cardEl.dataset.read = '1';
+      cardEl.style.cursor = 'default';
+      cardEl.removeAttribute('onclick');
+      cardEl.querySelector('.ann-unread-tag')?.remove();
+    }
+    if (data.unread === 0) _onAnnouncementsCleared();
+  } catch (err) {
+    console.error('Could not mark announcement as read:', err);
+  }
+}
+
+async function markAllAnnouncementsRead() {
+  try {
+    const res = await fetch('/employee/announcements/read-all', {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    document.querySelectorAll('#annContainer .ann-card').forEach(c => {
+      c.dataset.read = '1';
+      c.style.cursor = 'default';
+      c.removeAttribute('onclick');
+      c.querySelector('.ann-unread-tag')?.remove();
+    });
+    _onAnnouncementsCleared();
+  } catch (err) {
+    console.error('Could not mark all announcements as read:', err);
+  }
 }
 
 /* ═══════════════════════════════════════════

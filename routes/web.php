@@ -263,6 +263,8 @@ Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('emp
 
     // Announcements
     Route::get('/announcements', [EmployeeController::class, 'portalAnnouncements'])->name('announcements');
+    Route::post('/announcements/{announcement}/read', [EmployeeController::class, 'markAnnouncementRead'])->name('announcements.read');
+    Route::post('/announcements/read-all', [EmployeeController::class, 'markAllAnnouncementsRead'])->name('announcements.readAll');
 
     // Profile
     Route::get('/profile', [EmployeeController::class, 'portalProfile'])->name('profile');

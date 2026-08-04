@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Announcement;
+use App\Models\AnnouncementRead;
 use App\Models\Attendance;
 use App\Models\PayslipHistory;
 use App\Models\EmployeeTimesheet;
@@ -93,6 +94,8 @@ class EmployeeController extends Controller
         $attendances = $this->getAttendances($employeeId);
         $stats       = $this->buildStats($attendances);
         $announcements = Announcement::orderByDesc('created_at')->take(5)->get();
+        $readAnnouncementIds = AnnouncementRead::where('employee_id', $employeeId)
+            ->pluck('announcement_id')->all();
         $payslips    = PayslipHistory::where('email', $user->email)
             ->orderByDesc('sent_at')->take(3)->get();
         $employee    = Employee::where('email', $user->email)
@@ -100,7 +103,7 @@ class EmployeeController extends Controller
             ->first();
 
         return view('employee.dashboard-v2', compact(
-            'user', 'employee', 'stats', 'announcements', 'payslips', 'attendances'
+            'user', 'employee', 'stats', 'announcements', 'readAnnouncementIds', 'payslips', 'attendances'
         ));
     }
 
@@ -200,9 +203,63 @@ class EmployeeController extends Controller
     public function portalAnnouncements(Request $request)
     {
         $user          = Auth::user();
+        $employeeId    = $this->resolveEmployeeId($user);
         $announcements = Announcement::orderByDesc('created_at')->get();
+        $readAnnouncementIds = AnnouncementRead::where('employee_id', $employeeId)
+            ->pluck('announcement_id')->all();
 
-        return view('employee.announcements', compact('user', 'announcements'));
+        return view('employee.announcements', compact('user', 'announcements', 'readAnnouncementIds'));
+    }
+
+    /**
+     * Mark a single announcement as read for the current employee.
+     * Called from the portal via fetch(); returns the employee's
+     * updated unread count so the sidebar badge can update live.
+     */
+    public function markAnnouncementRead(Request $request, Announcement $announcement)
+    {
+        $user       = Auth::user();
+        $employeeId = $this->resolveEmployeeId($user);
+
+        AnnouncementRead::firstOrCreate([
+            'announcement_id' => $announcement->id,
+            'employee_id'     => $employeeId,
+        ], [
+            'read_at' => now(),
+        ]);
+
+        $unread = Announcement::orderByDesc('created_at')->take(5)->get()
+            ->whereNotIn('id', AnnouncementRead::where('employee_id', $employeeId)->pluck('announcement_id'))
+            ->count();
+
+        return response()->json(['success' => true, 'unread' => $unread]);
+    }
+
+    /**
+     * Mark every announcement currently visible to the employee as read.
+     */
+    public function markAllAnnouncementsRead(Request $request)
+    {
+        $user       = Auth::user();
+        $employeeId = $this->resolveEmployeeId($user);
+
+        $ids = Announcement::pluck('id');
+        $existing = AnnouncementRead::where('employee_id', $employeeId)
+            ->whereIn('announcement_id', $ids)->pluck('announcement_id');
+
+        $rows = $ids->diff($existing)->map(fn ($id) => [
+            'announcement_id' => $id,
+            'employee_id'     => $employeeId,
+            'read_at'         => now(),
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+
+        if ($rows->isNotEmpty()) {
+            AnnouncementRead::insert($rows->all());
+        }
+
+        return response()->json(['success' => true, 'unread' => 0]);
     }
 
     public function portalProfile(Request $request)

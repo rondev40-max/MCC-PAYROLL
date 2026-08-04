@@ -20,4 +20,18 @@ class Announcement extends Model
     protected $casts = [
         'is_read' => 'boolean',
     ];
+
+    /**
+     * Per-employee read receipts. Use this instead of the legacy
+     * `is_read` column, which is global and not scoped to a user.
+     */
+    public function reads()
+    {
+        return $this->hasMany(AnnouncementRead::class);
+    }
+
+    public function isReadBy(int $employeeId): bool
+    {
+        return $this->reads->contains('employee_id', $employeeId);
+    }
 }
