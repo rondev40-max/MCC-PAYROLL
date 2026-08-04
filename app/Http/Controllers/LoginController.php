@@ -20,7 +20,15 @@ class LoginController extends Controller
             'user_type' => ['required', 'in:admin,attendance,employee'],
 
         ]);
-
+ 
+        if ($credentials['user_type'] === 'admin') {
+            $allowedDomains = ['mcc.edu.ph', 'mcclawis.edu.ph'];
+            $domainPattern = '/@(' . implode('|', array_map('preg_quote', $allowedDomains)) . ')$/i';
+            if (!preg_match($domainPattern, $credentials['email'])) {
+                return back()->with('error', 'Admin login requires an @mcc.edu.ph or @mcclawis.edu.ph email address.')->withInput();
+            }
+        }
+ 
         $user = User::where('email', $credentials['email'])->first();
 
         // 1. Initial Validation: User not found

@@ -202,7 +202,14 @@
         .input-wrapper {
             position: relative;
         }
-
+ 
+        .input-hint {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+        }
+ 
         .input-wrapper input {
             width: 100%;
             padding: 11px 42px 11px 14px;
@@ -404,12 +411,13 @@
                         type="email"
                         id="email"
                         name="email"
-                        placeholder="admin@mcc.edu.ph"
+                        placeholder="admin@mcc.edu.ph or admin@mcclawis.edu.ph"
                         value="{{ old('email') }}"
                         required
                         autofocus
                         autocomplete="email"
                     >
+                    <span class="input-hint">Use an MCC or MCC Lawis email address</span>
                     <span class="input-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                     </span>
