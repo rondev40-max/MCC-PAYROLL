@@ -36,19 +36,20 @@ class LoginController extends Controller
         }
 
         // 3. Role Check (Verify if the user is trying to log into the correct type)
+        $userRole = strtolower(trim($user->role ?? ''));
         $allowed = false;
-        if ($credentials['user_type'] === 'admin' && ($user->role === 'admin' || $user->role === 'super_admin')) {
+        if ($credentials['user_type'] === 'admin' && in_array($userRole, ['admin', 'super_admin', 'superadmin', 'administrator'], true)) {
             $allowed = true;
-        } elseif ($credentials['user_type'] === 'attendance' && $user->role === 'attendance_checker') {
+        } elseif ($credentials['user_type'] === 'attendance' && $userRole === 'attendance_checker') {
             $allowed = true;
-        } elseif ($credentials['user_type'] === 'employee' && $user->role === 'employee') {
+        } elseif ($credentials['user_type'] === 'employee' && $userRole === 'employee') {
             $allowed = true;
         }
-
-
+ 
+ 
         if (!$allowed) {
             // Gumamit ng session('error') para gumana ang SweetAlert sa Blade
-            return back()->with('error', 'Access denied. Incorrect user type selected for your role.')->withInput();
+            return back()->with('error', "Access denied. Your account role is '{$user->role}'. Please use the correct portal for your account type or contact your system administrator.")->withInput();
         }
 
         // SECURITY: block login until the account's email has been verified.
