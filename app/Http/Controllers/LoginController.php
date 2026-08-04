@@ -128,7 +128,16 @@ class LoginController extends Controller
         }
  
         $request->session()->put('2fa:user:id', $user->id);
- 
+
+        // If the login attempt came from the admin portal, prefer showing a
+        // clean in-page modal on the admin login form instead of redirecting
+        // the user away. Other flows still go to the dedicated verification page.
+        if (($request->input('user_type') ?? '') === 'admin') {
+            return redirect()->route('admin.login.form')
+                ->with('show_otp_modal', true)
+                ->with('info', 'Enter the OTP code sent to your email to verify your login.');
+        }
+
         return redirect()->route('otp.verify.form')
             ->with('info', 'Enter the OTP code sent to your email to verify your login.');
     }

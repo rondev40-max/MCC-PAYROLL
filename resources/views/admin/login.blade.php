@@ -578,5 +578,83 @@
         }
     });
     </script>
+
+    <!-- ===================== OTP MODAL ===================== -->
+    <style>
+        .otp-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .otp-modal { background: #fff; width: 100%; max-width: 420px; border-radius: 12px; padding: 22px; box-shadow: 0 20px 40px rgba(2,6,23,0.4); }
+        .otp-modal h3 { margin: 0 0 8px; font-size: 1.05rem; }
+        .otp-modal p { margin: 0 0 12px; color: #55606a; font-size: 0.95rem; }
+        .otp-modal .form-row { margin-bottom: 12px; }
+        .otp-modal input[type="text"], .otp-modal input[type="email"] { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; }
+        .otp-modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top: 8px; }
+        .otp-modal .btn { padding: 10px 14px; border-radius: 8px; border: none; cursor: pointer; }
+        .otp-modal .btn-primary { background: #2563eb; color:#fff; }
+        .otp-modal .btn-ghost { background: transparent; color:#374151; border:1px solid #e6eefc; }
+    </style>
+
+    <div id="otpModalOverlay" class="otp-modal-overlay" aria-hidden="true">
+        <div class="otp-modal" role="dialog" aria-modal="true" aria-labelledby="otpTitle">
+            <h3 id="otpTitle">Enter verification code</h3>
+            <p>Please enter the 6-digit code recently sent to your registered email to complete sign in.</p>
+
+            <form id="otpModalForm" method="POST" action="{{ route('otp.verify') }}">
+                @csrf
+                <input type="hidden" name="email" id="otpModalEmail" value="">
+                <div class="form-row">
+                    <label for="otpModalInput" style="display:block; font-weight:600; margin-bottom:6px;">One-Time Code</label>
+                    <input id="otpModalInput" name="otp" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="123456" required autofocus>
+                </div>
+
+                <div class="actions">
+                    <button type="button" id="otpCancel" class="btn btn-ghost">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Verify and continue</button>
+                </div>
+            </form>
+
+            <p style="margin-top:12px; font-size:0.9rem; color:#6b7280;">Didn't receive a code? <a href="{{ route('otp.resend') }}">Resend</a></p>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const overlay = document.getElementById('otpModalOverlay');
+        const input = document.getElementById('otpModalInput');
+        const emailEl = document.getElementById('otpModalEmail');
+        const cancel = document.getElementById('otpCancel');
+
+        function showModal(prefillEmail) {
+            if (prefillEmail) emailEl.value = prefillEmail;
+            overlay.style.display = 'flex';
+            overlay.setAttribute('aria-hidden', 'false');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function hideModal() {
+            overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        cancel.addEventListener('click', hideModal);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) hideModal(); });
+
+        // If server requested showing OTP modal, display it.
+        @if(session('show_otp_modal') || session('info'))
+            // If available, try to prefill the email from the previous input value to help the user paste codes.
+            const prefill = {{ json_encode(old('email', '')) }};
+            showModal(prefill);
+
+            // Also show a lightweight SweetAlert informing user to enter the OTP
+            @if(session('info'))
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Verification required',
+                    text: {!! json_encode(session('info')) !!},
+                    confirmButtonColor: '#2563eb'
+                });
+            @endif
+        @endif
+    })();
+    </script>
 </body>
 </html>
