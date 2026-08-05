@@ -717,6 +717,16 @@
      FORMS
   ══════════════════════════════════════════════ */
   .f-label { font-size: .72rem; font-weight: 700; color: var(--text-2); margin-bottom: .3rem; display: block; letter-spacing: .02em; }
+  .f-error { font-size: .68rem; font-weight: 600; color: var(--danger); margin-top: .3rem; }
+  .f-input.is-invalid { border-color: var(--danger) !important; }
+  .pw-field { position: relative; }
+  .pw-field .f-input { padding-right: 2.3rem; }
+  .pw-toggle {
+    position: absolute; top: 50%; right: .55rem; transform: translateY(-50%);
+    background: none; border: none; color: var(--text-3); cursor: pointer;
+    padding: 4px; display: grid; place-items: center; font-size: .82rem;
+  }
+  .pw-toggle:hover { color: var(--brand); }
   .f-input {
     border: 1.5px solid var(--border);
     border-radius: 9px; padding: .52rem .88rem;
@@ -1742,14 +1752,14 @@
 
                 <div style="margin-top:.9rem;background:var(--brand-light);border:1px solid var(--brand-mid);border-radius:9px;padding:.65rem .85rem;font-size:.73rem;color:var(--brand);display:flex;align-items:flex-start;gap:7px;">
                   <i class="bi bi-info-circle-fill" style="margin-top:2px;flex-shrink:0;"></i>
-                  Contact your HR administrator to update your profile information.
+                  Update your name, email, or password from the panel on the right. Contact HR to change your position, department, or salary.
                 </div>
               </div>
             </div>
           </div>
 
           <div class="col-lg-8">
-            <div class="card">
+            <div class="card mb-3">
               <div class="card-hd">
                 <div class="card-title">
                   <div class="ct-icon" style="background:rgba(37,99,235,.1);color:var(--brand);">
@@ -1757,29 +1767,40 @@
                   </div>
                   Employee Details
                 </div>
-                <span style="font-size:.67rem;color:var(--text-3);">Read-only — contact HR to update</span>
+                <span style="font-size:.67rem;color:var(--text-3);">Name &amp; email editable · rest managed by HR</span>
               </div>
               <div class="card-body">
-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Personal Information</div>
-                <div class="row g-3 mb-4">
-                  <div class="col-md-6">
-                    <label class="f-label">Full Name</label>
-                    <input class="f-input" value="{{ $employee->name ?? '' }}" disabled>
+                <form action="{{ route('employee.profile.update') }}" method="POST">
+                  @csrf
+                  <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Personal Information</div>
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                      <label class="f-label">Full Name</label>
+                      <input type="text" name="name" class="f-input @error('name') is-invalid @enderror" value="{{ old('name', $employee->name ?? '') }}" required>
+                      @error('name') <div class="f-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6">
+                      <label class="f-label">Email Address</label>
+                      <input type="email" name="email" class="f-input @error('email') is-invalid @enderror" value="{{ old('email', $employee->email ?? '') }}" required>
+                      @error('email') <div class="f-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6">
+                      <label class="f-label">Phone</label>
+                      <input class="f-input" value="{{ $employee->phone ?? '—' }}" disabled>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="f-label">Address</label>
+                      <input class="f-input" value="{{ $employee->address ?? '—' }}" disabled>
+                    </div>
                   </div>
-                  <div class="col-md-6">
-                    <label class="f-label">Email Address</label>
-                    <input class="f-input" value="{{ $employee->email ?? '' }}" disabled>
+                  <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn-primary btn-sm">
+                      <i class="bi bi-check2"></i> Save Changes
+                    </button>
                   </div>
-                  <div class="col-md-6">
-                    <label class="f-label">Phone</label>
-                    <input class="f-input" value="{{ $employee->phone ?? '—' }}" disabled>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="f-label">Address</label>
-                    <input class="f-input" value="{{ $employee->address ?? '—' }}" disabled>
-                  </div>
-                </div>
-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Employment Details</div>
+                </form>
+
+                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin:1.2rem 0 .7rem;padding-top:1rem;border-top:1px solid var(--border-2);">Employment Details</div>
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="f-label">Position</label>
@@ -1798,6 +1819,58 @@
                     <input class="f-input" value="{{ $employee->type ?? '—' }}" disabled>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-title">
+                  <div class="ct-icon" style="background:rgba(124,58,237,.1);color:#7c3aed;">
+                    <i class="bi bi-shield-lock-fill"></i>
+                  </div>
+                  Change Password
+                </div>
+              </div>
+              <div class="card-body">
+                <form action="{{ route('employee.profile.update') }}" method="POST" id="pwForm">
+                  @csrf
+                  <input type="hidden" name="name"  value="{{ $employee->name  ?? '' }}">
+                  <input type="hidden" name="email" value="{{ $employee->email ?? '' }}">
+                  <div class="row g-3 mb-1">
+                    <div class="col-md-4">
+                      <label class="f-label">Current Password</label>
+                      <div class="pw-field">
+                        <input type="password" name="current_password" class="f-input @error('current_password') is-invalid @enderror" autocomplete="current-password">
+                        <button type="button" class="pw-toggle" onclick="togglePw(this)"><i class="bi bi-eye"></i></button>
+                      </div>
+                      @error('current_password') <div class="f-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                      <label class="f-label">New Password</label>
+                      <div class="pw-field">
+                        <input type="password" name="new_password" class="f-input @error('new_password') is-invalid @enderror" autocomplete="new-password" minlength="8">
+                        <button type="button" class="pw-toggle" onclick="togglePw(this)"><i class="bi bi-eye"></i></button>
+                      </div>
+                      @error('new_password') <div class="f-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                      <label class="f-label">Confirm New Password</label>
+                      <div class="pw-field">
+                        <input type="password" name="new_password_confirmation" class="f-input" autocomplete="new-password" minlength="8">
+                        <button type="button" class="pw-toggle" onclick="togglePw(this)"><i class="bi bi-eye"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="font-size:.68rem;color:var(--text-3);margin-bottom:1rem;">
+                    <i class="bi bi-info-circle"></i> Minimum 8 characters. Leave blank if you don't want to change your password.
+                  </div>
+                  <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn-primary btn-sm">
+                      <i class="bi bi-shield-check"></i> Update Password
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
@@ -1891,6 +1964,27 @@
 
 
 <script>
+/* ═══════════════════════════════════════════
+   PROFILE — PASSWORD FIELD TOGGLE & CONFIRM CHECK
+═══════════════════════════════════════════ */
+function togglePw(btn) {
+  const input = btn.previousElementSibling;
+  const icon  = btn.querySelector('i');
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  icon.className = showing ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+
+document.getElementById('pwForm')?.addEventListener('submit', (e) => {
+  const form = e.target;
+  const newPw     = form.querySelector('[name="new_password"]').value;
+  const confirmPw = form.querySelector('[name="new_password_confirmation"]').value;
+  if (newPw && newPw !== confirmPw) {
+    e.preventDefault();
+    Swal.fire({ icon: 'error', title: 'Passwords Don\'t Match', text: 'New password and confirmation must be identical.', confirmButtonColor: '#2563eb' });
+  }
+});
+
 /* ═══════════════════════════════════════════
    THEME TOGGLE
 ═══════════════════════════════════════════ */
