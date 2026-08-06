@@ -2,389 +2,331 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Add Utility Timesheet</title><script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
-  <!-- Bootstrap 5 CSS -->
-   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+  <title>Add Utility Timesheet</title>
+  <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
+  <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
-      background: #add8e6; /* Light blue background */
+      background: #f1f5f9; /* Slate 100 */
       min-height: 100vh;
       display: flex;
       align-items: flex-start;
       justify-content: center;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      z-index: 0;
     }
 
     .main-content {
-      margin: 30px auto;
-      padding: 30px;
-      background: #fff; /* White content box */
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin: 40px auto;
+      padding: 40px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
       width: 95%;
-      max-width: 600px;
+      max-width: 800px;
+      position: relative;
+      border: 1px solid #e2e8f0;
+      z-index: 1;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .main-content h2 {
-      color: #dc3545;
-      margin-bottom: 25px;
-      text-align: center;
+      color: #1e293b;
+      margin-bottom: 30px;
+      font-weight: 700;
+      font-size: 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .main-content h2 i {
+      color: #3b82f6; /* Blue 500 */
+    }
+
+    /* Floating Labels Styling */
+    .form-floating > .form-control,
+    .form-floating > .form-select {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      background-color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+
+    .form-floating > .form-control:focus,
+    .form-floating > .form-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      background-color: #ffffff;
+    }
+
+    .form-floating > label {
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    .form-floating > .form-select ~ label {
+      color: #3b82f6;
       font-weight: 600;
     }
 
-    .form-label {
-      color: #333;
-      font-weight: 500;
-      margin-bottom: 5px;
+    /* Days selector section */
+    .days-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
     }
-
-    .form-control,
-    .form-select {
-      border: 2px solid #e9ecef;
-      border-radius: 6px;
-      padding: 10px 12px;
+    
+    .days-section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .form-control:focus,
-    .form-select:focus {
-      border-color: #dc3545;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    /* Total display card */
+    .total-display {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      transition: all 0.3s ease;
     }
 
+    .total-display .label {
+      font-size: 1rem;
+      color: #1e40af;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .total-display .amount {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1d4ed8;
+      margin: 0;
+    }
+
+    /* Total state transitions */
+    .total-display.positive {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-color: #bbf7d0;
+    }
+    .total-display.positive .label, .total-display.positive .amount {
+      color: #166534;
+    }
+
+    /* Buttons */
     .btn-primary {
-      background-color: #dc3545;
-      border-color: #dc3545;
-      padding: 10px 25px;
-      font-weight: 500;
+      background: #3b82f6;
+      border: none;
+      padding: 12px 28px;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.2s ease;
     }
 
     .btn-primary:hover {
-      background-color: #a71d2a;
-      border-color: #a71d2a;
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
 
     .btn-secondary {
-      background-color: #6c757d;
-      border-color: #6c757d;
-      padding: 10px 25px;
-      font-weight: 500;
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+      padding: 12px 28px;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.2s ease;
     }
 
     .btn-secondary:hover {
-      background-color: #545b62;
-      border-color: #545b62;
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #94a3b8;
     }
 
     .button-group {
       display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 25px;
+      gap: 15px;
+      margin-top: 35px;
+      justify-content: flex-end;
     }
 
-    /* Days selector styling */
-    .days-selector {
-      background: #f8f9fa;
-      border-radius: 6px;
-      padding: 12px;
-      border: 2px solid #e9ecef;
-      transition: border-color 0.3s ease;
-    }
-
-    .days-selector:hover {
-      border-color: #dc3545;
-    }
-
-    .form-check {
-      margin-bottom: 0;
-    }
-
-    .form-check-input {
-      margin-top: 0.25rem;
-    }
-
-    .form-check-label {
-      font-size: 0.9rem;
-      color: #495057;
-      cursor: pointer;
-    }
-
-    .form-check-input:checked + .form-check-label {
-      color: #dc3545;
-      font-weight: 600;
-    }
-
-    .form-check-input:checked {
-      background-color: #dc3545;
-      border-color: #dc3545;
-    }
-
-    /* Total honorarium display */
-    .total-display {
-      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-      border: 2px solid #dc3545;
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .total-display .amount {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #dc3545;
-      margin: 0;
-    }
-
-    .total-display .label {
-      font-size: 0.9rem;
-      color: #6c757d;
-      margin: 0;
-    }
-
-    /* Enhanced textarea styling */
-    textarea.form-control {
-      resize: vertical;
-      min-height: 80px;
-      padding: 8px 12px;
-    }
-
-    /* FIXED: Error message styling */
-    .invalid-feedback {
-      display: block;
-      color: #dc3545;
-      font-size: 0.875rem;
-      margin-top: -10px;
-      margin-bottom: 10px;
+    @media (max-width: 768px) {
+      .button-group {
+        flex-direction: column-reverse;
+      }
+      .btn-primary, .btn-secondary {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <div class="main-content">
-    <h2><i class="bi bi-plus-circle me-2"></i>Add Utility Timesheet</h2>
+    <h2><i class="bi bi-tools"></i> Add Utility Timesheet</h2>
     
     @if ($errors->any())
-      <div class="alert alert-danger">
-        <strong>Please fix the following errors:</strong>
-        <ul class="mb-0 mt-2">
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      </div>
+        <div class="alert alert-danger border-0 rounded-3 shadow-sm mb-4">
+            <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please check your inputs</h6>
+            <ul class="mb-0 ps-3">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
     @endif
-
+    
     <form action="{{ route('utility.store') }}" method="POST">
       @csrf
-
-      <!-- Hidden fields for month, year, and period -->
-      <input type="hidden" name="month" value="{{ $month }}">
-      <input type="hidden" name="year" value="{{ $year }}">
-      <input type="hidden" name="period" value="{{ $period }}">
       
-      <!-- FIXED: Changed from text input to dropdown -->
-      <div class="mb-3">
-        <label for="employee_name" class="form-label">Select Utility Worker *</label>
-        <select class="form-select @error('employee_name') is-invalid @enderror" 
-                id="employee_name" 
-                name="employee_name" 
-                required>
-          <option value="">-- Choose an Employee --</option>
-          @forelse($utilityEmployees as $id => $name)
-            <option value="{{ $id }}" {{ old('employee_name') == $id ? 'selected' : '' }}>
-              {{ $name }}
-            </option>
-          @empty
-            <option value="" disabled>No utility workers found in the system</option>
-          @endforelse
-
-        </select>
-        @error('employee_name')
-          <div class="invalid-feedback d-block">{{ $message }}</div>
-        @enderror
-        <small class="form-text text-muted">
-          If the employee is not listed, please add them to the Master List first.
-        </small>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="form-floating">
+            <select class="form-select @error('employee_name') is-invalid @enderror" id="employee_name" name="employee_name" required>
+              <option value="" disabled selected>Select Utility Employee</option>
+              @forelse($utilityEmployees as $id => $name)
+                <option value="{{ $id }}" {{ old('employee_name') == $id ? 'selected' : '' }}>
+                  {{ $name }}
+                </option>
+              @empty
+                <option value="" disabled>No utility workers found in the system</option>
+              @endforelse
+            </select>
+            <label for="employee_name">Employee Name *</label>
+          </div>
+          <small class="text-muted ms-1 mt-1 d-block" style="font-size: 0.8rem;">If not listed, add them to Master List first.</small>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating">
+            <select class="form-select @error('designation') is-invalid @enderror" id="designation" name="designation" required>
+              <option value="" disabled selected>Select Designation</option>
+              <option value="instructor" {{ old('designation') == 'instructor' ? 'selected' : '' }}>Instructor</option>
+              <option value="utility" {{ old('designation') == 'utility' ? 'selected' : '' }}>Utility</option>
+              <option value="staff" {{ old('designation') == 'staff' ? 'selected' : '' }}>Staff</option>
+            </select>
+            <label for="designation">Designation *</label>
+          </div>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label for="designation" class="form-label">Designation *</label>
-        <select class="form-control @error('designation') is-invalid @enderror" 
-                id="designation" 
-                name="designation" 
-                required>
-          <option value="">Select Designation</option>
-          <option value="instructor" {{ old('designation') == 'instructor' ? 'selected' : '' }}>Instructor</option>
-          <option value="utility" {{ old('designation') == 'utility' ? 'selected' : '' }}>Utility</option>
-          <option value="staff" {{ old('designation') == 'staff' ? 'selected' : '' }}>Staff</option>
-        </select>
-        @error('designation')
-          <div class="invalid-feedback d-block">{{ $message }}</div>
-        @enderror
+      <div class="row g-3 mb-4">
+        <div class="col-md-12">
+          <div class="form-floating">
+            <input type="number" step="0.01" class="form-control @error('prov_abr') is-invalid @enderror" id="prov_abr" name="prov_abr" value="{{ old('prov_abr', 0) }}" min="0">
+            <label for="prov_abr">Previous Absences (Days)</label>
+          </div>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label for="prov_abr" class="form-label">Previous Absences (Days)</label>
-        <input type="number" 
-               step="0.01" 
-               class="form-control @error('prov_abr') is-invalid @enderror" 
-               id="prov_abr" 
-               name="prov_abr"
-               value="{{ old('prov_abr', 0) }}"
-               min="0">
-        @error('prov_abr')
-          <div class="invalid-feedback d-block">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <div class="mb-3">
-        <label for="days" class="form-label">Working Days (Hours per Day)</label>
-        <div class="days-selector mb-2">
-          <div class="row">
+      <div class="days-section">
+        <div class="days-section-title">
+          <i class="bi bi-calendar3"></i> Working Days (Hours per Day)
+        </div>
+        <div class="row g-3">
             @php($days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'])
             @foreach($days as $index => $day)
-              @php($i = $index + 1)
-              <div class="col-md-4 col-sm-6 col-12 mb-3">
-                <label class="form-label" for="day{{ $i }}">{{ $day }} Hours</label>
-                <input
-                  type="number"
-                  class="form-control day-hours"
-                  id="day{{ $i }}"
-                  name="days[{{ $i }}]"
-                  min="0"
-                  max="24"
-                  step="0.25"
-                  value="{{ old('days.' . $i, 0) }}"
-                  placeholder="0"
-                >
-              </div>
+                @php($i = $index + 1)
+                <div class="col-md-4 col-sm-6">
+                    <div class="form-floating">
+                        <input
+                            type="number"
+                            class="form-control day-hours"
+                            id="day{{ $i }}"
+                            name="days[{{ $i }}]"
+                            min="0"
+                            max="24"
+                            step="0.25"
+                            value="{{ old('days.' . $i, 0) }}"
+                            placeholder="0"
+                        >
+                        <label for="day{{ $i }}">{{ $day }}</label>
+                    </div>
+                </div>
             @endforeach
-          </div>
         </div>
-        <small class="form-text text-muted">Enter the number of hours worked for each day (Monday–Saturday). Leave blank for 0.</small>
+        <small class="text-muted d-block mt-3"><i class="bi bi-info-circle me-1"></i>Enter the number of hours worked for each day (Monday–Saturday).</small>
       </div>
 
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label for="total_days" class="form-label">Total Days</label>
-            <input type="number" step="0.01" class="form-control" id="total_days" name="total_days" value="0" min="0" readonly>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <div class="form-floating">
+            <input type="number" step="0.01" class="form-control bg-light" id="total_days" name="total_days" value="0" min="0" readonly>
+            <label for="total_days">Total Days</label>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label for="rate_per_day" class="form-label">Rate per Day (₱)</label>
-            <input type="number" 
-                   step="0.01" 
-                   class="form-control @error('rate_per_day') is-invalid @enderror" 
-                   id="rate_per_day" 
-                   name="rate_per_day" 
-                   value="{{ old('rate_per_day', '0.00') }}"
-                   min="0">
-            @error('rate_per_day')
-              <div class="invalid-feedback d-block">{{ $message }}</div>
-            @enderror
+        <div class="col-md-4">
+          <div class="form-floating">
+            <input type="number" step="0.01" class="form-control @error('rate_per_day') is-invalid @enderror" id="rate_per_day" name="rate_per_day" value="{{ old('rate_per_day', '0.00') }}" min="0">
+            <label for="rate_per_day">Rate per Day (₱)</label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-floating">
+            <input type="number" step="0.01" class="form-control @error('deduction') is-invalid @enderror" id="deduction" name="deduction" value="{{ old('deduction', '0.00') }}" min="0">
+            <label for="deduction">Deductions (₱)</label>
           </div>
         </div>
       </div>
 
-      <div class="mb-3">
-        <label for="deduction" class="form-label">Deduction Previous Cut Off (₱)</label>
-        <input type="number" 
-               step="0.01" 
-               class="form-control @error('deduction') is-invalid @enderror" 
-               id="deduction" 
-               name="deduction" 
-               value="{{ old('deduction', '0.00') }}"
-               min="0">
-        @error('deduction')
-          <div class="invalid-feedback d-block">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <!-- Total Honorarium Display -->
-      <div class="total-display">
-        <p class="label">Calculated Total Honorarium</p>
+      <div class="total-display" id="total-display-card">
+        <p class="label">Calculated Honorarium</p>
         <p class="amount" id="calculated-total">₱0.00</p>
       </div>
 
       <div class="button-group">
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check-lg me-1"></i>Add Timesheet
-        </button>
         <a href="{{ route('utility.index') }}" class="btn btn-secondary">
-          <i class="bi bi-x-lg me-1"></i>Cancel
+          Cancel
         </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save me-1"></i> Save Timesheet
+        </button>
       </div>
     </form>
   </div>
 
-  <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <script>
-    // Check for error message from Laravel session
-    @if(session('error'))
-      Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: '{{ session('error') }}',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#dc3545',
-        customClass: {
-          popup: 'swal-custom-popup',
-          title: 'swal-custom-title',
-          content: 'swal-custom-content',
-          confirmButton: 'swal-custom-button'
-        }
-      });
-    @endif
-
-    // Form submission with loading state
-    document.querySelector('form').addEventListener('submit', function(e) {
-      const submitBtn = document.querySelector('button[type="submit"]');
-      const originalText = submitBtn.innerHTML;
-      
-      // Show loading state
-      submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creating...';
-      submitBtn.disabled = true;
-      
-      // Show loading alert
-      Swal.fire({
-        title: 'Creating Utility Timesheet...',
-        text: 'Please wait while we add the new timesheet.',
-        icon: 'info',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-        customClass: {
-          popup: 'swal-custom-popup',
-          title: 'swal-custom-title',
-          content: 'swal-custom-content'
-        }
-      });
-      
-      // Reset button after a delay (in case of validation errors)
-      setTimeout(() => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-      }, 5000);
-    });
-
-    // Handle per-day hours inputs -> compute total days and update display
     function getTotalDaysFromDaysInputs() {
       const inputs = document.querySelectorAll('.day-hours');
       let total = 0;
@@ -395,10 +337,8 @@
       return total;
     }
 
-    // Recalculate total days when day inputs change
     document.querySelectorAll('.day-hours').forEach(input => {
       input.addEventListener('input', () => {
-        // Update total_days input with the count of days with hours > 0
         const total = getTotalDaysFromDaysInputs();
         const totalDaysEl = document.getElementById('total_days');
         if (totalDaysEl) totalDaysEl.value = total;
@@ -406,78 +346,76 @@
       });
     });
 
-    // Auto-calculate total honorarium
     function calculateTotal() {
       const totalDays = parseFloat(document.getElementById('total_days').value) || 0;
       const ratePerDay = parseFloat(document.getElementById('rate_per_day').value) || 0;
       const deduction = parseFloat(document.getElementById('deduction').value) || 0;
-
+      
       const totalHonorarium = (totalDays * ratePerDay) - deduction;
       const calculatedValue = totalHonorarium < 0 ? 0 : totalHonorarium;
-
-      // Update the display
-      document.getElementById('calculated-total').textContent = '₱' + calculatedValue.toFixed(2);
-
-      // Add visual feedback
-      const display = document.querySelector('.total-display');
+      
+      document.getElementById('calculated-total').textContent = '₱' + calculatedValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      
+      const displayCard = document.getElementById('total-display-card');
       if (calculatedValue > 0) {
-        display.style.borderColor = '#198754';
-        display.querySelector('.amount').style.color = '#198754';
+        displayCard.classList.add('positive');
       } else {
-        display.style.borderColor = '#dc3545';
-        display.querySelector('.amount').style.color = '#dc3545';
+        displayCard.classList.remove('positive');
       }
     }
 
-    // Add event listeners for auto-calculation
     document.getElementById('total_days').addEventListener('input', calculateTotal);
     document.getElementById('rate_per_day').addEventListener('input', calculateTotal);
     document.getElementById('deduction').addEventListener('input', calculateTotal);
 
-    // Initial calculation
-    calculateTotal();
+    document.addEventListener('DOMContentLoaded', () => {
+        calculateTotal();
+    });
+    
+    @if(session('error'))
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: '{{ session('error') }}',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#3b82f6',
+        customClass: {
+          popup: 'rounded-4'
+        }
+      });
+    @endif
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const submitBtn = document.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+      submitBtn.disabled = true;
+      
+      Swal.fire({
+        title: 'Saving Timesheet...',
+        text: 'Please wait...',
+        icon: 'info',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => { Swal.showLoading(); },
+        customClass: { popup: 'rounded-4' }
+      });
+      
+      setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }, 5000);
+    });
   </script>
 
-  <style>
-    /* Custom SweetAlert2 styling to match theme */
-    .swal-custom-popup {
-      border-radius: 15px !important;
-      border: 2px solid #dc3545 !important;
-    }
-    
-    .swal-custom-title {
-      color: #dc3545 !important;
-      font-weight: 700 !important;
-    }
-    
-    .swal-custom-content {
-      color: #2c3e50 !important;
-    }
-    
-    .swal-custom-button {
-      background: linear-gradient(135deg, #dc3545, #c82333) !important;
-      border: none !important;
-      border-radius: 8px !important;
-      font-weight: 600 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.5px !important;
-      padding: 12px 30px !important;
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3) !important;
-    }
-    
-    .swal-custom-button:hover {
-      background: linear-gradient(135deg, #a71d2a, #b21e2f) !important;
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4) !important;
-    }
-  </style>
-<script>
-// DevTools detection to make page blank if opened
-devtools.detect(function(status){
-  if(status){
-    document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
-  }
-});
-</script>
+  <script>
+    devtools.detect(function(status){
+        if(status){
+            document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
+        }
+    });
+  </script>
 </body>
 </html>
