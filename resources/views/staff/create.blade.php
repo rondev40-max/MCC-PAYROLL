@@ -41,8 +41,8 @@
       background: #ffffff;
       border-radius: 20px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-      width: 95%;
-      max-width: 800px;
+      width: 90%;
+      max-width: 90%;
       position: relative;
       border: 1px solid #e2e8f0;
       z-index: 1;
