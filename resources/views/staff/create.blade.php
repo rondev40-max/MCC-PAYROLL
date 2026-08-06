@@ -239,15 +239,29 @@
       </div>
 
       <div class="row g-3 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-3">
           <div class="form-floating">
-            <select class="form-select" id="designation" name="designation" required>
-              <option value="" disabled selected>Select Designation</option>
-              <option value="instructor" {{ old('designation') == 'instructor' ? 'selected' : '' }}>Instructor</option>
-              <option value="utility" {{ old('designation') == 'utility' ? 'selected' : '' }}>Utility</option>
-              <option value="staff" {{ old('designation') == 'staff' ? 'selected' : '' }}>Staff</option>
+            <select class="form-select" id="category" required>
+              <option value="staff" selected>Staff</option>
             </select>
-            <label for="designation">Designation</label>
+            <label for="category">Category</label>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-floating">
+            <select class="form-select @error('designation') is-invalid @enderror" id="designation" name="designation" required>
+              <option value="" disabled selected>Select Role</option>
+              <option value="BSIT Staff" {{ old('designation') == 'BSIT Staff' ? 'selected' : '' }}>BSIT Staff</option>
+              <option value="Registrar Staff" {{ old('designation') == 'Registrar Staff' ? 'selected' : '' }}>Registrar Staff</option>
+              <option value="Clinic Staff" {{ old('designation') == 'Clinic Staff' ? 'selected' : '' }}>Clinic Staff</option>
+              <option value="Library Staff" {{ old('designation') == 'Library Staff' ? 'selected' : '' }}>Library Staff</option>
+              <option value="Admin Staff" {{ old('designation') == 'Admin Staff' ? 'selected' : '' }}>Admin Staff</option>
+              <option value="VP Office Staff" {{ old('designation') == 'VP Office Staff' ? 'selected' : '' }}>VP Office Staff</option>
+              <option value="SAS Staff" {{ old('designation') == 'SAS Staff' ? 'selected' : '' }}>SAS Staff</option>
+              <option value="IT Encoder" {{ old('designation') == 'IT Encoder' ? 'selected' : '' }}>IT Encoder</option>
+              <option value="Guidance Staff" {{ old('designation') == 'Guidance Staff' ? 'selected' : '' }}>Guidance Staff</option>
+            </select>
+            <label for="designation">Specific Role</label>
           </div>
         </div>
         <div class="col-md-6">

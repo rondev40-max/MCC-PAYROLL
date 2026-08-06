@@ -219,14 +219,28 @@
         <input type="email" class="form-control" id="email" name="email" value="{{ $timesheet->email }}" placeholder="name@gmail.com">
       </div>
 
-      <div class="mb-3">
-        <label for="designation" class="form-label">Designation</label>
-        <select class="form-control" id="designation" name="designation" required>
-          <option value="">Select Designation</option>
-          <option value="instructor" {{ $timesheet->designation == 'instructor' ? 'selected' : '' }}>Instructor</option>
-          <option value="utility" {{ $timesheet->designation == 'utility' ? 'selected' : '' }}>Utility</option>
-          <option value="staff" {{ $timesheet->designation == 'staff' ? 'selected' : '' }}>Staff</option>
-        </select>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="category" class="form-label">Category</label>
+          <select class="form-control" id="category" required>
+            <option value="staff" selected>Staff</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="designation" class="form-label">Specific Role</label>
+          <select class="form-control @error('designation') is-invalid @enderror" id="designation" name="designation" required>
+            <option value="" disabled {{ empty($timesheet->designation) ? 'selected' : '' }}>Select Role</option>
+            <option value="BSIT Staff" {{ $timesheet->designation == 'BSIT Staff' ? 'selected' : '' }}>BSIT Staff</option>
+            <option value="Registrar Staff" {{ $timesheet->designation == 'Registrar Staff' ? 'selected' : '' }}>Registrar Staff</option>
+            <option value="Clinic Staff" {{ $timesheet->designation == 'Clinic Staff' ? 'selected' : '' }}>Clinic Staff</option>
+            <option value="Library Staff" {{ $timesheet->designation == 'Library Staff' ? 'selected' : '' }}>Library Staff</option>
+            <option value="Admin Staff" {{ $timesheet->designation == 'Admin Staff' ? 'selected' : '' }}>Admin Staff</option>
+            <option value="VP Office Staff" {{ $timesheet->designation == 'VP Office Staff' ? 'selected' : '' }}>VP Office Staff</option>
+            <option value="SAS Staff" {{ $timesheet->designation == 'SAS Staff' ? 'selected' : '' }}>SAS Staff</option>
+            <option value="IT Encoder" {{ $timesheet->designation == 'IT Encoder' ? 'selected' : '' }}>IT Encoder</option>
+            <option value="Guidance Staff" {{ $timesheet->designation == 'Guidance Staff' ? 'selected' : '' }}>Guidance Staff</option>
+          </select>
+        </div>
       </div>
 
       <div class="mb-3">
