@@ -1105,6 +1105,8 @@
           <div class="chart-legend">
             <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6;"></div>Staff</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Utility</div>
           </div>
           @endif
         </div>
@@ -1418,6 +1420,8 @@ function initDepartment() {
  const labels = DEPARTMENT_STATS.map(d => d.code);
  const ftData = DEPARTMENT_STATS.map(d => d.fulltime);
  const ptData = DEPARTMENT_STATS.map(d => d.parttime);
+ const stData = DEPARTMENT_STATS.map(d => d.staff || 0);
+ const utData = DEPARTMENT_STATS.map(d => d.utility || 0);
   
  deptChart = new Chart(ctx.getContext('2d'), {
    type: 'bar',
@@ -1435,6 +1439,20 @@ function initDepartment() {
          label: 'Part-Time',
          data: ptData,
          backgroundColor: 'rgba(245,158,11,0.85)',
+         borderRadius: { topLeft: 6, topRight: 6 },
+         borderSkipped: false,
+       },
+       {
+         label: 'Staff',
+         data: stData,
+         backgroundColor: 'rgba(59,130,246,0.85)',
+         borderRadius: { topLeft: 6, topRight: 6 },
+         borderSkipped: false,
+       },
+       {
+         label: 'Utility',
+         data: utData,
+         backgroundColor: 'rgba(147,197,253,0.85)',
          borderRadius: { topLeft: 6, topRight: 6 },
          borderSkipped: false,
        }
