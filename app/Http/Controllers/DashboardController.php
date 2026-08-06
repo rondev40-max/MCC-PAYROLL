@@ -306,7 +306,8 @@ class DashboardController extends Controller
             'employee_name' => 'required|string|max:255',
             'email'         => 'nullable|email',
             'employee_type' => 'required|in:fulltime,parttime,staff,utility',
-            'designation'   => 'required|in:instructor,utility,staff',
+            'designation'   => 'required|string|max:100',
+            'staff_type'    => 'nullable|string|max:100',
             'prov_abr'      => 'nullable|string|max:10',
             'department'    => 'required|string|max:50',
             'days'          => 'array',
@@ -316,6 +317,12 @@ class DashboardController extends Controller
             'rate_per_hour' => 'nullable|numeric|min:0',
             'deduction'     => 'nullable|numeric|min:0',
         ]);
+
+        // If a staff_type was selected, use it as the designation
+        $designation = $data['designation'];
+        if (!empty($data['staff_type'])) {
+            $designation = $data['staff_type'];
+        }
 
         $employee = \App\Models\Employee::create([
             'name'        => $data['employee_name'],
@@ -336,7 +343,7 @@ class DashboardController extends Controller
             'employee_id'       => $employee->id,
             'employee_name'     => $data['employee_name'],
             'email'             => $data['email'] ?? null,
-            'designation'       => $data['designation'],
+            'designation'       => $designation,
             'prov_abr'          => $data['prov_abr'] ?? null,
             'department'        => $data['department'],
             'days'              => json_encode($data['days'] ?? []),
@@ -346,6 +353,7 @@ class DashboardController extends Controller
             'deduction'         => $data['deduction'] ?? 0,
             'total_honorarium'  => max(0, (($data['total_hour'] ?? 0) * ($data['rate_per_hour'] ?? 0)) - ($data['deduction'] ?? 0)),
         ];
+
 
         $redirect = route('dashboard');
 

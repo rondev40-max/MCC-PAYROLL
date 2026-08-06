@@ -374,23 +374,44 @@
           <div class="form-row">
             <div class="form-col">
               <label class="form-label">Employee Type <span style="color: var(--danger);">*</span></label>
-              <select name="employee_type" class="form-select" required>
+              <select name="employee_type" id="employee_type" class="form-select" required>
                 <option value="">Select Type</option>
                 <option value="fulltime" {{ old('employee_type') == 'fulltime' ? 'selected' : '' }}>Fulltime</option>
                 <option value="parttime" {{ old('employee_type') == 'parttime' ? 'selected' : '' }}>Parttime</option>
-                <option value="contract" {{ old('employee_type') == 'contract' ? 'selected' : '' }}>Contract</option>
+                <option value="staff" {{ old('employee_type') == 'staff' ? 'selected' : '' }}>Staff</option>
+                <option value="utility" {{ old('employee_type') == 'utility' ? 'selected' : '' }}>Utility</option>
               </select>
             </div>
 
             <div class="form-col">
               <label class="form-label">Designation <span style="color: var(--danger);">*</span></label>
-              <select name="designation" class="form-select" required>
+              <select name="designation" id="designation" class="form-select" required>
                 <option value="">Select Designation</option>
                 <option value="instructor" {{ old('designation') == 'instructor' ? 'selected' : '' }}>Instructor</option>
-                <option value="staff" {{ old('designation') == 'staff' ? 'selected' : '' }}>Staff</option>
+                <option value="staff" {{ old('designation') == 'staff' || (old('staff_type') ? true : false) ? 'selected' : '' }}>Staff</option>
                 <option value="utility" {{ old('designation') == 'utility' ? 'selected' : '' }}>Utility</option>
                 <option value="admin" {{ old('designation') == 'admin' ? 'selected' : '' }}>Administrative</option>
               </select>
+            </div>
+          </div>
+
+          {{-- Staff Type dropdown: shown only when designation is "staff" --}}
+          <div class="form-row" id="staff-type-row" style="display: none;">
+            <div class="form-col">
+              <label class="form-label">Staff Type <span style="color: var(--danger);">*</span></label>
+              <select name="staff_type" id="staff_type" class="form-select">
+                <option value="">Select Staff Type</option>
+                <option value="BSIT Staff" {{ old('staff_type') == 'BSIT Staff' ? 'selected' : '' }}>BSIT Staff</option>
+                <option value="Registrar Staff" {{ old('staff_type') == 'Registrar Staff' ? 'selected' : '' }}>Registrar Staff</option>
+                <option value="Clinic Staff" {{ old('staff_type') == 'Clinic Staff' ? 'selected' : '' }}>Clinic Staff</option>
+                <option value="Library Staff" {{ old('staff_type') == 'Library Staff' ? 'selected' : '' }}>Library Staff</option>
+                <option value="Admin Staff" {{ old('staff_type') == 'Admin Staff' ? 'selected' : '' }}>Admin Staff</option>
+                <option value="VP Office Staff" {{ old('staff_type') == 'VP Office Staff' ? 'selected' : '' }}>VP Office Staff</option>
+                <option value="SAS Staff" {{ old('staff_type') == 'SAS Staff' ? 'selected' : '' }}>SAS Staff</option>
+                <option value="IT Encoder" {{ old('staff_type') == 'IT Encoder' ? 'selected' : '' }}>IT Encoder</option>
+                <option value="Guidance Staff" {{ old('staff_type') == 'Guidance Staff' ? 'selected' : '' }}>Guidance Staff</option>
+              </select>
+              <div class="required-note">Select the specific staff position</div>
             </div>
           </div>
         </div>
@@ -525,6 +546,38 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
+    // ---- Staff Type Toggle ----
+    const designationSelect = document.getElementById('designation');
+    const staffTypeRow = document.getElementById('staff-type-row');
+    const staffTypeSelect = document.getElementById('staff_type');
+
+    function toggleStaffType() {
+      const isStaff = designationSelect.value === 'staff';
+      staffTypeRow.style.display = isStaff ? '' : 'none';
+      staffTypeSelect.required = isStaff;
+      if (!isStaff) {
+        staffTypeSelect.value = '';
+      }
+    }
+
+    designationSelect.addEventListener('change', toggleStaffType);
+    // Run on page load (handles old() repopulation)
+    toggleStaffType();
+
+    // ---- Auto-sync Employee Type & Designation ----
+    const employeeTypeSelect = document.getElementById('employee_type');
+
+    employeeTypeSelect.addEventListener('change', function() {
+      const val = this.value;
+      if (val === 'staff') {
+        designationSelect.value = 'staff';
+        toggleStaffType();
+      } else if (val === 'utility') {
+        designationSelect.value = 'utility';
+        toggleStaffType();
+      }
+    });
+
     // Calculate total from day hours
     function getTotalHoursFromDaysInputs() {
       const inputs = document.querySelectorAll('.day-hours');
@@ -566,8 +619,13 @@
     document.getElementById('rate_per_hour').addEventListener('input', calculateTotal);
     document.getElementById('deduction').addEventListener('input', calculateTotal);
 
-    // Form submission
+    // Form submission — override designation with staff_type if staff
     document.getElementById('employeeForm').addEventListener('submit', function(e) {
+      // If designation is staff and a staff_type is selected, replace designation value
+      if (designationSelect.value === 'staff' && staffTypeSelect.value) {
+        designationSelect.innerHTML = '<option value="' + staffTypeSelect.value + '" selected>' + staffTypeSelect.value + '</option>';
+      }
+
       const submitBtn = document.getElementById('submitBtn');
       const originalText = submitBtn.innerHTML;
 
