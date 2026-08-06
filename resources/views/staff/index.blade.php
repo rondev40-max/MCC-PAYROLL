@@ -639,17 +639,7 @@
               <th style="min-width: 100px;">Designation</th>
               <th style="min-width: 70px;">Prev. Abs.</th>
 
-              @foreach($days as $day)
-                @php
-                  $isHolidayHeader = in_array($day['date'], $holidays ?? []);
-                  $isSundayHeader = (\Carbon\Carbon::parse($day['date'])->dayOfWeekIso == 7);
-                  $headerClass = $isHolidayHeader ? 'holiday-column' : ($isSundayHeader ? 'sunday-column' : '');
-                @endphp
-                <th class="day-header {{ $headerClass }}">
-                  <span class="day-number" style="color: {{ $isHolidayHeader ? 'var(--holiday-text)' : 'inherit' }};">{{ $day['number'] }}</span>
-                  <span class="day-abbr" style="color: {{ $isHolidayHeader ? 'var(--holiday-text)' : 'inherit' }};">{{ $day['abbr'] }}</span>
-                </th>
-              @endforeach
+              <th style="min-width: 130px; text-align: center;">Daily Hours</th>
 
               <th style="min-width: 140px;">Details (Inclusive Hours)</th>
               <th style="min-width: 60px;">Total Days</th>
@@ -675,41 +665,59 @@
                        placeholder="0">
               </td>
 
-              @foreach($days as $day)
-                @php
-                  $currentDate = $day['date'];
-                  $dateObj = \Carbon\Carbon::parse($currentDate);
-                  $weekday = $dateObj->format('D');
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.8rem; font-weight: 600;">
+                    <i class="bi bi-calendar-range me-1"></i> View / Edit
+                  </button>
+                  <div class="dropdown-menu p-3 shadow" style="min-width: 280px; max-height: 400px; overflow-y: auto; z-index: 1050;">
+                    <h6 class="dropdown-header px-0 mb-2 border-bottom pb-2 text-dark fw-bold">Enter Daily Hours</h6>
+                    <div class="row g-2">
+                      @foreach($days as $day)
+                        @php
+                          $currentDate = $day['date'];
+                          $dateObj = \Carbon\Carbon::parse($currentDate);
+                          $weekday = $dateObj->format('D');
 
-                  $isHoliday = in_array($currentDate, $holidays ?? []);
-                  $isSunday = ($weekday === 'Sun');
-                  $isDisabled = $isSunday || $isHoliday;
+                          $isHoliday = in_array($currentDate, $holidays ?? []);
+                          $isSunday = ($weekday === 'Sun');
+                          $isDisabled = $isSunday || $isHoliday;
 
-                  $weekdayMap = ['Mon'=>'mon_hours','Tue'=>'tue_hours','Wed'=>'wed_hours','Thu'=>'thu_hours','Fri'=>'fri_hours','Sat'=>'sat_hours','Sun'=>'sun_hours'];
-                  $field = $weekdayMap[$weekday] ?? 'sun_hours';
+                          $weekdayMap = ['Mon'=>'mon_hours','Tue'=>'tue_hours','Wed'=>'wed_hours','Thu'=>'thu_hours','Fri'=>'fri_hours','Sat'=>'sat_hours','Sun'=>'sun_hours'];
+                          $field = $weekdayMap[$weekday] ?? 'sun_hours';
 
-                  $value = $timesheet->$field ?? 0;
-                  if ($isDisabled) {
-                      $value = 0;
-                  }
-
-                  $columnClasses = $isHoliday ? 'holiday-column' : ($isSunday ? 'sunday-column' : '');
-                  $inputClasses = $isHoliday ? 'holiday-input' : ($isSunday ? 'sunday-input' : '');
-                @endphp
-                <td class="day-column {{ $columnClasses }}">
-                  <input type="number"
-                         class="table-input day-input {{ $inputClasses }}"
-                         value="{{ $value }}"
-                         data-timesheet-id="{{ $timesheet->id }}"
-                         data-field="{{ $field }}"
-                         placeholder="{{ $isDisabled ? 'N/A' : '0' }}"
-                         min="0"
-                         step="0.5"
-                         data-day-date="{{ $day['date'] }}"
-                         data-is-holiday="{{ $isHoliday ? 'true' : 'false' }}"
-                         {{ $isDisabled ? 'readonly' : '' }}>
-                </td>
-              @endforeach
+                          $value = $timesheet->$field ?? 0;
+                          if ($isDisabled) {
+                              $value = 0;
+                          }
+                          
+                          $labelStyle = $isHoliday ? 'color: var(--holiday-text); font-weight: bold;' : ($weekday === 'Sun' ? 'color: var(--danger);' : '');
+                        @endphp
+                        
+                        <div class="col-6">
+                          <div class="input-group input-group-sm mb-1" title="{{ $dateObj->format('M d, Y') }}">
+                            <span class="input-group-text" style="width: 55px; justify-content: center; {{ $labelStyle }}">
+                              {{ $day['number'] }}<small class="ms-1" style="font-size: 0.65rem;">{{ $day['abbr'] }}</small>
+                            </span>
+                            <input type="number"
+                                   class="form-control table-input day-input text-center"
+                                   value="{{ $value }}"
+                                   data-timesheet-id="{{ $timesheet->id }}"
+                                   data-field="{{ $field }}"
+                                   placeholder="{{ $isDisabled ? 'N/A' : '0' }}"
+                                   min="0"
+                                   step="0.5"
+                                   data-day-date="{{ $day['date'] }}"
+                                   style="height: 31px; border: 1px solid #ced4da; background-color: {{ $isDisabled ? '#e9ecef' : '#fff' }};"
+                                   {{ $isDisabled ? 'readonly' : '' }}
+                                   data-is-holiday="{{ $isHoliday ? 'true' : 'false' }}">
+                          </div>
+                        </div>
+                      @endforeach
+                    </div>
+                  </div>
+                </div>
+              </td>
 
               <td class="col-details">
                 <input type="text"

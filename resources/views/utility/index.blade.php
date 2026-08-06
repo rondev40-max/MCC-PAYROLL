@@ -649,17 +649,7 @@
               <th style="min-width: 100px;">Designation</th>
               <th style="min-width: 70px;">Prev. Abs.</th>
 
-              @foreach($days as $day)
-                @php
-                  $isHolidayHeader = in_array($day['date'], $holidays ?? []);
-                  $isSundayHeader = (\Carbon\Carbon::parse($day['date'])->dayOfWeekIso == 7);
-                  $headerClass = $isHolidayHeader ? 'holiday-column' : ($isSundayHeader ? 'sunday-column' : '');
-                @endphp
-                <th class="day-header {{ $headerClass }}">
-                  <span class="day-number" style="color: {{ $isHolidayHeader ? 'var(--holiday-text)' : 'inherit' }};">{{ $day['number'] }}</span>
-                  <span class="day-abbr" style="color: {{ $isHolidayHeader ? 'var(--holiday-text)' : 'inherit' }};">{{ $day['abbr'] }}</span>
-                </th>
-              @endforeach
+              <th style="min-width: 130px; text-align: center;">Daily Hours</th>
 
               <th style="min-width: 140px;">Details</th>
               <th style="min-width: 60px;">Total Day</th>
@@ -685,34 +675,52 @@
                        step="0.01">
               </td>
 
-              @foreach($days as $day)
-                @php
-                  $dayDate = \Carbon\Carbon::parse($day['date']);
-                  $weekday = $dayDate->format('D');
-                  $weekdayMap = ['Mon'=>'mon_hours','Tue'=>'tue_hours','Wed'=>'wed_hours','Thu'=>'thu_hours','Fri'=>'fri_hours','Sat'=>'sat_hours','Sun'=>'sun_hours'];
-                  $columnField = $weekdayMap[$weekday] ?? null;
+              <td class="text-center">
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="font-size: 0.8rem; font-weight: 600;">
+                    <i class="bi bi-calendar-range me-1"></i> View / Edit
+                  </button>
+                  <div class="dropdown-menu p-3 shadow" style="min-width: 280px; max-height: 400px; overflow-y: auto; z-index: 1050;">
+                    <h6 class="dropdown-header px-0 mb-2 border-bottom pb-2 text-dark fw-bold">Enter Daily Hours</h6>
+                    <div class="row g-2">
+                      @foreach($days as $day)
+                        @php
+                          $dayDate = \Carbon\Carbon::parse($day['date']);
+                          $weekday = $dayDate->format('D');
+                          $weekdayMap = ['Mon'=>'mon_hours','Tue'=>'tue_hours','Wed'=>'wed_hours','Thu'=>'thu_hours','Fri'=>'fri_hours','Sat'=>'sat_hours','Sun'=>'sun_hours'];
+                          $columnField = $weekdayMap[$weekday] ?? null;
 
-                  $dailyValue = $columnField ? ($timesheet->$columnField ?? 0) : 0;
+                          $dailyValue = $columnField ? ($timesheet->$columnField ?? 0) : 0;
 
-                  $isSunday = ($dayDate->dayOfWeekIso == 7);
-                  $isHoliday = in_array($day['date'], $holidays ?? []);
-                  $isDisabled = $isSunday || $isHoliday;
-
-                  $columnClasses = $isHoliday ? 'holiday-column' : ($isSunday ? 'sunday-column' : '');
-                  $inputClasses = $isHoliday ? 'holiday-input' : ($isSunday ? 'sunday-input' : '');
-                @endphp
-                <td class="day-column {{ $columnClasses }}">
-                  <input type="number"
-                         class="table-input field-input day-input {{ $inputClasses }}"
-                         value="{{ $isDisabled ? 0 : $dailyValue }}"
-                         data-timesheet-id="{{ $timesheet->id }}"
-                         data-field="{{ $columnField }}"
-                         placeholder="0"
-                         min="0"
-                         step="1"
-                         {{ $isDisabled ? 'readonly' : '' }}>
-                </td>
-              @endforeach
+                          $isSunday = ($dayDate->dayOfWeekIso == 7);
+                          $isHoliday = in_array($day['date'], $holidays ?? []);
+                          $isDisabled = $isSunday || $isHoliday;
+                          
+                          $labelStyle = $isHoliday ? 'color: var(--holiday-text); font-weight: bold;' : ($isSunday ? 'color: var(--danger);' : '');
+                        @endphp
+                        
+                        <div class="col-6">
+                          <div class="input-group input-group-sm mb-1" title="{{ $dayDate->format('M d, Y') }}">
+                            <span class="input-group-text" style="width: 55px; justify-content: center; {{ $labelStyle }}">
+                              {{ $day['number'] }}<small class="ms-1" style="font-size: 0.65rem;">{{ $day['abbr'] }}</small>
+                            </span>
+                            <input type="number"
+                                   class="form-control table-input field-input day-input text-center"
+                                   value="{{ $isDisabled ? 0 : $dailyValue }}"
+                                   data-timesheet-id="{{ $timesheet->id }}"
+                                   data-field="{{ $columnField }}"
+                                   placeholder="{{ $isDisabled ? 'N/A' : '0' }}"
+                                   min="0"
+                                   step="1"
+                                   style="height: 31px; border: 1px solid #ced4da; background-color: {{ $isDisabled ? '#e9ecef' : '#fff' }};"
+                                   {{ $isDisabled ? 'readonly' : '' }}>
+                          </div>
+                        </div>
+                      @endforeach
+                    </div>
+                  </div>
+                </div>
+              </td>
 
               <td class="col-details">
                 <input type="text"
