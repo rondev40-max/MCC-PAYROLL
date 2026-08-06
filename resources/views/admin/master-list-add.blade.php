@@ -414,6 +414,27 @@
               <div class="required-note">Select the specific staff position</div>
             </div>
           </div>
+
+          {{-- Administrative Type dropdown: shown only when designation is "admin" --}}
+          <div class="form-row" id="admin-type-row" style="display: none;">
+            <div class="form-col">
+              <label class="form-label">Administrative Type <span style="color: var(--danger);">*</span></label>
+              <select name="admin_type" id="admin_type" class="form-select">
+                <option value="">Select Administrative Type</option>
+                <option value="College President" {{ old('admin_type') == 'College President' ? 'selected' : '' }}>College President</option>
+                <option value="Dean of BSHM" {{ old('admin_type') == 'Dean of BSHM' ? 'selected' : '' }}>Dean of BSHM</option>
+                <option value="Dean of Educ" {{ old('admin_type') == 'Dean of Educ' ? 'selected' : '' }}>Dean of Educ</option>
+                <option value="Librarian" {{ old('admin_type') == 'Librarian' ? 'selected' : '' }}>Librarian</option>
+                <option value="Registrar" {{ old('admin_type') == 'Registrar' ? 'selected' : '' }}>Registrar</option>
+                <option value="Instructor" {{ old('admin_type') == 'Instructor' ? 'selected' : '' }}>Instructor</option>
+                <option value="Dentist" {{ old('admin_type') == 'Dentist' ? 'selected' : '' }}>Dentist</option>
+                <option value="Doctor" {{ old('admin_type') == 'Doctor' ? 'selected' : '' }}>Doctor</option>
+                <option value="Accountant" {{ old('admin_type') == 'Accountant' ? 'selected' : '' }}>Accountant</option>
+                <option value="Guidance" {{ old('admin_type') == 'Guidance' ? 'selected' : '' }}>Guidance</option>
+              </select>
+              <div class="required-note">Select the specific administrative position</div>
+            </div>
+          </div>
         </div>
 
         <!-- Department & Location -->
@@ -546,23 +567,32 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-    // ---- Staff Type Toggle ----
+    // ---- Sub-type Toggles ----
     const designationSelect = document.getElementById('designation');
     const staffTypeRow = document.getElementById('staff-type-row');
     const staffTypeSelect = document.getElementById('staff_type');
+    const adminTypeRow = document.getElementById('admin-type-row');
+    const adminTypeSelect = document.getElementById('admin_type');
 
-    function toggleStaffType() {
-      const isStaff = designationSelect.value === 'staff';
+    function toggleSubTypeDropdowns() {
+      const val = designationSelect.value;
+
+      // Staff Type
+      const isStaff = val === 'staff';
       staffTypeRow.style.display = isStaff ? '' : 'none';
       staffTypeSelect.required = isStaff;
-      if (!isStaff) {
-        staffTypeSelect.value = '';
-      }
+      if (!isStaff) staffTypeSelect.value = '';
+
+      // Admin Type
+      const isAdmin = val === 'admin';
+      adminTypeRow.style.display = isAdmin ? '' : 'none';
+      adminTypeSelect.required = isAdmin;
+      if (!isAdmin) adminTypeSelect.value = '';
     }
 
-    designationSelect.addEventListener('change', toggleStaffType);
+    designationSelect.addEventListener('change', toggleSubTypeDropdowns);
     // Run on page load (handles old() repopulation)
-    toggleStaffType();
+    toggleSubTypeDropdowns();
 
     // ---- Auto-sync Employee Type & Designation ----
     const employeeTypeSelect = document.getElementById('employee_type');
@@ -571,11 +601,10 @@
       const val = this.value;
       if (val === 'staff') {
         designationSelect.value = 'staff';
-        toggleStaffType();
       } else if (val === 'utility') {
         designationSelect.value = 'utility';
-        toggleStaffType();
       }
+      toggleSubTypeDropdowns();
     });
 
     // Calculate total from day hours
@@ -619,11 +648,15 @@
     document.getElementById('rate_per_hour').addEventListener('input', calculateTotal);
     document.getElementById('deduction').addEventListener('input', calculateTotal);
 
-    // Form submission — override designation with staff_type if staff
+    // Form submission — override designation with sub-type if applicable
     document.getElementById('employeeForm').addEventListener('submit', function(e) {
       // If designation is staff and a staff_type is selected, replace designation value
       if (designationSelect.value === 'staff' && staffTypeSelect.value) {
         designationSelect.innerHTML = '<option value="' + staffTypeSelect.value + '" selected>' + staffTypeSelect.value + '</option>';
+      }
+      // If designation is admin and an admin_type is selected, replace designation value
+      if (designationSelect.value === 'admin' && adminTypeSelect.value) {
+        designationSelect.innerHTML = '<option value="' + adminTypeSelect.value + '" selected>' + adminTypeSelect.value + '</option>';
       }
 
       const submitBtn = document.getElementById('submitBtn');

@@ -308,6 +308,7 @@ class DashboardController extends Controller
             'employee_type' => 'required|in:fulltime,parttime,staff,utility',
             'designation'   => 'required|string|max:100',
             'staff_type'    => 'nullable|string|max:100',
+            'admin_type'    => 'nullable|string|max:100',
             'prov_abr'      => 'nullable|string|max:10',
             'department'    => 'required|string|max:50',
             'days'          => 'array',
@@ -318,10 +319,12 @@ class DashboardController extends Controller
             'deduction'     => 'nullable|numeric|min:0',
         ]);
 
-        // If a staff_type was selected, use it as the designation
+        // If a staff_type or admin_type was selected, use it as the designation
         $designation = $data['designation'];
         if (!empty($data['staff_type'])) {
             $designation = $data['staff_type'];
+        } elseif (!empty($data['admin_type'])) {
+            $designation = $data['admin_type'];
         }
 
         $employee = \App\Models\Employee::create([
