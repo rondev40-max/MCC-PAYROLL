@@ -217,6 +217,10 @@
     
     <form action="{{ route('utility.store') }}" method="POST">
       @csrf
+
+      <input type="hidden" name="month" value="{{ request('month', $month ?? now()->month) }}">
+      <input type="hidden" name="year" value="{{ request('year', $year ?? now()->year) }}">
+      <input type="hidden" name="period" value="{{ request('period', $period ?? (now()->day <= 15 ? '1-15' : '16-end')) }}">
       
       <div class="row g-3 mb-3">
         <div class="col-md-6">
