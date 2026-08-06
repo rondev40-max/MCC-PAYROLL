@@ -182,7 +182,7 @@ class UtilityTimesheetController extends Controller
                             ->toArray();
 
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
         for ($d = $startDay; $d <= $endDay; $d++) {
             if ($d <= $daysInMonth) {
@@ -516,7 +516,7 @@ class UtilityTimesheetController extends Controller
         $holidays = Holiday::whereYear('date', $year)->whereMonth('date', $month)->pluck('date')->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))->toArray();
 
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
         for ($d = $startDay; $d <= $endDay; $d++) {
             $dayDate = $baseDate->copy()->day($d);
             $days[] = ['number' => $d, 'abbr' => $abbrMap[$dayDate->format('D')] ?? '', 'date' => $dayDate->format('Y-m-d')];

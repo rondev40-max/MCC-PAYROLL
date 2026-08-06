@@ -407,7 +407,7 @@ class AdminController extends Controller
             ->toArray();
 
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
         $period = new \Carbon\CarbonPeriod($startDate, $endDate);
 
         foreach ($period as $date) {
@@ -971,7 +971,7 @@ class AdminController extends Controller
                 $endDate = Carbon::parse(trim($dates[1]));
 
                 $period = new \Carbon\CarbonPeriod($startDate, $endDate);
-                $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+                $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
                 foreach ($period as $date) {
                     $days[] = [
@@ -1006,7 +1006,7 @@ class AdminController extends Controller
                 }
 
                 $period = new \Carbon\CarbonPeriod($startDate, $endDate);
-                $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+                $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
                 foreach ($period as $date) {
                     $days[] = [

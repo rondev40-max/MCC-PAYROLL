@@ -119,7 +119,7 @@ class StaffTimesheetController extends Controller
                             ->toArray();
 
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
         for ($d = $startDay; $d <= $endDay; $d++) {
             if ($d <= $daysInMonth) {
@@ -479,7 +479,7 @@ class StaffTimesheetController extends Controller
         // --- START: AYOS PARA SA PRINT PAGE ---
         // I-generate ang $days array, katulad ng sa index() method. Ito ang kulang.
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
         for ($d = $startDay; $d <= $endDay; $d++) {
             if ($d <= $daysInMonth) {
                 $dayDate = $baseDate->copy()->day($d);

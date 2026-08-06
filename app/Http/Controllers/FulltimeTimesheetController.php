@@ -57,7 +57,7 @@ class FulltimeTimesheetController extends Controller
                             ->toArray();
         
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
         for ($d = $startDay; $d <= $endDay; $d++) {
             if ($d <= $daysInMonth) {
@@ -523,7 +523,7 @@ class FulltimeTimesheetController extends Controller
 
         // 3. GENERATE DAYS ARRAY
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'S'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
         for ($d = $startDay; $d <= $endDay; $d++) {
             if ($d <= $daysInMonth) {

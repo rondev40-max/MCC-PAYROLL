@@ -57,7 +57,7 @@ class ParttimeTimesheetController extends Controller
                             ->toArray();
 
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'SU'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
 
         for ($i = $startDay; $i <= $endDay; $i++) {
             if ($i <= $daysInMonth) {
@@ -544,7 +544,7 @@ class ParttimeTimesheetController extends Controller
                             ->toArray();
     
         $days = [];
-        $abbrMap = ['Mon'=>'M','Tue'=>'T','Wed'=>'W','Thu'=>'TH','Fri'=>'F','Sat'=>'S','Sun'=>'SU'];
+        $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
         for ($d = $startDay; $d <= $endDay; $d++) {
             if ($d <= $daysInMonth) {
                 $dayDate = $baseDate->copy()->day($d);
