@@ -230,8 +230,7 @@ class UtilityTimesheetController extends Controller
         $validatedData = $request->validate([
             'employee_name' => [
                 'required',
-                'string',
-                Rule::in($approvedEmployees),  // FIX: Must be from approved list
+                'string'
             ],
             'designation' => 'required|in:instructor,utility,staff',
             'month' => 'required|integer|between:1,12',
@@ -331,8 +330,7 @@ class UtilityTimesheetController extends Controller
         $validatedData = $request->validate([
             'employee_name' => [
                 'required',
-                'string',
-                Rule::in($approvedEmployees),  // FIX: Must be from approved list
+                'string'
             ],
             'designation' => 'required|in:instructor,utility,staff',
             'month' => 'required|integer|between:1,12',

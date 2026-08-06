@@ -221,19 +221,9 @@
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <div class="form-floating">
-            <select class="form-select @error('employee_name') is-invalid @enderror" id="employee_name" name="employee_name" required>
-              <option value="" disabled selected>Select Utility Employee</option>
-              @forelse($utilityEmployees as $id => $name)
-                <option value="{{ $id }}" {{ old('employee_name') == $id ? 'selected' : '' }}>
-                  {{ $name }}
-                </option>
-              @empty
-                <option value="" disabled>No utility workers found in the system</option>
-              @endforelse
-            </select>
+            <input type="text" class="form-control @error('employee_name') is-invalid @enderror" id="employee_name" name="employee_name" value="{{ old('employee_name') }}" placeholder="John Doe" required>
             <label for="employee_name">Employee Name *</label>
           </div>
-          <small class="text-muted ms-1 mt-1 d-block" style="font-size: 0.8rem;">If not listed, add them to Master List first.</small>
         </div>
         <div class="col-md-6">
           <div class="form-floating">
