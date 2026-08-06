@@ -1,0 +1,525 @@
+diff --git a/app/Http/Controllers/EmployeeController.php b/app/Http/Controllers/EmployeeController.php
+index 38d15a6..b958e44 100644
+--- a/app/Http/Controllers/EmployeeController.php
++++ b/app/Http/Controllers/EmployeeController.php
+@@ -6,6 +6,7 @@
+ use Illuminate\Http\Request;
+ use App\Models\Employee;
+ use App\Models\Announcement;
++use App\Models\AnnouncementRead;
+ use App\Models\Attendance;
+ use App\Models\PayslipHistory;
+ use App\Models\EmployeeTimesheet;
+@@ -93,6 +94,8 @@ public function portalDashboard(Request $request)
+         $attendances = $this->getAttendances($employeeId);
+         $stats       = $this->buildStats($attendances);
+         $announcements = Announcement::orderByDesc('created_at')->take(5)->get();
++        $readAnnouncementIds = AnnouncementRead::where('employee_id', $employeeId)
++            ->pluck('announcement_id')->all();
+         $payslips    = PayslipHistory::where('email', $user->email)
+             ->orderByDesc('sent_at')->take(3)->get();
+         $employee    = Employee::where('email', $user->email)
+@@ -100,7 +103,7 @@ public function portalDashboard(Request $request)
+             ->first();
+ 
+         return view('employee.dashboard-v2', compact(
+-            'user', 'employee', 'stats', 'announcements', 'payslips', 'attendances'
++            'user', 'employee', 'stats', 'announcements', 'readAnnouncementIds', 'payslips', 'attendances'
+         ));
+     }
+ 
+@@ -200,9 +203,63 @@ public function portalStoreTimesheet(Request $request)
+     public function portalAnnouncements(Request $request)
+     {
+         $user          = Auth::user();
++        $employeeId    = $this->resolveEmployeeId($user);
+         $announcements = Announcement::orderByDesc('created_at')->get();
++        $readAnnouncementIds = AnnouncementRead::where('employee_id', $employeeId)
++            ->pluck('announcement_id')->all();
+ 
+-        return view('employee.announcements', compact('user', 'announcements'));
++        return view('employee.announcements', compact('user', 'announcements', 'readAnnouncementIds'));
++    }
++
++    /**
++     * Mark a single announcement as read for the current employee.
++     * Called from the portal via fetch(); returns the employee's
++     * updated unread count so the sidebar badge can update live.
++     */
++    public function markAnnouncementRead(Request $request, Announcement $announcement)
++    {
++        $user       = Auth::user();
++        $employeeId = $this->resolveEmployeeId($user);
++
++        AnnouncementRead::firstOrCreate([
++            'announcement_id' => $announcement->id,
++            'employee_id'     => $employeeId,
++        ], [
++            'read_at' => now(),
++        ]);
++
++        $unread = Announcement::orderByDesc('created_at')->take(5)->get()
++            ->whereNotIn('id', AnnouncementRead::where('employee_id', $employeeId)->pluck('announcement_id'))
++            ->count();
++
++        return response()->json(['success' => true, 'unread' => $unread]);
++    }
++
++    /**
++     * Mark every announcement currently visible to the employee as read.
++     */
++    public function markAllAnnouncementsRead(Request $request)
++    {
++        $user       = Auth::user();
++        $employeeId = $this->resolveEmployeeId($user);
++
++        $ids = Announcement::pluck('id');
++        $existing = AnnouncementRead::where('employee_id', $employeeId)
++            ->whereIn('announcement_id', $ids)->pluck('announcement_id');
++
++        $rows = $ids->diff($existing)->map(fn ($id) => [
++            'announcement_id' => $id,
++            'employee_id'     => $employeeId,
++            'read_at'         => now(),
++            'created_at'      => now(),
++            'updated_at'      => now(),
++        ]);
++
++        if ($rows->isNotEmpty()) {
++            AnnouncementRead::insert($rows->all());
++        }
++
++        return response()->json(['success' => true, 'unread' => 0]);
+     }
+ 
+     public function portalProfile(Request $request)
+diff --git a/app/Models/Announcement.php b/app/Models/Announcement.php
+index 2769936..642e8f3 100644
+--- a/app/Models/Announcement.php
++++ b/app/Models/Announcement.php
+@@ -20,4 +20,18 @@ class Announcement extends Model
+     protected $casts = [
+         'is_read' => 'boolean',
+     ];
++
++    /**
++     * Per-employee read receipts. Use this instead of the legacy
++     * `is_read` column, which is global and not scoped to a user.
++     */
++    public function reads()
++    {
++        return $this->hasMany(AnnouncementRead::class);
++    }
++
++    public function isReadBy(int $employeeId): bool
++    {
++        return $this->reads->contains('employee_id', $employeeId);
++    }
+ }
+diff --git a/app/Models/AnnouncementRead.php b/app/Models/AnnouncementRead.php
+new file mode 100644
+index 0000000..562e7e0
+--- /dev/null
++++ b/app/Models/AnnouncementRead.php
+@@ -0,0 +1,23 @@
++<?php
++
++namespace App\Models;
++
++use Illuminate\Database\Eloquent\Model;
++
++class AnnouncementRead extends Model
++{
++    protected $fillable = [
++        'announcement_id',
++        'employee_id',
++        'read_at',
++    ];
++
++    protected $casts = [
++        'read_at' => 'datetime',
++    ];
++
++    public function announcement()
++    {
++        return $this->belongsTo(Announcement::class);
++    }
++}
+diff --git a/database/migrations/2026_06_01_000000_create_announcement_reads_table.php b/database/migrations/2026_06_01_000000_create_announcement_reads_table.php
+new file mode 100644
+index 0000000..8b32967
+--- /dev/null
++++ b/database/migrations/2026_06_01_000000_create_announcement_reads_table.php
+@@ -0,0 +1,36 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++/**
++ * Tracks which announcement each individual employee has read.
++ *
++ * The original `announcements.is_read` column was a single global flag —
++ * one employee opening an announcement would mark it "read" for every
++ * other employee too. This pivot table makes read-state per-employee,
++ * the way the Employee Portal UI (unread badge / "NEW" tag) already
++ * assumes it works.
++ */
++return new class extends Migration
++{
++    public function up(): void
++    {
++        Schema::create('announcement_reads', function (Blueprint $table) {
++            $table->id();
++            $table->foreignId('announcement_id')->constrained()->cascadeOnDelete();
++            $table->unsignedBigInteger('employee_id');
++            $table->timestamp('read_at')->useCurrent();
++            $table->timestamps();
++
++            $table->unique(['announcement_id', 'employee_id']);
++            $table->index('employee_id');
++        });
++    }
++
++    public function down(): void
++    {
++        Schema::dropIfExists('announcement_reads');
++    }
++};
+diff --git a/resources/views/employee/dashboard-v2.blade.php b/resources/views/employee/dashboard-v2.blade.php
+index f232adf..c51a5f5 100644
+--- a/resources/views/employee/dashboard-v2.blade.php
++++ b/resources/views/employee/dashboard-v2.blade.php
+@@ -717,6 +717,16 @@
+      FORMS
+   ══════════════════════════════════════════════ */
+   .f-label { font-size: .72rem; font-weight: 700; color: var(--text-2); margin-bottom: .3rem; display: block; letter-spacing: .02em; }
++  .f-error { font-size: .68rem; font-weight: 600; color: var(--danger); margin-top: .3rem; }
++  .f-input.is-invalid { border-color: var(--danger) !important; }
++  .pw-field { position: relative; }
++  .pw-field .f-input { padding-right: 2.3rem; }
++  .pw-toggle {
++    position: absolute; top: 50%; right: .55rem; transform: translateY(-50%);
++    background: none; border: none; color: var(--text-3); cursor: pointer;
++    padding: 4px; display: grid; place-items: center; font-size: .82rem;
++  }
++  .pw-toggle:hover { color: var(--brand); }
+   .f-input {
+     border: 1.5px solid var(--border);
+     border-radius: 9px; padding: .52rem .88rem;
+@@ -952,7 +962,8 @@
+       // Hoisted derived values — computed once, up top, so nothing below depends on
+       // markup order. (Previously some of these were computed inline inside whichever
+       // component happened to render first, which broke silently if blocks got reordered.)
+-      $unread = isset($announcements) ? $announcements->where('is_read', false)->count() : 0;
++      $readAnnouncementIds = $readAnnouncementIds ?? [];
++      $unread = isset($announcements) ? $announcements->whereNotIn('id', $readAnnouncementIds)->count() : 0;
+       $newPay = isset($payslips) ? $payslips->where('viewed', false)->count() : 0;
+ 
+       // Attendance calendar month — driven by ?month=&year= so it's navigable from the
+@@ -1021,7 +1032,7 @@
+       <div class="nav-label">Info</div>
+       <button class="sb-link" data-tab="announcements" id="nav-announcements">
+         <i class="bi bi-megaphone-fill"></i> Announcements
+-        @if($unread > 0) <span class="sb-dot"></span> @endif
++        @if($unread > 0) <span class="sb-dot" id="annSbDot"></span> @endif
+       </button>
+       <button class="sb-link" data-tab="profile" id="nav-profile">
+         <i class="bi bi-person-circle"></i> My Profile
+@@ -1074,7 +1085,7 @@
+ 
+         <div class="icon-btn" id="notifBtn" title="Announcements" style="cursor:pointer;">
+           <i class="bi bi-bell" style="font-size:.82rem;"></i>
+-          @if(isset($unread) && $unread > 0) <span class="n-dot"></span> @endif
++          @if(isset($unread) && $unread > 0) <span class="n-dot" id="annNDot"></span> @endif
+         </div>
+ 
+         <div class="tb-user" id="profileBtn">
+@@ -1635,13 +1646,20 @@ class="btn-primary btn-sm">
+             <div class="ph-title">Announcements</div>
+             <div class="ph-sub">Official notices and updates from the administration</div>
+           </div>
+-          <select class="f-input" style="width:auto;font-size:.78rem;" id="annFilter" onchange="filterAnn()">
+-            <option value="all">All Types</option>
+-            <option value="general">General</option>
+-            <option value="payroll">Payroll</option>
+-            <option value="holiday">Holiday</option>
+-            <option value="urgent">Urgent</option>
+-          </select>
++          <div class="d-flex align-items-center gap-2">
++            @if($unread > 0)
++              <button class="btn-outline btn-sm" id="markAllReadBtn" onclick="markAllAnnouncementsRead()">
++                <i class="bi bi-check2-all"></i> Mark all as read
++              </button>
++            @endif
++            <select class="f-input" style="width:auto;font-size:.78rem;" id="annFilter" onchange="filterAnn()">
++              <option value="all">All Types</option>
++              <option value="general">General</option>
++              <option value="payroll">Payroll</option>
++              <option value="holiday">Holiday</option>
++              <option value="urgent">Urgent</option>
++            </select>
++          </div>
+         </div>
+ 
+         <div id="annContainer">
+@@ -1650,8 +1668,9 @@ class="btn-primary btn-sm">
+             $ac = ['general'=>'#2563eb','payroll'=>'#10b981','holiday'=>'#f59e0b','urgent'=>'#ef4444'][$ann->type ?? 'general'] ?? '#2563eb';
+             $ai = ['general'=>'megaphone','payroll'=>'cash-coin','holiday'=>'calendar-heart','urgent'=>'exclamation-triangle'][$ann->type ?? 'general'] ?? 'megaphone';
+             $at = $ann->type ?? 'general';
++            $annIsUnread = !in_array($ann->id, $readAnnouncementIds ?? []);
+           @endphp
+-          <div class="ann-card" style="--ann-c:{{ $ac }};" data-type="{{ $at }}">
++          <div class="ann-card" style="--ann-c:{{ $ac }};{{ $annIsUnread ? 'cursor:pointer;' : '' }}" data-type="{{ $at }}" data-ann-id="{{ $ann->id }}" data-read="{{ $annIsUnread ? '0' : '1' }}" @if($annIsUnread) onclick="markAnnouncementRead({{ $ann->id }}, this)" @endif>
+             <div class="d-flex align-items-start gap-3 mb-2">
+               <div style="width:38px;height:38px;border-radius:10px;background:{{ $ac }}18;display:grid;place-items:center;flex-shrink:0;">
+                 <i class="bi bi-{{ $ai }}" style="color:{{ $ac }};font-size:.9rem;"></i>
+@@ -1659,8 +1678,8 @@ class="btn-primary btn-sm">
+               <div style="flex:1;min-width:0;">
+                 <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                   <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:.87rem;color:var(--text);">{{ $ann->title }}</span>
+-                  @if(!($ann->is_read ?? false))
+-                    <span style="background:var(--warn);color:#fff;font-size:.54rem;font-weight:800;border-radius:4px;padding:2px 7px;letter-spacing:.3px;">UNREAD</span>
++                  @if($annIsUnread)
++                    <span class="ann-unread-tag" style="background:var(--warn);color:#fff;font-size:.54rem;font-weight:800;border-radius:4px;padding:2px 7px;letter-spacing:.3px;">UNREAD</span>
+                   @endif
+                 </div>
+                 <div class="d-flex align-items-center gap-2">
+@@ -1733,14 +1752,14 @@ class="btn-primary btn-sm">
+ 
+                 <div style="margin-top:.9rem;background:var(--brand-light);border:1px solid var(--brand-mid);border-radius:9px;padding:.65rem .85rem;font-size:.73rem;color:var(--brand);display:flex;align-items:flex-start;gap:7px;">
+                   <i class="bi bi-info-circle-fill" style="margin-top:2px;flex-shrink:0;"></i>
+-                  Contact your HR administrator to update your profile information.
++                  Update your name, email, or password from the panel on the right. Contact HR to change your position, department, or salary.
+                 </div>
+               </div>
+             </div>
+           </div>
+ 
+           <div class="col-lg-8">
+-            <div class="card">
++            <div class="card mb-3">
+               <div class="card-hd">
+                 <div class="card-title">
+                   <div class="ct-icon" style="background:rgba(37,99,235,.1);color:var(--brand);">
+@@ -1748,29 +1767,40 @@ class="btn-primary btn-sm">
+                   </div>
+                   Employee Details
+                 </div>
+-                <span style="font-size:.67rem;color:var(--text-3);">Read-only — contact HR to update</span>
++                <span style="font-size:.67rem;color:var(--text-3);">Name &amp; email editable · rest managed by HR</span>
+               </div>
+               <div class="card-body">
+-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Personal Information</div>
+-                <div class="row g-3 mb-4">
+-                  <div class="col-md-6">
+-                    <label class="f-label">Full Name</label>
+-                    <input class="f-input" value="{{ $employee->name ?? '' }}" disabled>
+-                  </div>
+-                  <div class="col-md-6">
+-                    <label class="f-label">Email Address</label>
+-                    <input class="f-input" value="{{ $employee->email ?? '' }}" disabled>
+-                  </div>
+-                  <div class="col-md-6">
+-                    <label class="f-label">Phone</label>
+-                    <input class="f-input" value="{{ $employee->phone ?? '—' }}" disabled>
++                <form action="{{ route('employee.profile.update') }}" method="POST">
++                  @csrf
++                  <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Personal Information</div>
++                  <div class="row g-3 mb-3">
++                    <div class="col-md-6">
++                      <label class="f-label">Full Name</label>
++                      <input type="text" name="name" class="f-input @error('name') is-invalid @enderror" value="{{ old('name', $employee->name ?? '') }}" required>
++                      @error('name') <div class="f-error">{{ $message }}</div> @enderror
++                    </div>
++                    <div class="col-md-6">
++                      <label class="f-label">Email Address</label>
++                      <input type="email" name="email" class="f-input @error('email') is-invalid @enderror" value="{{ old('email', $employee->email ?? '') }}" required>
++                      @error('email') <div class="f-error">{{ $message }}</div> @enderror
++                    </div>
++                    <div class="col-md-6">
++                      <label class="f-label">Phone</label>
++                      <input class="f-input" value="{{ $employee->phone ?? '—' }}" disabled>
++                    </div>
++                    <div class="col-md-6">
++                      <label class="f-label">Address</label>
++                      <input class="f-input" value="{{ $employee->address ?? '—' }}" disabled>
++                    </div>
+                   </div>
+-                  <div class="col-md-6">
+-                    <label class="f-label">Address</label>
+-                    <input class="f-input" value="{{ $employee->address ?? '—' }}" disabled>
++                  <div class="d-flex justify-content-end">
++                    <button type="submit" class="btn-primary btn-sm">
++                      <i class="bi bi-check2"></i> Save Changes
++                    </button>
+                   </div>
+-                </div>
+-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Employment Details</div>
++                </form>
++
++                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin:1.2rem 0 .7rem;padding-top:1rem;border-top:1px solid var(--border-2);">Employment Details</div>
+                 <div class="row g-3">
+                   <div class="col-md-6">
+                     <label class="f-label">Position</label>
+@@ -1791,6 +1821,58 @@ class="btn-primary btn-sm">
+                 </div>
+               </div>
+             </div>
++
++            <!-- Change Password -->
++            <div class="card">
++              <div class="card-hd">
++                <div class="card-title">
++                  <div class="ct-icon" style="background:rgba(124,58,237,.1);color:#7c3aed;">
++                    <i class="bi bi-shield-lock-fill"></i>
++                  </div>
++                  Change Password
++                </div>
++              </div>
++              <div class="card-body">
++                <form action="{{ route('employee.profile.update') }}" method="POST" id="pwForm">
++                  @csrf
++                  <input type="hidden" name="name"  value="{{ $employee->name  ?? '' }}">
++                  <input type="hidden" name="email" value="{{ $employee->email ?? '' }}">
++                  <div class="row g-3 mb-1">
++                    <div class="col-md-4">
++                      <label class="f-label">Current Password</label>
++                      <div class="pw-field">
++                        <input type="password" name="current_password" class="f-input @error('current_password') is-invalid @enderror" autocomplete="current-password">
++                        <button type="button" class="pw-toggle" onclick="togglePw(this)"><i class="bi bi-eye"></i></button>
++                      </div>
++                      @error('current_password') <div class="f-error">{{ $message }}</div> @enderror
++                    </div>
++                    <div class="col-md-4">
++                      <label class="f-label">New Password</label>
++                      <div class="pw-field">
++                        <input type="password" name="new_password" class="f-input @error('new_password') is-invalid @enderror" autocomplete="new-password" minlength="8">
++                        <button type="button" class="pw-toggle" onclick="togglePw(this)"><i class="bi bi-eye"></i></button>
++                      </div>
++                      @error('new_password') <div class="f-error">{{ $message }}</div> @enderror
++                    </div>
++                    <div class="col-md-4">
++                      <label class="f-label">Confirm New Password</label>
++                      <div class="pw-field">
++                        <input type="password" name="new_password_confirmation" class="f-input" autocomplete="new-password" minlength="8">
++                        <button type="button" class="pw-toggle" onclick="togglePw(this)"><i class="bi bi-eye"></i></button>
++                      </div>
++                    </div>
++                  </div>
++                  <div style="font-size:.68rem;color:var(--text-3);margin-bottom:1rem;">
++                    <i class="bi bi-info-circle"></i> Minimum 8 characters. Leave blank if you don't want to change your password.
++                  </div>
++                  <div class="d-flex justify-content-end">
++                    <button type="submit" class="btn-primary btn-sm">
++                      <i class="bi bi-shield-check"></i> Update Password
++                    </button>
++                  </div>
++                </form>
++              </div>
++            </div>
+           </div>
+         </div>
+       </div>
+@@ -1882,6 +1964,27 @@ class="btn-primary btn-sm">
+ 
+ 
+ <script>
++/* ═══════════════════════════════════════════
++   PROFILE — PASSWORD FIELD TOGGLE & CONFIRM CHECK
++═══════════════════════════════════════════ */
++function togglePw(btn) {
++  const input = btn.previousElementSibling;
++  const icon  = btn.querySelector('i');
++  const showing = input.type === 'text';
++  input.type = showing ? 'password' : 'text';
++  icon.className = showing ? 'bi bi-eye' : 'bi bi-eye-slash';
++}
++
++document.getElementById('pwForm')?.addEventListener('submit', (e) => {
++  const form = e.target;
++  const newPw     = form.querySelector('[name="new_password"]').value;
++  const confirmPw = form.querySelector('[name="new_password_confirmation"]').value;
++  if (newPw && newPw !== confirmPw) {
++    e.preventDefault();
++    Swal.fire({ icon: 'error', title: 'Passwords Don\'t Match', text: 'New password and confirmation must be identical.', confirmButtonColor: '#2563eb' });
++  }
++});
++
+ /* ═══════════════════════════════════════════
+    THEME TOGGLE
+ ═══════════════════════════════════════════ */
+@@ -2004,6 +2107,59 @@ function filterAnn() {
+   });
+ }
+ 
++/* ═══════════════════════════════════════════
++   ANNOUNCEMENTS — MARK AS READ
++═══════════════════════════════════════════ */
++const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
++
++function _onAnnouncementsCleared() {
++  document.getElementById('annSbDot')?.remove();
++  document.getElementById('annNDot')?.remove();
++  document.getElementById('markAllReadBtn')?.remove();
++}
++
++async function markAnnouncementRead(id, cardEl) {
++  if (cardEl?.dataset.read === '1') return; // already read, avoid duplicate calls
++  try {
++    const res = await fetch(`/employee/announcements/${id}/read`, {
++      method: 'POST',
++      headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
++    });
++    if (!res.ok) throw new Error(`HTTP ${res.status}`);
++    const data = await res.json();
++
++    if (cardEl) {
++      cardEl.dataset.read = '1';
++      cardEl.style.cursor = 'default';
++      cardEl.removeAttribute('onclick');
++      cardEl.querySelector('.ann-unread-tag')?.remove();
++    }
++    if (data.unread === 0) _onAnnouncementsCleared();
++  } catch (err) {
++    console.error('Could not mark announcement as read:', err);
++  }
++}
++
++async function markAllAnnouncementsRead() {
++  try {
++    const res = await fetch('/employee/announcements/read-all', {
++      method: 'POST',
++      headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
++    });
++    if (!res.ok) throw new Error(`HTTP ${res.status}`);
++
++    document.querySelectorAll('#annContainer .ann-card').forEach(c => {
++      c.dataset.read = '1';
++      c.style.cursor = 'default';
++      c.removeAttribute('onclick');
++      c.querySelector('.ann-unread-tag')?.remove();
++    });
++    _onAnnouncementsCleared();
++  } catch (err) {
++    console.error('Could not mark all announcements as read:', err);
++  }
++}
++
+ /* ═══════════════════════════════════════════
+    PAYSLIP VIEW — FETCH & RENDER
+ ═══════════════════════════════════════════ */
+diff --git a/routes/web.php b/routes/web.php
+index ec3e85c..4a0f06d 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -263,6 +263,8 @@
+ 
+     // Announcements
+     Route::get('/announcements', [EmployeeController::class, 'portalAnnouncements'])->name('announcements');
++    Route::post('/announcements/{announcement}/read', [EmployeeController::class, 'markAnnouncementRead'])->name('announcements.read');
++    Route::post('/announcements/read-all', [EmployeeController::class, 'markAllAnnouncementsRead'])->name('announcements.readAll');
+ 
+     // Profile
+     Route::get('/profile', [EmployeeController::class, 'portalProfile'])->name('profile');
