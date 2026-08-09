@@ -286,15 +286,15 @@
             <h3 id="attendance-title"><i class="fas fa-calendar-check"></i> Attendance Management</h3>
 
             <div class="date-controls">
-                <button class="btn btn-secondary" onclick="previousWeek()">
-                    <i class="fas fa-chevron-left"></i> Previous Week
+                <button class="btn btn-secondary" onclick="previousCutoff()">
+                    <i class="fas fa-chevron-left"></i> Previous Cutoff
                 </button>
                 <span class="current-week" id="current-week"></span>
-                <button class="btn btn-secondary" id="next-week-btn" onclick="nextWeek()">
-                    Next Week <i class="fas fa-chevron-right"></i>
+                <button class="btn btn-secondary" id="next-week-btn" onclick="nextCutoff()">
+                    Next Cutoff <i class="fas fa-chevron-right"></i>
                 </button>
-                <button class="btn" onclick="goToCurrentWeek()">
-                    <i class="fas fa-calendar-day"></i> Current Week
+                <button class="btn" onclick="goToCurrentCutoff()">
+                    <i class="fas fa-calendar-day"></i> Current Cutoff
                 </button>
             </div>
 
@@ -316,33 +316,18 @@
                 <table id="attendance-table" style="display:none;">
                     <thead>
                         <tr>
-                            <th rowspan="2" style="width:35px;">
+                            <th style="width:35px;">
                                 <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()" title="Select All">
                             </th>
-                            <th rowspan="2" class="col-id">ID</th>
-                            <th rowspan="2" class="col-name" style="text-align:left;">Instructor Name</th>
-                            <th rowspan="2" class="col-desg">Designation</th>
-                            <th rowspan="2" class="col-type">Type</th>
-                            <th colspan="2" class="day-group-th">Mon <small id="mon-date"></small></th>
-                            <th colspan="2" class="day-group-th">Tue <small id="tue-date"></small></th>
-                            <th colspan="2" class="day-group-th">Wed <small id="wed-date"></small></th>
-                            <th colspan="2" class="day-group-th">Thu <small id="thu-date"></small></th>
-                            <th colspan="2" class="day-group-th">Fri <small id="fri-date"></small></th>
-                            <th colspan="2" class="day-group-th">Sat <small id="sat-date"></small></th>
-                        </tr>
-                        <tr>
-                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">AM In/Out</th>
-                            <th style="font-size:.68rem;min-width:90px;">PM In/Out</th>
+                            <th class="col-id">ID</th>
+                            <th class="col-name" style="text-align:left;">Instructor Name</th>
+                            <th class="col-desg">Designation</th>
+                            <th class="col-type">Type</th>
+                            <th>Total Days Present</th>
+                            <th>Total Hours</th>
+                            <th>Lateness (mins)</th>
+                            <th>Undertime (mins)</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="attendance-tbody"></tbody>
@@ -350,15 +335,6 @@
             </div>
 
             <div class="quick-actions">
-                <button class="btn btn-success" onclick="markAllPresent()">
-                    <i class="fas fa-check-double"></i> Fill Default Times
-                </button>
-                <button class="btn btn-secondary" onclick="clearAllTimes()">
-                    <i class="fas fa-times"></i> Clear All Times
-                </button>
-                <button class="btn" id="save-attendance-btn" onclick="saveAttendance(event)">
-                    <i class="fas fa-save"></i> Save Attendance
-                </button>
                 <button class="btn btn-secondary" onclick="exportAttendance()">
                     <i class="fas fa-file-export"></i> Export CSV
                 </button>
@@ -375,6 +351,41 @@
                     <button class="btn btn-secondary" onclick="clearSelection()">
                         <i class="fas fa-times"></i> Clear Selection
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DTR Modal -->
+        <div class="modal fade" id="dtrModal" tabindex="-1" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; overflow-y:auto;">
+            <div class="modal-dialog" style="max-width:800px; margin:2rem auto; background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,.3);">
+                <div class="modal-content">
+                    <div class="modal-header" style="padding:1rem 1.5rem; border-bottom:1px solid #dee2e6; display:flex; justify-content:space-between; align-items:center; background:#007bff; color:white; border-radius:10px 10px 0 0;">
+                        <h5 class="modal-title" style="margin:0;"><i class="fas fa-file-alt"></i> Civil Service Form No. 48 - <span id="modal-emp-name"></span></h5>
+                        <button type="button" class="btn-close" onclick="closeDtrModal()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding:1.5rem;">
+                        <div style="text-align:center; margin-bottom:1rem;">
+                            <h4 style="margin:0 0 5px 0;">DAILY TIME RECORD</h4>
+                            <p style="margin:0; font-size:.9rem; color:#666;" id="modal-cutoff-period"></p>
+                        </div>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:1rem; min-width:100%;">
+                            <thead>
+                                <tr style="background:#f8f9fa;">
+                                    <th style="padding:8px; border:1px solid #dee2e6;">Day</th>
+                                    <th style="padding:8px; border:1px solid #dee2e6;">AM Arrival</th>
+                                    <th style="padding:8px; border:1px solid #dee2e6;">AM Departure</th>
+                                    <th style="padding:8px; border:1px solid #dee2e6;">PM Arrival</th>
+                                    <th style="padding:8px; border:1px solid #dee2e6;">PM Departure</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dtr-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer" style="padding:1rem 1.5rem; border-top:1px solid #dee2e6; text-align:right; background:#f8f9fa; border-radius:0 0 10px 10px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeDtrModal()">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="save-dtr-btn" onclick="saveDtrData()">Save DTR</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -408,20 +419,56 @@
 
 <script>
 const OFF_AM_IN='08:00', OFF_AM_OUT='12:00', OFF_PM_IN='13:00', OFF_PM_OUT='17:00';
-const DAYS=['monday','tuesday','wednesday','thursday','friday','saturday'];
-let currentDate=new Date(), selectedCourse='', attendanceData=[];
+let currentDate = new Date();
+if (currentDate.getDate() <= 15) {
+    currentDate.setDate(1); // Set to 1st
+} else {
+    currentDate.setDate(16); // Set to 16th
+}
+let selectedCourse='', attendanceData=[];
+let cutoffDates = [];
+let currentEditingEmpId = null;
 
-function getWeekMonday(d){const x=new Date(d),day=x.getDay();x.setDate(x.getDate()+(day===0?-6:1-day));return x;}
+function getCutoffStart(d){
+    const x = new Date(d);
+    if(x.getDate() <= 15) {
+        x.setDate(1);
+    } else {
+        x.setDate(16);
+    }
+    return x;
+}
+
+function getCutoffEnd(d){
+    const x = new Date(d);
+    if(x.getDate() <= 15) {
+        x.setDate(15);
+    } else {
+        x.setMonth(x.getMonth() + 1, 0); // Last day of month
+    }
+    return x;
+}
+
 function formatLocalDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function escapeHtml(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s??'')));return d.innerHTML;}
 function toMins(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m;}
-function fmtMins(m){if(!m||m<=0)return '';const h=Math.floor(m/60),mn=m%60;return h>0?(mn>0?h+'h '+mn+'m':h+'h'):mn+'m';}
+function fmtMins(m){if(!m||m<=0)return '0';const h=Math.floor(m/60),mn=m%60;return h>0?(mn>0?h+'h '+mn+'m':h+'h'):mn+'m';}
+
 function calcMetrics(aI,aO,pI,pO){
     let l=0,u=0,ov=0,w=0;
     const ai=toMins(aI),ao=toMins(aO),pi=toMins(pI),po=toMins(pO);
     const oi=toMins(OFF_AM_IN),oo=toMins(OFF_PM_OUT);
-    if(ai!==null&&ai>oi)l=ai-oi;
-    if(po!==null){if(po<oo)u=oo-po;if(po>oo)ov=po-oo;}
+    if(ai!==null&&ai>oi)l+=ai-oi;
+    if(po!==null){if(po<oo)u+=oo-po;if(po>oo)ov+=po-oo;}
+    
+    // PM Lateness
+    const pi_min = toMins(OFF_PM_IN);
+    if (pi !== null && pi > pi_min) l += pi - pi_min;
+    
+    // AM Undertime
+    const ao_min = toMins(OFF_AM_OUT);
+    if (ao !== null && ao < ao_min) u += ao_min - ao;
+
     if(ai!==null&&ao!==null&&ao>ai)w+=ao-ai;
     if(pi!==null&&po!==null&&po>pi)w+=po-pi;
     return{lateness:l,undertime:u,overtime:ov,worked:w};
@@ -443,32 +490,59 @@ function loadAttendance(course){
     document.getElementById('attendance-section').style.display='block';
     document.getElementById('stats-section').style.display='block';
     document.getElementById('attendance-title').innerHTML='<i class="fas fa-calendar-check"></i> '+escapeHtml(course.toUpperCase())+' Attendance &mdash; CSC Form No. 48';
-    updateWeekDisplay();
+    updateCutoffDisplay();
     fetchAttendanceData();
 }
 
-function updateWeekDisplay(){
-    const today=new Date(),som=getWeekMonday(currentDate),eom=new Date(som);
-    eom.setDate(som.getDate()+5);
-    document.getElementById('current-week').textContent=som.toLocaleDateString()+' \u2013 '+eom.toLocaleDateString();
-    document.getElementById('next-week-btn').disabled=som>=getWeekMonday(today);
-    ['mon','tue','wed','thu','fri','sat'].forEach((d,i)=>{
-        const dd=new Date(som);dd.setDate(som.getDate()+i);
-        document.getElementById(d+'-date').textContent=dd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    });
+function updateCutoffDisplay(){
+    const start = getCutoffStart(currentDate);
+    const end = getCutoffEnd(currentDate);
+    
+    document.getElementById('current-week').textContent = start.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' – ' + end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    
+    cutoffDates = [];
+    let d = new Date(start);
+    while (d <= end) {
+        cutoffDates.push(formatLocalDate(d));
+        d.setDate(d.getDate() + 1);
+    }
 }
 
-function previousWeek(){currentDate.setDate(currentDate.getDate()-7);updateWeekDisplay();fetchAttendanceData();}
-function nextWeek(){currentDate.setDate(currentDate.getDate()+7);updateWeekDisplay();fetchAttendanceData();}
-function goToCurrentWeek(){currentDate=new Date();updateWeekDisplay();fetchAttendanceData();}
+function previousCutoff(){
+    if (currentDate.getDate() <= 15) {
+        currentDate.setDate(0); // Last day of previous month
+        currentDate.setDate(16);
+    } else {
+        currentDate.setDate(1);
+    }
+    updateCutoffDisplay();fetchAttendanceData();
+}
+function nextCutoff(){
+    if (currentDate.getDate() <= 15) {
+        currentDate.setDate(16);
+    } else {
+        currentDate.setMonth(currentDate.getMonth()+1, 1);
+    }
+    updateCutoffDisplay();fetchAttendanceData();
+}
+function goToCurrentCutoff(){
+    currentDate = new Date();
+    if (currentDate.getDate() <= 15) {
+        currentDate.setDate(1);
+    } else {
+        currentDate.setDate(16);
+    }
+    updateCutoffDisplay();fetchAttendanceData();
+}
 
 function fetchAttendanceData(){
     if(!selectedCourse){showNotification('Please select a course first.','error');return;}
-    const som=getWeekMonday(currentDate),date=formatLocalDate(som);
+    const start = getCutoffStart(currentDate);
+    const date = formatLocalDate(start);
     document.getElementById('loading-spinner').style.display='block';
     document.getElementById('attendance-table').style.display='none';
     document.getElementById('attendance-tbody').innerHTML='';
-    fetch('/attendance/api/attendance-data/'+encodeURIComponent(selectedCourse)+'?week_start='+encodeURIComponent(date))
+    fetch('/attendance/api/attendance-data/'+encodeURIComponent(selectedCourse)+'?cutoff_start='+encodeURIComponent(date))
         .then(r=>{
             if(r.status===401){redirect401();return null;}
             if(r.status===403)throw new Error('Unauthorized access to this department');
@@ -491,54 +565,79 @@ function fetchAttendanceData(){
                     const empDesg=String(emp.designation||'N/A').trim();
                     const empType=String(emp.employee_type||'Employee').trim();
                     const attendance={};
-                    DAYS.forEach(day=>{
+                    cutoffDates.forEach(day=>{
                         const saved=emp.saved_times&&emp.saved_times[day];
                         if(saved){
                             attendance[day]={am_in:saved.am_in||'',am_out:saved.am_out||'',pm_in:saved.pm_in||'',pm_out:saved.pm_out||''};
                         } else {
-                            const leg=!!(emp.days&&emp.days[day]);
-                            attendance[day]={am_in:leg?OFF_AM_IN:'',am_out:leg?OFF_AM_OUT:'',pm_in:leg?OFF_PM_IN:'',pm_out:leg?OFF_PM_OUT:''};
+                            attendance[day]={am_in:'',am_out:'',pm_in:'',pm_out:''};
                         }
                     });
-                    tbody.appendChild(createAttendanceRow(empId,empName,empDesg,empType,attendance));
+                    
+                    let daysPresent = 0;
+                    let totalMins = 0;
+                    let totalLate = 0;
+                    let totalUnder = 0;
+                    
+                    cutoffDates.forEach(day=>{
+                        const d = attendance[day];
+                        if(d.am_in || d.am_out || d.pm_in || d.pm_out) {
+                            daysPresent++;
+                            const m = calcMetrics(d.am_in, d.am_out, d.pm_in, d.pm_out);
+                            totalMins += m.worked;
+                            totalLate += m.lateness;
+                            totalUnder += m.undertime;
+                        }
+                    });
+
+                    const tr = document.createElement('tr');
+                    tr.dataset.empId=empId;
+                    
+                    const chkTd=document.createElement('td');
+                    const chk=document.createElement('input');
+                    chk.type='checkbox';chk.className='employee-checkbox';chk.dataset.empId=empId;
+                    chk.addEventListener('change',updateBulkActionsUI);
+                    chkTd.appendChild(chk);tr.appendChild(chkTd);
+                    
+                    appendTd(tr,empId,'col-id');
+                    appendTd(tr,empName,'col-name',true);
+                    appendTd(tr,empDesg,'col-desg');
+                    appendTd(tr,empType,'col-type');
+                    
+                    appendTd(tr, daysPresent, '');
+                    appendTd(tr, (totalMins/60).toFixed(2) + ' hrs', '');
+                    appendTd(tr, totalLate + ' m', 'text-warning');
+                    appendTd(tr, totalUnder + ' m', 'text-danger');
+                    
+                    const actTd = document.createElement('td');
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary';
+                    btn.style.padding = '0.4rem 0.8rem';
+                    btn.style.fontSize = '0.8rem';
+                    btn.innerHTML = '<i class="fas fa-edit"></i> Edit DTR';
+                    btn.onclick = () => openDtrModal(empId);
+                    actTd.appendChild(btn);
+                    tr.appendChild(actTd);
+
+                    tbody.appendChild(tr);
                     attendanceData.push({id:empId,employee_name:empName,designation:empDesg,employee_type:empType,attendance});
                     count++;
                 }catch(e){console.error('Row error',idx,e);}
             });
             document.getElementById('loading-spinner').style.display='none';
-            document.getElementById('attendance-table').style.display='block';
+            document.getElementById('attendance-table').style.display='table';
             if(count===0)showNotification('No employee data found.','warning');
             else showNotification('Loaded '+count+' employee records.','success');
             updateStatistics();
         })
         .catch(err=>{
             document.getElementById('loading-spinner').style.display='none';
-            document.getElementById('attendance-table').style.display='block';
-            document.getElementById('attendance-tbody').innerHTML='<tr><td colspan="17" style="text-align:center;padding:20px;color:#dc3545;"><i class="fas fa-exclamation-triangle"></i><br><strong>Unable to load data</strong><br><small>'+escapeHtml(err.message)+'</small></td></tr>';
+            document.getElementById('attendance-table').style.display='table';
+            document.getElementById('attendance-tbody').innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:#dc3545;"><i class="fas fa-exclamation-triangle"></i><br><strong>Unable to load data</strong><br><small>'+escapeHtml(err.message)+'</small></td></tr>';
             showNotification(escapeHtml(err.message),'error');
         });
 }
 
-// â”€â”€â”€ ROW BUILDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function createAttendanceRow(empId,empName,empDesg,empType,attendance){
-    const tr=document.createElement('tr');
-    tr.dataset.empId=empId;
-    const chkTd=document.createElement('td');
-    const chk=document.createElement('input');
-    chk.type='checkbox';chk.className='employee-checkbox';chk.dataset.empId=empId;
-    chk.addEventListener('change',updateBulkActionsUI);
-    chkTd.appendChild(chk);tr.appendChild(chkTd);
-    appendTd(tr,empId,'col-id');
-    appendTd(tr,empName,'col-name',true);
-    appendTd(tr,empDesg,'col-desg');
-    appendTd(tr,empType,'col-type');
-    DAYS.forEach(day=>{
-        const d=attendance[day]||{am_in:'',am_out:'',pm_in:'',pm_out:''};
-        tr.appendChild(buildTimeCell(empId,day,'am',d.am_in,d.am_out));
-        tr.appendChild(buildTimeCell(empId,day,'pm',d.pm_in,d.pm_out));
-    });
-    return tr;
-}
 function appendTd(tr,text,cls,leftAlign){
     const td=document.createElement('td');
     if(cls)td.className=cls;
@@ -546,135 +645,86 @@ function appendTd(tr,text,cls,leftAlign){
     td.textContent=text;
     tr.appendChild(td);
 }
-function buildTimeCell(empId,day,period,inVal,outVal){
-    const tdEl=document.createElement('td');
-    tdEl.className='time-cell';
-    const group=document.createElement('div');
-    group.className='time-input-group';
-    const inKey=period==='am'?'am_in':'pm_in';
-    const outKey=period==='am'?'am_out':'pm_out';
-    const inLbl=period==='am'?'AM In':'PM In';
-    const outLbl=period==='am'?'AM Out':'PM Out';
-    group.appendChild(wrapLbl(buildTimeInput(empId,day,inKey,inLbl,inVal||''),inLbl));
-    group.appendChild(wrapLbl(buildTimeInput(empId,day,outKey,outLbl,outVal||''),outLbl));
-    const metrics=document.createElement('div');
-    metrics.className='day-metrics';
-    metrics.id='metrics-'+empId+'-'+day+'-'+period;
-    group.appendChild(metrics);
-    if(inVal||outVal)setTimeout(()=>refreshDayMetrics(empId,day),0);
-    tdEl.appendChild(group);
-    return tdEl;
-}
-function wrapLbl(input,text){
-    const w=document.createElement('div'),l=document.createElement('label');
-    l.textContent=text;w.appendChild(l);w.appendChild(input);return w;
-}
-function buildTimeInput(empId,day,key,lbl,initVal){
-    const inp=document.createElement('input');
-    inp.type='time';inp.id='time_'+empId+'_'+day+'_'+key;
-    inp.value=initVal;inp.title=lbl+' - '+day;
-    applyInputStyle(inp,key,initVal);
-    inp.addEventListener('change',function(){
-        const emp=attendanceData.find(e=>e.id===empId);
-        if(emp){if(!emp.attendance[day])emp.attendance[day]={};emp.attendance[day][key]=this.value;}
-        applyInputStyle(inp,key,this.value);
-        refreshDayMetrics(empId,day);
-        updateStatistics();
+
+// DTR Modal Logic
+function openDtrModal(empId) {
+    currentEditingEmpId = empId;
+    const emp = attendanceData.find(e => e.id === empId);
+    if (!emp) return;
+    
+    document.getElementById('modal-emp-name').textContent = emp.employee_name;
+    document.getElementById('modal-cutoff-period').textContent = document.getElementById('current-week').textContent;
+    
+    const tbody = document.getElementById('dtr-tbody');
+    tbody.innerHTML = '';
+    
+    cutoffDates.forEach(day => {
+        const d = emp.attendance[day] || {am_in:'', am_out:'', pm_in:'', pm_out:''};
+        
+        const tr = document.createElement('tr');
+        
+        const tdDay = document.createElement('td');
+        tdDay.style.padding = '8px';
+        tdDay.style.border = '1px solid #dee2e6';
+        tdDay.style.fontWeight = 'bold';
+        tdDay.textContent = new Date(day).toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+        tr.appendChild(tdDay);
+        
+        ['am_in', 'am_out', 'pm_in', 'pm_out'].forEach(key => {
+            const td = document.createElement('td');
+            td.style.padding = '8px';
+            td.style.border = '1px solid #dee2e6';
+            const inp = document.createElement('input');
+            inp.type = 'time';
+            inp.style.width = '100%';
+            inp.style.padding = '4px';
+            inp.style.border = '1px solid #ccc';
+            inp.style.borderRadius = '4px';
+            inp.value = d[key] || '';
+            inp.id = 'modal_time_' + day + '_' + key;
+            td.appendChild(inp);
+            tr.appendChild(td);
+        });
+        
+        tbody.appendChild(tr);
     });
-    return inp;
-}
-function applyInputStyle(inp,key,val){
-    inp.classList.remove('has-time','late');
-    if(!val)return;
-    inp.classList.add('has-time');
-    if(key==='am_in'&&val>OFF_AM_IN)inp.classList.add('late');
-    if(key==='am_out'&&val<OFF_AM_OUT)inp.classList.add('late');
-    if(key==='pm_in'&&val>OFF_PM_IN)inp.classList.add('late');
-    if(key==='pm_out'&&val<OFF_PM_OUT)inp.classList.add('late');
-}
-function refreshDayMetrics(empId,day){
-    const emp=attendanceData.find(e=>e.id===empId);
-    if(!emp)return;
-    const d=emp.attendance[day]||{};
-    const amEl=document.getElementById('metrics-'+empId+'-'+day+'-am');
-    if(amEl){
-        amEl.innerHTML='';
-        if(d.am_in&&d.am_out){
-            const mins=toMins(d.am_out)-toMins(d.am_in);
-            const late=toMins(d.am_in)>toMins(OFF_AM_IN)?toMins(d.am_in)-toMins(OFF_AM_IN):0;
-            amEl.innerHTML='<span class="badge-hours">'+fmtMins(mins)+'</span>';
-            if(late)amEl.innerHTML+='<span class="badge-late">+'+fmtMins(late)+'</span>';
-        }
-    }
-    const pmEl=document.getElementById('metrics-'+empId+'-'+day+'-pm');
-    if(pmEl){
-        pmEl.innerHTML='';
-        if(d.pm_in&&d.pm_out){
-            const mins=toMins(d.pm_out)-toMins(d.pm_in);
-            const under=toMins(d.pm_out)<toMins(OFF_PM_OUT)?toMins(OFF_PM_OUT)-toMins(d.pm_out):0;
-            const over=toMins(d.pm_out)>toMins(OFF_PM_OUT)?toMins(d.pm_out)-toMins(OFF_PM_OUT):0;
-            pmEl.innerHTML='<span class="badge-hours">'+fmtMins(mins)+'</span>';
-            if(under)pmEl.innerHTML+='<span class="badge-under">-'+fmtMins(under)+'</span>';
-            if(over)pmEl.innerHTML+='<span class="badge-over">+'+fmtMins(over)+'</span>';
-        }
-    }
+    
+    document.getElementById('dtrModal').style.display = 'block';
 }
 
-// â”€â”€â”€ QUICK ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function markAllPresent(){
-    attendanceData.forEach(emp=>{
-        DAYS.forEach(day=>{
-            emp.attendance[day]={am_in:OFF_AM_IN,am_out:OFF_AM_OUT,pm_in:OFF_PM_IN,pm_out:OFF_PM_OUT};
-            ['am_in','am_out','pm_in','pm_out'].forEach(k=>{
-                const inp=document.getElementById('time_'+emp.id+'_'+day+'_'+k);
-                if(inp){inp.value=emp.attendance[day][k];applyInputStyle(inp,k,inp.value);}
-            });
-            refreshDayMetrics(emp.id,day);
-        });
-    });
-    updateStatistics();
-    showNotification('Official times applied to all employees.','success');
-}
-function clearAllTimes(){
-    attendanceData.forEach(emp=>{
-        DAYS.forEach(day=>{
-            emp.attendance[day]={am_in:'',am_out:'',pm_in:'',pm_out:''};
-            ['am_in','am_out','pm_in','pm_out'].forEach(k=>{
-                const inp=document.getElementById('time_'+emp.id+'_'+day+'_'+k);
-                if(inp){inp.value='';applyInputStyle(inp,k,'');}
-            });
-            refreshDayMetrics(emp.id,day);
-        });
-    });
-    updateStatistics();
-    showNotification('All time entries cleared.','warning');
+function closeDtrModal() {
+    document.getElementById('dtrModal').style.display = 'none';
+    currentEditingEmpId = null;
 }
 
-// â”€â”€â”€ SAVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function saveAttendance(event){
-    event.preventDefault();
-    if(!selectedCourse){showNotification('Please select a course first.','error');return;}
-    if(!attendanceData.length){showNotification('No attendance data loaded.','error');return;}
-    const hasAny=attendanceData.some(emp=>DAYS.some(day=>{const d=emp.attendance[day];return d&&(d.am_in||d.am_out||d.pm_in||d.pm_out);}));
-    if(!hasAny){
-        Swal.fire({icon:'warning',title:'No times entered',text:'No time entries found. Save anyway?',showCancelButton:true,confirmButtonText:'Yes, save'})
-            .then(r=>{if(r.isConfirmed)performSaveAttendance();});
-        return;
-    }
-    performSaveAttendance();
-}
-function performSaveAttendance(){
-    const som=getWeekMonday(currentDate);
+function saveDtrData() {
+    if (!currentEditingEmpId) return;
+    const emp = attendanceData.find(e => e.id === currentEditingEmpId);
+    if (!emp) return;
+    
+    // Update local data
+    cutoffDates.forEach(day => {
+        if (!emp.attendance[day]) emp.attendance[day] = {};
+        ['am_in', 'am_out', 'pm_in', 'pm_out'].forEach(key => {
+            const inp = document.getElementById('modal_time_' + day + '_' + key);
+            if (inp) emp.attendance[day][key] = inp.value;
+        });
+    });
+    
+    // Perform Save
+    const start = getCutoffStart(currentDate);
     const saveData={
         course:selectedCourse.toUpperCase(),
-        week_start:formatLocalDate(som),
-        attendance_data:attendanceData.map(emp=>({
+        cutoff_start:formatLocalDate(start),
+        attendance_data:[{
             id:emp.id,employee_name:emp.employee_name,name:emp.employee_name,
             designation:emp.designation,employee_type:emp.employee_type,type:emp.employee_type,
             attendance:emp.attendance
-        }))
+        }]
     };
-    const btn=document.getElementById('save-attendance-btn'),orig=btn.innerHTML;
+    
+    const btn = document.getElementById('save-dtr-btn');
+    const orig = btn.innerHTML;
     btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled=true;
     const csrfMeta=document.querySelector('meta[name="csrf-token"]');
@@ -688,8 +738,11 @@ function performSaveAttendance(){
     .then(data=>{
         if(!data)return;
         if(data.success){
-            showNotification(data.message||'Attendance saved!','success');
-            setTimeout(()=>{fetchAttendanceData();loadCourseCounts();},500);
+            showNotification('DTR Saved!','success');
+            closeDtrModal();
+            fetchAttendanceData(); // Refresh the table
+            
+            // Trigger history save asynchronously
             fetch('/attendance/api/save-attendance-history',{
                 method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf},
                 body:JSON.stringify(saveData)
@@ -702,7 +755,7 @@ function performSaveAttendance(){
     .finally(()=>{btn.innerHTML=orig;btn.disabled=false;});
 }
 
-// â”€â”€â”€ STATISTICS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STATISTICS ───────────────────────────────────────────────────────────
 function updateStatistics(){
     const total=attendanceData.length;
     document.getElementById('total-employees').textContent=total;
@@ -712,19 +765,23 @@ function updateStatistics(){
     }
     let dp=0,da=0,tm=0;
     attendanceData.forEach(emp=>{
-        DAYS.forEach(day=>{
+        let hasEntry = false;
+        cutoffDates.forEach(day=>{
             const d=emp.attendance[day]||{};
-            if(d.am_in||d.am_out||d.pm_in||d.pm_out){dp++;tm+=calcMetrics(d.am_in,d.am_out,d.pm_in,d.pm_out).worked;}
-            else da++;
+            if(d.am_in||d.am_out||d.pm_in||d.pm_out){
+                hasEntry = true;
+                tm+=calcMetrics(d.am_in,d.am_out,d.pm_in,d.pm_out).worked;
+            }
         });
+        if (hasEntry) dp++; else da++;
     });
-    document.getElementById('present-today').textContent=dp;
+    document.getElementById('present-today').textContent=dp; // Employees with at least one entry
     document.getElementById('absent-today').textContent=da;
     document.getElementById('avg-hours').textContent=(dp>0?(tm/dp/60).toFixed(1):0)+'h';
-    document.getElementById('attendance-rate').textContent=Math.round(dp/(total*6)*100)+'%';
+    document.getElementById('attendance-rate').textContent=Math.round(dp/(total)*100)+'%';
 }
 
-// â”€â”€â”€ SELECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SELECTION ────────────────────────────────────────────────────────────
 function toggleSelectAll(){
     const all=document.getElementById('select-all-checkbox').checked;
     document.querySelectorAll('.employee-checkbox').forEach(c=>{c.checked=all;c.closest('tr').classList.toggle('selected-row',all);});
@@ -743,7 +800,7 @@ function clearSelection(){
 function bulkDeleteSelected(){
     const sel=[...document.querySelectorAll('.employee-checkbox:checked')].map(c=>c.dataset.empId);
     if(!sel.length)return;
-    Swal.fire({icon:'warning',title:'Delete '+sel.length+' record(s)?',text:'Removes attendance for this week.',
+    Swal.fire({icon:'warning',title:'Delete '+sel.length+' record(s)?',text:'Removes attendance for this cutoff.',
         showCancelButton:true,confirmButtonColor:'#dc3545',confirmButtonText:'Delete'})
     .then(r=>{
         if(!r.isConfirmed)return;
@@ -763,15 +820,15 @@ function bulkDeleteSelected(){
     });
 }
 
-// â”€â”€â”€ EXPORT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── EXPORT ───────────────────────────────────────────────────────────────
 function exportAttendance(){
     if(!attendanceData.length){showNotification('No data to export.','error');return;}
-    const rows=[['Employee Name','Designation','Type','Day','AM In','AM Out','PM In','PM Out','Total Hours','Lateness (min)','Undertime (min)','Overtime (min)']];
+    const rows=[['Employee Name','Designation','Type','Date','AM In','AM Out','PM In','PM Out','Total Hours','Lateness (min)','Undertime (min)','Overtime (min)']];
     attendanceData.forEach(emp=>{
-        DAYS.forEach(day=>{
+        cutoffDates.forEach(day=>{
             const d=emp.attendance[day]||{},m=calcMetrics(d.am_in,d.am_out,d.pm_in,d.pm_out);
             rows.push([emp.employee_name,emp.designation,emp.employee_type,
-                day.charAt(0).toUpperCase()+day.slice(1),
+                day,
                 d.am_in||'',d.am_out||'',d.pm_in||'',d.pm_out||'',
                 (m.worked/60).toFixed(2),m.lateness,m.undertime,m.overtime]);
         });
@@ -779,19 +836,19 @@ function exportAttendance(){
     const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
     const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;
-    a.download='attendance_'+selectedCourse+'_'+formatLocalDate(getWeekMonday(currentDate))+'.csv';
+    a.download='attendance_'+selectedCourse+'_'+formatLocalDate(getCutoffStart(currentDate))+'.csv';
     a.click();
     URL.revokeObjectURL(url);
     showNotification('CSV export downloaded.','success');
 }
 
-// â”€â”€â”€ NOTIFICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────
 function showNotification(message,type){
     type=type||'success';
     document.querySelectorAll('.notification').forEach(n=>n.remove());
     const div=document.createElement('div');
     div.className='notification '+type;
-    div.innerHTML='<div class="notification-content"><span>'+message+'</span><button class="notification-close" onclick="this.closest(\'.notification\').remove()">\u00D7</button></div>';
+    div.innerHTML='<div class="notification-content"><span>'+message+'</span><button class="notification-close" onclick="this.closest('.notification').remove()">&times;</button></div>';
     document.body.appendChild(div);
     setTimeout(()=>{if(div.parentNode)div.remove();},5000);
 }

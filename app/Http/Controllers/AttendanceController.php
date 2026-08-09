@@ -391,13 +391,13 @@ class AttendanceController extends Controller
                 return response()->json(['error' => 'Unauthorized access to this department.'], 403);
             }
 
-            // Determine the week_start from request (for merging saved times)
-            $weekStart = null;
-            if ($request->has('week_start')) {
+            // Determine the cutoff_start from request (for merging saved times)
+            $cutoffStart = null;
+            if ($request->has('cutoff_start')) {
                 try {
-                    $weekStart = Carbon::parse($request->query('week_start'))->startOfDay();
+                    $cutoffStart = Carbon::parse($request->query('cutoff_start'))->startOfDay();
                 } catch (\Exception $e) {
-                    Log::warning('Invalid week_start param: ' . $e->getMessage());
+                    Log::warning('Invalid cutoff_start param: ' . $e->getMessage());
                 }
             }
 
@@ -425,9 +425,9 @@ class AttendanceController extends Controller
                 ->concat($staff)
                 ->concat($utility);
 
-            // Merge saved CSC attendance times if week_start is provided
-            if ($weekStart) {
-                $data = $this->mergeSavedTimes($data, $course, $weekStart);
+            // Merge saved CSC attendance times if cutoff_start is provided
+            if ($cutoffStart) {
+                $data = $this->mergeSavedTimes($data, $course, $cutoffStart);
             }
 
             Log::info('getAttendanceData retrieved', [
@@ -480,13 +480,23 @@ class AttendanceController extends Controller
      * Helper: Merge saved per-day CSC times from attendances table.
      * Adds a 'saved_times' key to each employee entry, keyed by weekday name.
      */
-    private function mergeSavedTimes($data, string $course, Carbon $weekStart): \Illuminate\Support\Collection
+    private function mergeSavedTimes($data, string $course, Carbon $cutoffStart): \Illuminate\Support\Collection
     {
         try {
-            // Build list of dates for the week (Mon–Sat)
-            $weekDates = [];
-            foreach (self::WEEK_DAYS as $day => $offset) {
-                $weekDates[$day] = $weekStart->copy()->addDays($offset)->toDateString();
+            // Determine cutoff end date
+            $cutoffEnd = $cutoffStart->copy();
+            if ($cutoffStart->day <= 15) {
+                $cutoffEnd->day = 15;
+            } else {
+                $cutoffEnd->endOfMonth();
+            }
+
+            // Build list of dates for the cutoff period
+            $cutoffDates = [];
+            $currentDate = $cutoffStart->copy();
+            while ($currentDate->lte($cutoffEnd)) {
+                $cutoffDates[] = $currentDate->toDateString();
+                $currentDate->addDay();
             }
 
             // Gather all raw employee IDs from the data
@@ -496,13 +506,13 @@ class AttendanceController extends Controller
                 return $data;
             }
 
-            // Fetch all saved attendance rows for this week/course
+            // Fetch all saved attendance rows for this cutoff/course
             $savedRows = DB::table('attendances')
                 ->where('course', $course)
                 ->whereIn('employee_id', $rawIds)
                 ->whereBetween('date', [
-                    $weekStart->toDateString(),
-                    $weekStart->copy()->addDays(5)->toDateString(),
+                    $cutoffStart->toDateString(),
+                    $cutoffEnd->toDateString(),
                 ])
                 ->select([
                     'employee_id', 'date',
@@ -518,14 +528,14 @@ class AttendanceController extends Controller
                 $indexed[$row->employee_id][$row->date] = $row;
             }
 
-            return $data->map(function ($emp) use ($indexed, $weekDates) {
+            return $data->map(function ($emp) use ($indexed, $cutoffDates) {
                 $rawId = $emp['raw_id'];
                 $savedTimes = [];
 
-                foreach ($weekDates as $dayName => $dateStr) {
+                foreach ($cutoffDates as $dateStr) {
                     if (isset($indexed[$rawId][$dateStr])) {
                         $r = $indexed[$rawId][$dateStr];
-                        $savedTimes[$dayName] = [
+                        $savedTimes[$dateStr] = [
                             'am_in'              => $r->am_in_time   ? substr($r->am_in_time, 0, 5)   : '',
                             'am_out'             => $r->am_out_time  ? substr($r->am_out_time, 0, 5)  : '',
                             'pm_in'              => $r->pm_in_time   ? substr($r->pm_in_time, 0, 5)   : '',
@@ -537,7 +547,7 @@ class AttendanceController extends Controller
                             'status'             => $r->status ?? 'absent',
                         ];
                     } else {
-                        $savedTimes[$dayName] = null;
+                        $savedTimes[$dateStr] = null;
                     }
                 }
 
@@ -653,13 +663,13 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'course'          => 'required|string|max:50',
-            'week_start'      => 'required|date',
+            'cutoff_start'    => 'required|date',
             'attendance_data' => 'required|array',
         ]);
 
         try {
             $course        = strtoupper($validated['course']);
-            $weekStartDate = Carbon::parse($validated['week_start'])->startOfDay();
+            $cutoffStartDate = Carbon::parse($validated['cutoff_start'])->startOfDay();
             $userId        = $this->getUserId();
             $saved         = 0;
             $skipped       = 0;
@@ -694,12 +704,11 @@ class AttendanceController extends Controller
 
                 $employeeDays = $employee['attendance'] ?? [];
 
-                foreach (self::WEEK_DAYS as $dayKey => $offset) {
-                    if (!array_key_exists($dayKey, $employeeDays)) {
+                foreach ($employeeDays as $date => $dayData) {
+                    // Basic validation for date format
+                    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                         continue;
                     }
-
-                    $dayData = $employeeDays[$dayKey];
 
                     // Support both time-object format and legacy boolean
                     if (is_array($dayData)) {
@@ -720,7 +729,6 @@ class AttendanceController extends Controller
 
                     // Calculate metrics
                     $metrics   = $this->calculateDayMetrics($amIn, $amOut, $pmIn, $pmOut);
-                    $date      = $weekStartDate->copy()->addDays($offset)->toDateString();
 
                     try {
                         DB::table('attendances')->updateOrInsert(
@@ -808,13 +816,13 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'course'          => 'required|string|max:50',
-            'week_start'      => 'required|date',
+            'cutoff_start'    => 'required|date',
             'attendance_data' => 'required|array',
         ]);
 
         try {
             $course        = strtoupper($validated['course']);
-            $weekStartDate = Carbon::parse($validated['week_start'])->startOfDay();
+            $cutoffStartDate = Carbon::parse($validated['cutoff_start'])->startOfDay();
             $userId        = $this->getUserId();
             $saved         = 0;
             $skipped       = 0;
@@ -846,12 +854,12 @@ class AttendanceController extends Controller
 
                 $employeeDays = $employee['attendance'] ?? [];
 
-                foreach (self::WEEK_DAYS as $dayKey => $offset) {
-                    if (!array_key_exists($dayKey, $employeeDays)) {
+                foreach ($employeeDays as $date => $dayData) {
+                    // Basic validation for date format
+                    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                         continue;
                     }
 
-                    $dayData = $employeeDays[$dayKey];
                     if (is_array($dayData)) {
                         $amIn  = !empty($dayData['am_in'])  ? $dayData['am_in']  : null;
                         $pmOut = !empty($dayData['pm_out']) ? $dayData['pm_out'] : null;
@@ -861,8 +869,6 @@ class AttendanceController extends Controller
                         $amIn  = $hasTimes ? self::DEFAULT_TIME_IN  : null;
                         $pmOut = $hasTimes ? self::DEFAULT_TIME_OUT : null;
                     }
-
-                    $date = $weekStartDate->copy()->addDays($offset)->toDateString();
 
                     try {
                         DB::table('attendance_histories')->updateOrInsert(
