@@ -144,6 +144,19 @@ Route::post('/fulltime/{id}/update-field', [FulltimeTimesheetController::class, 
     Route::get('/utility/print', [\App\Http\Controllers\UtilityTimesheetController::class, 'printAll'])->name('utility.print');
     Route::post('/utility/{id}/update-field', [\App\Http\Controllers\UtilityTimesheetController::class, 'updateField'])->name('utility.update.field');
 
+    // Admin Personnel Timesheet Resource
+    Route::resource('admin-personnel', \App\Http\Controllers\AdminPersonnelTimesheetController::class);
+    Route::get('/admin-personnel/print/all', [\App\Http\Controllers\AdminPersonnelTimesheetController::class, 'printAll'])->name('admin-personnel.print');
+    Route::post('/admin-personnel/{id}/update-day', [\App\Http\Controllers\AdminPersonnelTimesheetController::class, 'updateDay'])->name('admin-personnel.update.day');
+    Route::post('/admin-personnel/{id}/update-field', [\App\Http\Controllers\AdminPersonnelTimesheetController::class, 'updateField'])->name('admin-personnel.update.field');
+
+    // Watchman Timesheet Resource
+    Route::resource('watchman', \App\Http\Controllers\WatchmanTimesheetController::class);
+    Route::get('/watchman/print/all', [\App\Http\Controllers\WatchmanTimesheetController::class, 'printAll'])->name('watchman.print');
+    Route::post('/watchman/{id}/update-day', [\App\Http\Controllers\WatchmanTimesheetController::class, 'updateDay'])->name('watchman.update.day');
+    Route::post('/watchman/{id}/update-field', [\App\Http\Controllers\WatchmanTimesheetController::class, 'updateField'])->name('watchman.update.field');
+
+
     // Department Routes
     Route::resource('departments', DepartmentController::class);
     Route::get('/timesheets', [FulltimeTimesheetController::class, 'index'])->name('timesheets.index');

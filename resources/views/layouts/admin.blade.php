@@ -353,7 +353,7 @@
 
         <div class="dropdown">
           <button
-            class="sidebar-btn dropdown-toggle {{ request()->routeIs('fulltime.*', 'parttime.*', 'utility.*', 'staff.*') ? 'active' : '' }}"
+            class="sidebar-btn dropdown-toggle {{ request()->routeIs('fulltime.*', 'parttime.*', 'utility.*', 'staff.*', 'admin-personnel.*', 'watchman.*') ? 'active' : '' }}"
             type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-people"></i><span>Employees</span>
           </button>
@@ -366,6 +366,10 @@
                 Workers</a></li>
             <li><a class="dropdown-item" href="{{ route('staff.index') }}"><i
                   class="bi bi-person-workspace"></i>Staff</a></li>
+            <li><a class="dropdown-item" href="{{ route('admin-personnel.index') }}"><i
+                  class="bi bi-person-gear"></i>Admin</a></li>
+            <li><a class="dropdown-item" href="{{ route('watchman.index') }}"><i
+                  class="bi bi-eye"></i>Watchman</a></li>
           </ul>
         </div>
 
