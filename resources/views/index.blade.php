@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
@@ -28,75 +28,73 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-page: #f4f6fb;
+      --bg-page: #f8fafc;
       --bg-panel: #ffffff;
       --bg-panel-solid: #ffffff;
-      --dot-color: rgba(15, 23, 42, 0.08);
       
-      --border-color: #0f172a;
-      --border-color-strong: #0f172a;
-      --border-width: 2px;
+      --border-color: #e2e8f0;
+      --border-color-soft: #f1f5f9;
+      --border-width: 1px;
 
       --text-primary: #0f172a;
-      --text-secondary: #334155;
-      --text-tertiary: #475569;
+      --text-secondary: #475569;
+      --text-tertiary: #64748b;
 
       --accent-blue: #1e4fbf;
       --accent-blue-hover: #163e9b;
-      --accent-blue-soft: #edf2ff;
+      --accent-blue-soft: #f0f4ff;
 
       --accent-maroon: #7e1618;
       --accent-maroon-hover: #631113;
-      --accent-maroon-soft: #fdf2f2;
+      --accent-maroon-soft: #fef2f2;
 
       --accent-slate: #334155;
-      --accent-slate-soft: #f1f5f9;
+      --accent-slate-soft: #f8fafc;
 
-      --radius-lg: 12px;
-      --radius-md: 8px;
-      --radius-sm: 6px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
       --radius-pill: 999px;
 
-      --shadow-hard-lg: 6px 6px 0px #0f172a;
-      --shadow-hard-md: 4px 4px 0px #0f172a;
-      --shadow-hard-sm: 3px 3px 0px #0f172a;
-      --shadow-focus: 0 0 0 3px rgba(30, 79, 191, 0.25);
+      --shadow-soft-lg: 0 10px 25px -3px rgba(15, 23, 42, 0.03), 0 4px 12px -4px rgba(15, 23, 42, 0.02);
+      --shadow-soft-md: 0 8px 16px -2px rgba(15, 23, 42, 0.02), 0 2px 6px -2px rgba(15, 23, 42, 0.01);
+      --shadow-soft-sm: 0 2px 8px -1px rgba(15, 23, 42, 0.02);
+      --shadow-focus: 0 0 0 3px rgba(30, 79, 191, 0.08);
 
       --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     [data-theme="dark"] {
       --bg-page: #0b0f19;
-      --bg-panel: #111827;
-      --bg-panel-solid: #1f2937;
-      --dot-color: rgba(255, 255, 255, 0.04);
+      --bg-panel: #0f172a;
+      --bg-panel-solid: #1e293b;
 
-      --border-color: #334155;
-      --border-color-strong: #475569;
+      --border-color: #1e293b;
+      --border-color-soft: #111827;
 
       --text-primary: #f8fafc;
-      --text-secondary: #cbd5e1;
-      --text-tertiary: #94a3b8;
+      --text-secondary: #94a3b8;
+      --text-tertiary: #64748b;
 
       --accent-blue: #60a5fa;
       --accent-blue-hover: #93c5fd;
-      --accent-blue-soft: rgba(96, 165, 250, 0.08);
+      --accent-blue-soft: rgba(96, 165, 250, 0.06);
 
       --accent-maroon: #f87171;
       --accent-maroon-hover: #fca5a5;
-      --accent-maroon-soft: rgba(248, 113, 113, 0.08);
+      --accent-maroon-soft: rgba(248, 113, 113, 0.06);
 
       --accent-slate: #94a3b8;
-      --accent-slate-soft: rgba(148, 163, 184, 0.08);
+      --accent-slate-soft: rgba(148, 163, 184, 0.06);
 
-      --shadow-hard-lg: 6px 6px 0px #334155;
-      --shadow-hard-md: 4px 4px 0px #334155;
-      --shadow-hard-sm: 3px 3px 0px #334155;
+      --shadow-soft-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.2), 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+      --shadow-soft-md: 0 8px 16px -2px rgba(0, 0, 0, 0.15), 0 2px 6px -2px rgba(0, 0, 0, 0.08);
+      --shadow-soft-sm: 0 2px 8px -1px rgba(0, 0, 0, 0.1);
     }
 
     html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
-    /* ===================== GEOMETRIC DOT BACKGROUND ===================== */
+    /* ===================== MINIMALIST BACKGROUND ===================== */
     body {
       font-family: var(--font);
       font-size: 0.9rem;
@@ -109,9 +107,7 @@
       overflow-x: hidden;
       
       background-color: var(--bg-page);
-      background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
-      background-size: 20px 20px;
-      transition: background-color 0.2s ease, background-image 0.2s ease;
+      transition: background-color 0.25s ease;
     }
 
     /* ===================== LAYOUT CONTAINERS ===================== */
@@ -130,13 +126,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 76px;
-      margin-top: 20px;
-      padding: 0 24px;
+      height: 72px;
+      margin-top: 16px;
+      padding: 0 20px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-hard-md);
+      box-shadow: var(--shadow-soft-sm);
       z-index: 100;
     }
 
@@ -149,9 +145,9 @@
     }
 
     .brand-mark {
-      width: 38px;
-      height: 38px;
-      padding: 2px;
+      width: 34px;
+      height: 34px;
+      padding: 1px;
       background: #ffffff;
       border: var(--border-width) solid var(--border-color);
       border-radius: 50%;
@@ -175,50 +171,50 @@
     }
 
     .brand-name {
-      font-size: 1.05rem;
-      font-weight: 800;
+      font-size: 0.95rem;
+      font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     .brand-subtitle {
       font-size: 0.72rem;
       color: var(--text-tertiary);
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-outline {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 40px;
-      padding: 0 18px;
+      min-height: 38px;
+      padding: 0 16px;
       font-family: inherit;
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text-primary);
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-pill);
       cursor: pointer;
       text-decoration: none;
-      box-shadow: var(--shadow-hard-sm);
-      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: var(--shadow-soft-sm);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .btn-outline:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: 4px 4px 0px var(--border-color);
+      background: var(--border-color-soft);
+      border-color: var(--text-tertiary);
+      transform: translateY(-1px);
     }
 
     .btn-outline:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0px var(--border-color);
+      transform: translateY(0);
     }
 
     .btn-outline svg {
@@ -227,7 +223,7 @@
     }
 
     .theme-toggle-btn {
-      width: 40px;
+      width: 38px;
       padding: 0;
       justify-content: center;
     }
@@ -239,10 +235,10 @@
     /* ===================== HERO / PORTALS MAIN SECTION ===================== */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: 1.15fr 1fr;
-      gap: clamp(28px, 6vw, 56px);
+      grid-template-columns: 1.1fr 1.0fr;
+      gap: clamp(24px, 5vw, 48px);
       align-items: center;
-      margin-top: 48px;
+      margin-top: 40px;
       margin-bottom: 56px;
     }
 
@@ -250,7 +246,7 @@
     .intro-panel {
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 20px;
     }
 
     .institution-pill {
@@ -258,52 +254,46 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--text-primary);
+      color: var(--text-tertiary);
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       padding: 6px 14px;
-      border-radius: var(--radius-sm);
-      box-shadow: var(--shadow-hard-sm);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-soft-sm);
     }
 
     .institution-pill .dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--accent-blue);
-      animation: throb 2s infinite alternate;
-    }
-
-    @keyframes throb {
-      0% { opacity: 0.4; transform: scale(0.8); }
-      100% { opacity: 1; transform: scale(1.2); }
+      background: #10b981; /* Soft green */
     }
 
     .intro-title h1 {
-      font-size: clamp(2.3rem, 4.5vw, 3.2rem);
-      font-weight: 900;
-      line-height: 1.05;
-      letter-spacing: -0.04em;
+      font-size: clamp(2.1rem, 4vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
       margin-bottom: 8px;
     }
 
     .intro-title h2 {
-      font-size: clamp(1.4rem, 2.5vw, 1.9rem);
-      font-weight: 800;
+      font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+      font-weight: 600;
       line-height: 1.2;
       color: var(--accent-blue);
       letter-spacing: -0.02em;
     }
 
     .intro-desc {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text-secondary);
       line-height: 1.6;
-      max-width: 480px;
+      max-width: 460px;
     }
 
     /* Digital Clock Card */
@@ -311,25 +301,25 @@
       align-self: flex-start;
       display: inline-flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 16px 24px;
+      gap: 2px;
+      padding: 14px 20px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-hard-md);
+      box-shadow: var(--shadow-soft-sm);
     }
 
     .clock-time {
-      font-size: 1.8rem;
-      font-weight: 900;
+      font-size: 1.5rem;
+      font-weight: 700;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.02em;
       color: var(--text-primary);
     }
 
     .clock-date {
-      font-size: 0.75rem;
-      font-weight: 800;
+      font-size: 0.72rem;
+      font-weight: 500;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-tertiary);
@@ -339,34 +329,32 @@
     .portal-stack {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .portal-card {
-      position: relative;
       display: flex;
       align-items: center;
-      gap: 18px;
-      padding: 24px;
+      gap: 16px;
+      padding: 20px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-hard-lg);
+      box-shadow: var(--shadow-soft-md);
       text-decoration: none;
       color: inherit;
       cursor: pointer;
-      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .portal-card:hover {
-      transform: translate(-3px, -3px);
-      box-shadow: 9px 9px 0px var(--border-color);
-      border-color: var(--border-color-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-soft-lg);
+      border-color: var(--portal-accent);
     }
 
     .portal-card:active {
-      transform: translate(3px, 3px);
-      box-shadow: 3px 3px 0px var(--border-color);
+      transform: translateY(0);
     }
 
     .portal-card--employee { --portal-accent: var(--accent-blue); --portal-soft: var(--accent-blue-soft); }
@@ -377,20 +365,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 52px;
-      height: 52px;
+      width: 46px;
+      height: 46px;
       border-radius: var(--radius-md);
-      border: var(--border-width) solid var(--border-color);
       background: var(--portal-soft);
       color: var(--portal-accent);
       flex-shrink: 0;
-      box-shadow: var(--shadow-hard-sm);
+      transition: transform 0.2s ease;
     }
 
     .portal-icon svg {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       stroke: currentColor;
+      stroke-width: 1.8;
     }
 
     .portal-info {
@@ -399,51 +387,46 @@
     }
 
     .portal-info h3 {
-      font-size: 1.1rem;
-      font-weight: 800;
+      font-size: 1.0rem;
+      font-weight: 700;
       letter-spacing: -0.015em;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .portal-badge {
-      font-size: 0.64rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: #ffffff;
-      background: var(--portal-accent);
-      border: 1px solid var(--border-color);
-      padding: 3px 10px;
-      border-radius: var(--radius-sm);
-      box-shadow: 1.5px 1.5px 0px var(--border-color);
+      color: var(--portal-accent);
+      background: var(--portal-soft);
+      border: var(--border-width) solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
     }
 
     .portal-info p {
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       color: var(--text-secondary);
-      line-height: 1.45;
+      line-height: 1.4;
     }
 
     .portal-chevron {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      border: var(--border-width) solid var(--border-color);
-      background: var(--bg-panel);
-      color: var(--text-secondary);
-      transition: all 0.15s ease;
-      box-shadow: 2px 2px 0px var(--border-color);
+      color: var(--text-tertiary);
+      transition: all 0.2s ease;
     }
 
     .portal-card:hover .portal-chevron {
-      background: var(--portal-accent);
-      color: #ffffff;
+      color: var(--portal-accent);
       transform: translateX(2px);
     }
 
@@ -452,26 +435,24 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 20px;
+      padding: 12px 18px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-hard-md);
-      margin-bottom: 24px;
-      font-size: 0.84rem;
+      box-shadow: var(--shadow-soft-sm);
+      margin-bottom: 16px;
+      font-size: 0.82rem;
     }
 
     .announcement-badge {
-      font-size: 0.66rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: #ffffff;
-      background: var(--accent-blue);
-      border: 1.5px solid var(--border-color);
-      padding: 3px 10px;
-      border-radius: var(--radius-sm);
-      box-shadow: 1.5px 1.5px 0px var(--border-color);
+      color: var(--accent-blue);
+      background: var(--accent-blue-soft);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
       flex-shrink: 0;
     }
 
@@ -483,13 +464,13 @@
 
     .announcement-content strong {
       color: var(--text-primary);
-      font-weight: 700;
+      font-weight: 600;
     }
 
     .announcement-date {
       font-size: 0.72rem;
       color: var(--text-tertiary);
-      font-weight: 600;
+      font-weight: 500;
       flex-shrink: 0;
     }
 
@@ -497,87 +478,81 @@
     .features-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: clamp(16px, 3vw, 28px);
-      padding: 28px;
+      gap: clamp(16px, 3vw, 24px);
+      padding: 24px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-hard-lg);
-      margin-bottom: 64px;
+      box-shadow: var(--shadow-soft-sm);
+      margin-bottom: 56px;
     }
 
     .feature-item {
       display: flex;
       align-items: flex-start;
-      gap: 16px;
+      gap: 14px;
     }
 
     .feature-icon-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-md);
-      border: var(--border-width) solid var(--border-color);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
       background: var(--accent-blue-soft);
       color: var(--accent-blue);
       flex-shrink: 0;
-      box-shadow: var(--shadow-hard-sm);
     }
 
     .feature-icon-wrapper svg {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
+      stroke-width: 1.8;
     }
 
     .feature-text h4 {
-      font-size: 0.95rem;
-      font-weight: 800;
+      font-size: 0.9rem;
+      font-weight: 700;
       letter-spacing: -0.01em;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .feature-text p {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-secondary);
-      line-height: 1.45;
+      line-height: 1.4;
     }
 
     /* ===================== GRID BELOW THE FOLD ===================== */
     .secondary-grid {
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: clamp(28px, 5vw, 56px);
-      margin-bottom: 64px;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: clamp(24px, 5vw, 48px);
+      margin-bottom: 56px;
     }
 
     /* FAQ accordion */
     .faq-panel h2 {
-      font-size: 1.6rem;
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      margin-bottom: 24px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
     }
 
     .faq-accordion {
       display: flex;
       flex-direction: column;
-      gap: 12px;
     }
 
     .faq-item {
-      background: var(--bg-panel);
-      border: var(--border-width) solid var(--border-color);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-hard-sm);
-      overflow: hidden;
-      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+      background: transparent;
+      border-bottom: var(--border-width) solid var(--border-color);
+      transition: all 0.2s ease;
     }
 
-    .faq-item.open {
-      transform: translate(-1px, -1px);
-      box-shadow: var(--shadow-hard-md);
+    .faq-item:first-child {
+      border-top: var(--border-width) solid var(--border-color);
     }
 
     .faq-q {
@@ -586,13 +561,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 18px 24px;
+      padding: 16px 8px;
       background: transparent;
       border: none;
       cursor: pointer;
       font: inherit;
-      font-size: 0.9rem;
-      font-weight: 800;
+      font-size: 0.86rem;
+      font-weight: 600;
       color: var(--text-primary);
       text-align: left;
     }
@@ -602,9 +577,10 @@
     }
 
     .faq-icon-arrow {
-      width: 18px;
-      height: 18px;
-      stroke: var(--text-primary);
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-tertiary);
+      stroke-width: 2.2;
       transition: transform 0.25s ease;
     }
 
@@ -616,19 +592,22 @@
     .faq-a-wrap {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .faq-a {
-      padding: 0 24px 22px;
-      font-size: 0.82rem;
+      padding: 0 8px 16px;
+      font-size: 0.8rem;
       color: var(--text-secondary);
-      line-height: 1.55;
+      line-height: 1.5;
     }
 
     .faq-a a {
       color: var(--accent-blue);
-      font-weight: 700;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .faq-a a:hover {
       text-decoration: underline;
     }
 
@@ -637,60 +616,59 @@
       align-self: flex-start;
       display: flex;
       flex-direction: column;
-      gap: 22px;
-      padding: 32px;
+      gap: 18px;
+      padding: 24px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-hard-lg);
+      box-shadow: var(--shadow-soft-md);
     }
 
     .support-card-head {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     .support-card-head h2 {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
     }
 
     .support-card-head p {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
     }
 
     .support-list {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 14px;
     }
 
     .support-row {
       display: flex;
       align-items: flex-start;
-      gap: 14px;
+      gap: 12px;
     }
 
     .support-row-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: var(--radius-sm);
-      border: var(--border-width) solid var(--border-color);
       background: var(--accent-blue-soft);
       color: var(--accent-blue);
       flex-shrink: 0;
-      box-shadow: var(--shadow-hard-sm);
     }
 
     .support-row-icon svg {
       width: 16px;
       height: 16px;
+      stroke-width: 1.8;
     }
 
     .support-details {
@@ -700,17 +678,17 @@
     }
 
     .support-label {
-      font-size: 0.64rem;
-      font-weight: 800;
+      font-size: 0.62rem;
+      font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-tertiary);
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
 
     .support-value {
-      font-size: 0.86rem;
-      font-weight: 700;
+      font-size: 0.82rem;
+      font-weight: 600;
       color: var(--text-primary);
       text-decoration: none;
       word-break: break-word;
@@ -718,10 +696,11 @@
 
     .support-value:hover {
       color: var(--accent-blue);
+      text-decoration: underline;
     }
 
     .support-hint {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-tertiary);
       margin-top: 1px;
     }
@@ -739,7 +718,7 @@
       justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
-      padding-block: 28px;
+      padding-block: 20px;
       font-size: 0.78rem;
       color: var(--text-tertiary);
     }
@@ -747,24 +726,24 @@
     .footer-copy {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
     }
 
     .footer-credit {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-tertiary);
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .footer-links {
       display: flex;
-      gap: 24px;
+      gap: 20px;
     }
 
     .footer-links a {
       color: var(--text-secondary);
       text-decoration: none;
-      font-weight: 700;
+      font-weight: 500;
       transition: color 0.15s ease;
     }
 
@@ -777,7 +756,9 @@
       position: fixed;
       inset: 0;
       z-index: 350;
-      background: rgba(11, 15, 25, 0.5);
+      background: rgba(11, 15, 25, 0.4);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -795,17 +776,17 @@
     .modal {
       position: relative;
       width: 100%;
-      max-width: 350px;
+      max-width: 340px;
       background: var(--bg-panel);
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 34px 28px 26px;
+      padding: 30px 24px 22px;
       text-align: center;
-      box-shadow: var(--shadow-hard-lg);
+      box-shadow: var(--shadow-soft-lg);
       max-height: calc(100vh - 40px);
       overflow-y: auto;
-      transform: translateY(14px);
-      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform: translateY(10px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .modal-overlay.open .modal {
@@ -814,30 +795,24 @@
 
     .modal-close {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 32px;
-      height: 32px;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--bg-panel);
+      background: transparent;
       border: var(--border-width) solid var(--border-color);
-      color: var(--text-primary);
+      color: var(--text-tertiary);
       cursor: pointer;
-      box-shadow: var(--shadow-hard-sm);
       transition: all 0.15s ease;
     }
 
     .modal-close:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: 4px 4px 0px var(--border-color);
-    }
-
-    .modal-close:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0px var(--border-color);
+      color: var(--text-primary);
+      background: var(--border-color-soft);
     }
 
     .modal-close svg {
@@ -846,33 +821,32 @@
     }
 
     .modal-head {
-      margin-bottom: 22px;
+      margin-bottom: 18px;
     }
 
     .modal-kicker {
       display: inline-block;
-      font-size: 0.66rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: #ffffff;
-      background: var(--accent-maroon);
-      border: 1.5px solid var(--border-color);
-      padding: 3px 12px;
-      border-radius: var(--radius-sm);
-      box-shadow: 1.5px 1.5px 0px var(--border-color);
-      margin-bottom: 10px;
+      color: var(--accent-maroon);
+      background: var(--accent-maroon-soft);
+      border: var(--border-width) solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 8px;
     }
 
     .modal-head h2 {
-      font-size: 1.3rem;
-      font-weight: 800;
+      font-size: 1.15rem;
+      font-weight: 700;
       letter-spacing: -0.015em;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .modal-sub {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
     }
 
@@ -883,9 +857,8 @@
       background: #ffffff;
       border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 16px;
-      margin-bottom: 22px;
-      box-shadow: var(--shadow-hard-sm);
+      padding: 12px;
+      margin-bottom: 18px;
     }
 
     #qrCanvasWrap {
@@ -908,56 +881,56 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      min-height: 46px;
+      min-height: 42px;
       font-family: inherit;
-      font-size: 0.84rem;
-      font-weight: 800;
+      font-size: 0.82rem;
+      font-weight: 600;
       color: #ffffff;
       background: var(--accent-blue);
-      border: var(--border-width) solid var(--border-color);
-      border-radius: var(--radius-sm);
+      border: none;
+      border-radius: var(--radius-pill);
       cursor: pointer;
       text-decoration: none;
-      box-shadow: var(--shadow-hard-md);
-      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 4px 10px rgba(30, 79, 191, 0.15);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .btn-solid:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0px var(--border-color);
+      background: var(--accent-blue-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(30, 79, 191, 0.22);
     }
 
     .btn-solid:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0px var(--border-color);
+      transform: translateY(0);
     }
 
     .btn-solid svg {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
     }
 
     .modal-note {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-tertiary);
-      line-height: 1.45;
-      margin-top: 14px;
+      line-height: 1.4;
+      margin-top: 12px;
     }
 
     .qr-fallback {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-tertiary);
       text-align: center;
-      line-height: 1.45;
-      padding: 0 10px;
+      line-height: 1.4;
+      padding: 0 8px;
     }
 
     /* ===================== RESPONSIVE STYLES ===================== */
     @media (max-width: 900px) {
       .dashboard-grid {
         grid-template-columns: 1fr;
-        gap: 36px;
-        margin-top: 36px;
+        gap: 32px;
+        margin-top: 32px;
         text-align: center;
       }
 
@@ -971,20 +944,19 @@
 
       .secondary-grid {
         grid-template-columns: 1fr;
-        gap: 36px;
+        gap: 32px;
       }
 
       .features-strip {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 16px;
       }
     }
 
     @media (max-width: 600px) {
       .navbar {
-        margin-top: 16px;
-        height: 68px;
-        padding: 0 16px;
+        margin-top: 12px;
+        height: 64px;
       }
 
       .brand-subtitle {
@@ -995,7 +967,7 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 16px;
+        gap: 12px;
       }
     }
 
@@ -1004,12 +976,12 @@
         display: none;
       }
       .btn-outline {
-        padding: 0 12px;
+        padding: 0 10px;
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .portal-card:hover, .btn-solid:hover, .btn-outline:hover, .modal-close:hover { transform: none !important; box-shadow: none !important; }
+      .portal-card:hover, .btn-solid:hover, .btn-outline:hover { transform: none !important; box-shadow: none !important; }
       * { transition-duration: 0.01ms !important; }
     }
   </style>
@@ -1029,7 +1001,7 @@
       </a>
       <div class="nav-actions">
         <a href="{{ url('/register') }}" class="btn-outline" aria-label="Register Account">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <line x1="19" y1="8" x2="19" y2="14"/>
@@ -1038,11 +1010,11 @@
           <span class="btn-text">Register</span>
         </a>
         <button class="btn-outline theme-toggle-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
             <circle cx="12" cy="12" r="4"/>
             <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
           </svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
           </svg>
         </button>
@@ -1089,7 +1061,7 @@
           <!-- Employee Portal -->
           <a href="{{ url('/employee/login') }}" class="portal-card portal-card--employee">
             <div class="portal-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
@@ -1099,7 +1071,7 @@
               <p>View digital payslips, inspect attendance records, and manage personal timesheets.</p>
             </div>
             <div class="portal-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </div>
@@ -1108,17 +1080,17 @@
           <!-- Attendance Log Portal -->
           <a href="{{ url('/attendance/attendlog') }}" class="portal-card portal-card--attendance">
             <div class="portal-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </div>
             <div class="portal-info">
-              <h3>Attendance Log <span class="portal-badge" style="color: #ffffff; background: #0f172a;">On-Site</span></h3>
+              <h3>Attendance Log <span class="portal-badge" style="color: var(--text-primary); background: var(--bg-page);">On-Site</span></h3>
               <p>Clock in, verify hours, and log on-site daily attendance. Restricted to authorized terminal check-in.</p>
             </div>
             <div class="portal-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </div>
@@ -1127,17 +1099,17 @@
           <!-- App Download Button -->
           <button type="button" class="portal-card portal-card--app" id="portal-download" aria-haspopup="dialog" aria-controls="qrModalOverlay">
             <span class="portal-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
                 <line x1="12" y1="18" x2="12.01" y2="18"/>
               </svg>
             </span>
             <span class="portal-info">
-              <h3>Download Mobile App <span class="portal-badge" style="color: #ffffff; background: var(--accent-maroon);">Android APK</span></h3>
+              <h3>Download Mobile App <span class="portal-badge" style="color: var(--accent-maroon); background: var(--accent-maroon-soft);">Android APK</span></h3>
               <p>Verify timesheets, check logs, and view pay-periods instantly on-the-go.</p>
             </span>
             <span class="portal-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </span>
@@ -1151,7 +1123,7 @@
       <section class="features-strip" aria-label="System Capabilities">
         <div class="feature-item">
           <div class="feature-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
@@ -1163,7 +1135,7 @@
         </div>
         <div class="feature-item">
           <div class="feature-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="12" y1="1" x2="12" y2="23"/>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
@@ -1175,7 +1147,7 @@
         </div>
         <div class="feature-item">
           <div class="feature-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
@@ -1198,7 +1170,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 How do I register or activate an account?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1210,7 +1182,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 I forgot my password. How do I reset it?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1222,7 +1194,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 When are pay period payslips uploaded?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1234,7 +1206,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 Is my personal payroll and timesheet data secure?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1255,7 +1227,7 @@
           <div class="support-list">
             <div class="support-row">
               <div class="support-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
@@ -1268,7 +1240,7 @@
             </div>
             <div class="support-row">
               <div class="support-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                 </svg>
               </div>
@@ -1280,7 +1252,7 @@
             </div>
             <div class="support-row">
               <div class="support-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
@@ -1318,7 +1290,7 @@
   <div class="modal-overlay" id="qrModalOverlay" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
     <div class="modal">
       <button type="button" class="modal-close" id="qrModalClose" aria-label="Close dialog">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M18 6 6 18M6 6l12 12"/>
         </svg>
       </button>
@@ -1334,7 +1306,7 @@
       </div>
 
       <a href="{{ asset('downloads/mcc-employee-app.apk') }}" class="btn-solid" download>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <path d="M12 5v14M19 12l-7 7-7-7"/>
         </svg>
         Download APK Directly
