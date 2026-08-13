@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
@@ -28,50 +28,55 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-page: #f3f5f9;
-      --bg-panel: rgba(255, 255, 255, 0.72);
+      --bg-page: #f4f6fb;
+      --bg-panel: #ffffff;
       --bg-panel-solid: #ffffff;
-      --border-color: rgba(0, 0, 0, 0.08);
-      --border-color-strong: rgba(0, 0, 0, 0.15);
+      --dot-color: rgba(15, 23, 42, 0.08);
+      
+      --border-color: #0f172a;
+      --border-color-strong: #0f172a;
+      --border-width: 2px;
 
       --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --text-tertiary: #64748b;
+      --text-secondary: #334155;
+      --text-tertiary: #475569;
 
       --accent-blue: #1e4fbf;
       --accent-blue-hover: #163e9b;
-      --accent-blue-soft: rgba(30, 79, 191, 0.06);
+      --accent-blue-soft: #edf2ff;
 
       --accent-maroon: #7e1618;
       --accent-maroon-hover: #631113;
-      --accent-maroon-soft: rgba(126, 22, 24, 0.06);
+      --accent-maroon-soft: #fdf2f2;
 
       --accent-slate: #334155;
-      --accent-slate-soft: rgba(51, 65, 85, 0.06);
+      --accent-slate-soft: #f1f5f9;
 
-      --radius-lg: 16px;
-      --radius-md: 12px;
-      --radius-sm: 8px;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --radius-sm: 6px;
       --radius-pill: 999px;
 
-      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.04);
-      --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.03);
-      --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.02);
-      --shadow-focus: 0 0 0 3px rgba(30, 79, 191, 0.18);
+      --shadow-hard-lg: 6px 6px 0px #0f172a;
+      --shadow-hard-md: 4px 4px 0px #0f172a;
+      --shadow-hard-sm: 3px 3px 0px #0f172a;
+      --shadow-focus: 0 0 0 3px rgba(30, 79, 191, 0.25);
 
       --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     [data-theme="dark"] {
       --bg-page: #0b0f19;
-      --bg-panel: rgba(16, 21, 31, 0.8);
-      --bg-panel-solid: #111827;
-      --border-color: rgba(255, 255, 255, 0.08);
-      --border-color-strong: rgba(255, 255, 255, 0.16);
+      --bg-panel: #111827;
+      --bg-panel-solid: #1f2937;
+      --dot-color: rgba(255, 255, 255, 0.04);
+
+      --border-color: #334155;
+      --border-color-strong: #475569;
 
       --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-tertiary: #64748b;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #94a3b8;
 
       --accent-blue: #60a5fa;
       --accent-blue-hover: #93c5fd;
@@ -84,14 +89,14 @@
       --accent-slate: #94a3b8;
       --accent-slate-soft: rgba(148, 163, 184, 0.08);
 
-      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.2);
-      --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
-      --shadow-focus: 0 0 0 3px rgba(96, 165, 250, 0.3);
+      --shadow-hard-lg: 6px 6px 0px #334155;
+      --shadow-hard-md: 4px 4px 0px #334155;
+      --shadow-hard-sm: 3px 3px 0px #334155;
     }
 
     html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
+    /* ===================== GEOMETRIC DOT BACKGROUND ===================== */
     body {
       font-family: var(--font);
       font-size: 0.9rem;
@@ -102,31 +107,11 @@
       flex-direction: column;
       position: relative;
       overflow-x: hidden;
-    }
-
-    /* ===================== BACKGROUND BLUR SYSTEM ===================== */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: url('{{ asset('images/mcc.jpg') }}') no-repeat center center/cover;
-      filter: blur(10px) brightness(0.75) saturate(1.1);
-      transform: scale(1.03);
-      z-index: -2;
-      transition: filter 0.3s ease;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: rgba(243, 245, 249, 0.86); /* Beautiful light frosted glass */
-      z-index: -1;
-      transition: background 0.3s ease;
-    }
-
-    [data-theme="dark"] body::after {
-      background: rgba(11, 15, 25, 0.88); /* Deep dark glass */
+      
+      background-color: var(--bg-page);
+      background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+      background-size: 20px 20px;
+      transition: background-color 0.2s ease, background-image 0.2s ease;
     }
 
     /* ===================== LAYOUT CONTAINERS ===================== */
@@ -145,15 +130,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 72px;
-      margin-top: 16px;
-      padding: 0 20px;
+      height: 76px;
+      margin-top: 20px;
+      padding: 0 24px;
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
+      box-shadow: var(--shadow-hard-md);
       z-index: 100;
     }
 
@@ -166,12 +149,12 @@
     }
 
     .brand-mark {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       padding: 2px;
       background: #ffffff;
+      border: var(--border-width) solid var(--border-color);
       border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -192,44 +175,50 @@
     }
 
     .brand-name {
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-size: 1.05rem;
+      font-weight: 800;
       letter-spacing: -0.02em;
     }
 
     .brand-subtitle {
       font-size: 0.72rem;
       color: var(--text-tertiary);
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .btn-outline {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 38px;
-      padding: 0 16px;
+      min-height: 40px;
+      padding: 0 18px;
       font-family: inherit;
       font-size: 0.8rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-primary);
-      background: transparent;
-      border: 1px solid var(--border-color-strong);
-      border-radius: var(--radius-pill);
+      background: var(--bg-panel);
+      border: var(--border-width) solid var(--border-color);
+      border-radius: var(--radius-sm);
       cursor: pointer;
       text-decoration: none;
-      transition: all 0.2s ease;
+      box-shadow: var(--shadow-hard-sm);
+      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .btn-outline:hover {
-      background: var(--border-color);
-      border-color: var(--text-primary);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px var(--border-color);
+    }
+
+    .btn-outline:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--border-color);
     }
 
     .btn-outline svg {
@@ -238,7 +227,7 @@
     }
 
     .theme-toggle-btn {
-      width: 38px;
+      width: 40px;
       padding: 0;
       justify-content: center;
     }
@@ -250,10 +239,10 @@
     /* ===================== HERO / PORTALS MAIN SECTION ===================== */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: 1.1fr 1fr;
-      gap: clamp(24px, 5vw, 48px);
+      grid-template-columns: 1.15fr 1fr;
+      gap: clamp(28px, 6vw, 56px);
       align-items: center;
-      margin-top: 40px;
+      margin-top: 48px;
       margin-bottom: 56px;
     }
 
@@ -261,7 +250,7 @@
     .intro-panel {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 22px;
     }
 
     .institution-pill {
@@ -269,37 +258,44 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.7rem;
-      font-weight: 700;
+      font-size: 0.72rem;
+      font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--accent-blue);
-      background: var(--accent-blue-soft);
-      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      background: var(--bg-panel);
+      border: var(--border-width) solid var(--border-color);
       padding: 6px 14px;
-      border-radius: var(--radius-pill);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-hard-sm);
     }
 
     .institution-pill .dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: currentColor;
+      background: var(--accent-blue);
+      animation: throb 2s infinite alternate;
+    }
+
+    @keyframes throb {
+      0% { opacity: 0.4; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
     }
 
     .intro-title h1 {
-      font-size: clamp(2.2rem, 4vw, 3rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin-bottom: 12px;
+      font-size: clamp(2.3rem, 4.5vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
     }
 
     .intro-title h2 {
-      font-size: clamp(1.3rem, 2.5vw, 1.8rem);
-      font-weight: 600;
+      font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+      font-weight: 800;
       line-height: 1.2;
-      color: var(--text-secondary);
+      color: var(--accent-blue);
       letter-spacing: -0.02em;
     }
 
@@ -310,7 +306,7 @@
       max-width: 480px;
     }
 
-    /* Live Digital Clock Card */
+    /* Digital Clock Card */
     .clock-card {
       align-self: flex-start;
       display: inline-flex;
@@ -318,16 +314,14 @@
       gap: 4px;
       padding: 16px 24px;
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-hard-md);
     }
 
     .clock-time {
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-size: 1.8rem;
+      font-weight: 900;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.02em;
       color: var(--text-primary);
@@ -335,7 +329,7 @@
 
     .clock-date {
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-tertiary);
@@ -345,7 +339,7 @@
     .portal-stack {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .portal-card {
@@ -353,55 +347,44 @@
       display: flex;
       align-items: center;
       gap: 18px;
-      padding: 22px;
+      padding: 24px;
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-hard-lg);
       text-decoration: none;
       color: inherit;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-      overflow: hidden;
-    }
-
-    .portal-card::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: var(--portal-accent);
-      transition: width 0.2s ease;
+      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .portal-card:hover {
-      transform: translateX(4px);
-      box-shadow: var(--shadow-lg);
+      transform: translate(-3px, -3px);
+      box-shadow: 9px 9px 0px var(--border-color);
       border-color: var(--border-color-strong);
     }
 
-    .portal-card:hover::before {
-      width: 6px;
+    .portal-card:active {
+      transform: translate(3px, 3px);
+      box-shadow: 3px 3px 0px var(--border-color);
     }
 
-    .portal-card--employee { --portal-accent: var(--accent-blue); }
-    .portal-card--attendance { --portal-accent: var(--text-primary); }
-    .portal-card--app { --portal-accent: var(--accent-maroon); }
+    .portal-card--employee { --portal-accent: var(--accent-blue); --portal-soft: var(--accent-blue-soft); }
+    .portal-card--attendance { --portal-accent: var(--text-primary); --portal-soft: var(--accent-slate-soft); }
+    .portal-card--app { --portal-accent: var(--accent-maroon); --portal-soft: var(--accent-maroon-soft); }
 
     .portal-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       border-radius: var(--radius-md);
+      border: var(--border-width) solid var(--border-color);
       background: var(--portal-soft);
       color: var(--portal-accent);
       flex-shrink: 0;
+      box-shadow: var(--shadow-hard-sm);
     }
 
     .portal-icon svg {
@@ -416,31 +399,32 @@
     }
 
     .portal-info h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
+      font-size: 1.1rem;
+      font-weight: 800;
       letter-spacing: -0.015em;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .portal-badge {
-      font-size: 0.62rem;
-      font-weight: 700;
+      font-size: 0.64rem;
+      font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--accent-maroon);
-      background: var(--accent-maroon-soft);
+      color: #ffffff;
+      background: var(--portal-accent);
       border: 1px solid var(--border-color);
-      padding: 2px 8px;
-      border-radius: var(--radius-pill);
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      box-shadow: 1.5px 1.5px 0px var(--border-color);
     }
 
     .portal-info p {
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
     .portal-chevron {
@@ -450,15 +434,17 @@
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: var(--border-color);
+      border: var(--border-width) solid var(--border-color);
+      background: var(--bg-panel);
       color: var(--text-secondary);
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
+      box-shadow: 2px 2px 0px var(--border-color);
     }
 
     .portal-card:hover .portal-chevron {
       background: var(--portal-accent);
       color: #ffffff;
-      transform: translateX(3px);
+      transform: translateX(2px);
     }
 
     /* ===================== ANNOUNCEMENT BANNER ===================== */
@@ -466,25 +452,26 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 14px 20px;
-      background: var(--bg-panel-solid);
-      border: 1px solid var(--border-color);
-      border-left: 4px solid var(--accent-blue);
+      padding: 16px 20px;
+      background: var(--bg-panel);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
+      box-shadow: var(--shadow-hard-md);
       margin-bottom: 24px;
       font-size: 0.84rem;
     }
 
     .announcement-badge {
       font-size: 0.66rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--accent-blue);
-      background: var(--accent-blue-soft);
+      color: #ffffff;
+      background: var(--accent-blue);
+      border: 1.5px solid var(--border-color);
       padding: 3px 10px;
-      border-radius: var(--radius-pill);
+      border-radius: var(--radius-sm);
+      box-shadow: 1.5px 1.5px 0px var(--border-color);
       flex-shrink: 0;
     }
 
@@ -496,13 +483,13 @@
 
     .announcement-content strong {
       color: var(--text-primary);
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .announcement-date {
       font-size: 0.72rem;
       color: var(--text-tertiary);
-      font-weight: 500;
+      font-weight: 600;
       flex-shrink: 0;
     }
 
@@ -511,32 +498,32 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: clamp(16px, 3vw, 28px);
-      padding: 24px;
+      padding: 28px;
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 56px;
+      box-shadow: var(--shadow-hard-lg);
+      margin-bottom: 64px;
     }
 
     .feature-item {
       display: flex;
       align-items: flex-start;
-      gap: 14px;
+      gap: 16px;
     }
 
     .feature-icon-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: var(--radius-md);
+      border: var(--border-width) solid var(--border-color);
       background: var(--accent-blue-soft);
       color: var(--accent-blue);
       flex-shrink: 0;
+      box-shadow: var(--shadow-hard-sm);
     }
 
     .feature-icon-wrapper svg {
@@ -545,53 +532,52 @@
     }
 
     .feature-text h4 {
-      font-size: 0.9rem;
-      font-weight: 700;
+      font-size: 0.95rem;
+      font-weight: 800;
       letter-spacing: -0.01em;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
 
     .feature-text p {
       font-size: 0.78rem;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
     /* ===================== GRID BELOW THE FOLD ===================== */
     .secondary-grid {
       display: grid;
       grid-template-columns: 1.2fr 0.8fr;
-      gap: clamp(24px, 5vw, 48px);
-      margin-bottom: 56px;
+      gap: clamp(28px, 5vw, 56px);
+      margin-bottom: 64px;
     }
 
     /* FAQ accordion */
     .faq-panel h2 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 20px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
     }
 
     .faq-accordion {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     .faq-item {
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
+      box-shadow: var(--shadow-hard-sm);
       overflow: hidden;
-      transition: all 0.2s ease;
+      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .faq-item.open {
-      border-color: var(--border-color-strong);
-      box-shadow: var(--shadow-sm);
+      transform: translate(-1px, -1px);
+      box-shadow: var(--shadow-hard-md);
     }
 
     .faq-q {
@@ -600,13 +586,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 16px 20px;
+      padding: 18px 24px;
       background: transparent;
       border: none;
       cursor: pointer;
       font: inherit;
-      font-size: 0.86rem;
-      font-weight: 600;
+      font-size: 0.9rem;
+      font-weight: 800;
       color: var(--text-primary);
       text-align: left;
     }
@@ -616,9 +602,9 @@
     }
 
     .faq-icon-arrow {
-      width: 16px;
-      height: 16px;
-      stroke: var(--text-tertiary);
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-primary);
       transition: transform 0.25s ease;
     }
 
@@ -634,15 +620,15 @@
     }
 
     .faq-a {
-      padding: 0 20px 20px;
-      font-size: 0.8rem;
+      padding: 0 24px 22px;
+      font-size: 0.82rem;
       color: var(--text-secondary);
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     .faq-a a {
       color: var(--accent-blue);
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: underline;
     }
 
@@ -651,14 +637,12 @@
       align-self: flex-start;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      padding: 28px;
+      gap: 22px;
+      padding: 32px;
       background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-hard-lg);
     }
 
     .support-card-head {
@@ -668,38 +652,40 @@
     }
 
     .support-card-head h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.015em;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .support-card-head p {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-secondary);
     }
 
     .support-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
 
     .support-row {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
+      gap: 14px;
     }
 
     .support-row-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: var(--radius-sm);
+      border: var(--border-width) solid var(--border-color);
       background: var(--accent-blue-soft);
       color: var(--accent-blue);
       flex-shrink: 0;
+      box-shadow: var(--shadow-hard-sm);
     }
 
     .support-row-icon svg {
@@ -715,16 +701,16 @@
 
     .support-label {
       font-size: 0.64rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-tertiary);
-      margin-bottom: 1px;
+      margin-bottom: 2px;
     }
 
     .support-value {
-      font-size: 0.84rem;
-      font-weight: 600;
+      font-size: 0.86rem;
+      font-weight: 700;
       color: var(--text-primary);
       text-decoration: none;
       word-break: break-word;
@@ -743,10 +729,8 @@
     /* ===================== FOOTER ===================== */
     .site-footer {
       margin-top: auto;
-      border-top: 1px solid var(--border-color);
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      border-top: var(--border-width) solid var(--border-color);
+      background: var(--bg-panel);
     }
 
     .footer-inner {
@@ -755,7 +739,7 @@
       justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
-      padding-block: 24px;
+      padding-block: 28px;
       font-size: 0.78rem;
       color: var(--text-tertiary);
     }
@@ -767,21 +751,21 @@
     }
 
     .footer-credit {
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       color: var(--text-tertiary);
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .footer-links {
       display: flex;
-      gap: 20px;
+      gap: 24px;
     }
 
     .footer-links a {
       color: var(--text-secondary);
       text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s ease;
+      font-weight: 700;
+      transition: color 0.15s ease;
     }
 
     .footer-links a:hover {
@@ -793,16 +777,14 @@
       position: fixed;
       inset: 0;
       z-index: 350;
-      background: rgba(11, 15, 25, 0.6);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(11, 15, 25, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s ease;
+      transition: opacity 0.2s ease;
     }
 
     .modal-overlay.open {
@@ -813,17 +795,17 @@
     .modal {
       position: relative;
       width: 100%;
-      max-width: 340px;
-      background: var(--bg-panel-solid);
-      border: 1px solid var(--border-color);
+      max-width: 350px;
+      background: var(--bg-panel);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 32px 28px 24px;
+      padding: 34px 28px 26px;
       text-align: center;
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--shadow-hard-lg);
       max-height: calc(100vh - 40px);
       overflow-y: auto;
-      transform: translateY(16px) scale(0.97);
-      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform: translateY(14px);
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .modal-overlay.open .modal {
@@ -834,22 +816,28 @@
       position: absolute;
       top: 16px;
       right: 16px;
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-tertiary);
+      background: var(--bg-panel);
+      border: var(--border-width) solid var(--border-color);
+      color: var(--text-primary);
       cursor: pointer;
-      transition: all 0.2s ease;
+      box-shadow: var(--shadow-hard-sm);
+      transition: all 0.15s ease;
     }
 
     .modal-close:hover {
-      color: var(--text-primary);
-      background: var(--border-color);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px var(--border-color);
+    }
+
+    .modal-close:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--border-color);
     }
 
     .modal-close svg {
@@ -858,31 +846,33 @@
     }
 
     .modal-head {
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
     .modal-kicker {
       display: inline-block;
       font-size: 0.66rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--accent-maroon);
-      background: var(--accent-maroon-soft);
-      padding: 3px 10px;
-      border-radius: var(--radius-pill);
-      margin-bottom: 8px;
+      color: #ffffff;
+      background: var(--accent-maroon);
+      border: 1.5px solid var(--border-color);
+      padding: 3px 12px;
+      border-radius: var(--radius-sm);
+      box-shadow: 1.5px 1.5px 0px var(--border-color);
+      margin-bottom: 10px;
     }
 
     .modal-head h2 {
-      font-size: 1.2rem;
-      font-weight: 700;
+      font-size: 1.3rem;
+      font-weight: 800;
       letter-spacing: -0.015em;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .modal-sub {
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
     }
 
@@ -891,11 +881,11 @@
       align-items: center;
       justify-content: center;
       background: #ffffff;
-      border: 1px solid var(--border-color);
+      border: var(--border-width) solid var(--border-color);
       border-radius: var(--radius-md);
       padding: 16px;
-      margin-bottom: 20px;
-      box-shadow: var(--shadow-sm);
+      margin-bottom: 22px;
+      box-shadow: var(--shadow-hard-sm);
     }
 
     #qrCanvasWrap {
@@ -918,35 +908,39 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      min-height: 44px;
+      min-height: 46px;
       font-family: inherit;
       font-size: 0.84rem;
-      font-weight: 700;
+      font-weight: 800;
       color: #ffffff;
       background: var(--accent-blue);
-      border: none;
-      border-radius: var(--radius-pill);
+      border: var(--border-width) solid var(--border-color);
+      border-radius: var(--radius-sm);
       cursor: pointer;
       text-decoration: none;
-      box-shadow: 0 4px 12px rgba(30, 79, 191, 0.2);
-      transition: all 0.2s ease;
+      box-shadow: var(--shadow-hard-md);
+      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .btn-solid:hover {
-      background: var(--accent-blue-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(30, 79, 191, 0.3);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px var(--border-color);
+    }
+
+    .btn-solid:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px var(--border-color);
     }
 
     .btn-solid svg {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
     }
 
     .modal-note {
       font-size: 0.72rem;
       color: var(--text-tertiary);
-      line-height: 1.4;
+      line-height: 1.45;
       margin-top: 14px;
     }
 
@@ -954,7 +948,7 @@
       font-size: 0.72rem;
       color: var(--text-tertiary);
       text-align: center;
-      line-height: 1.4;
+      line-height: 1.45;
       padding: 0 10px;
     }
 
@@ -962,8 +956,8 @@
     @media (max-width: 900px) {
       .dashboard-grid {
         grid-template-columns: 1fr;
-        gap: 32px;
-        margin-top: 32px;
+        gap: 36px;
+        margin-top: 36px;
         text-align: center;
       }
 
@@ -977,7 +971,7 @@
 
       .secondary-grid {
         grid-template-columns: 1fr;
-        gap: 32px;
+        gap: 36px;
       }
 
       .features-strip {
@@ -988,8 +982,9 @@
 
     @media (max-width: 600px) {
       .navbar {
-        margin-top: 12px;
-        height: 64px;
+        margin-top: 16px;
+        height: 68px;
+        padding: 0 16px;
       }
 
       .brand-subtitle {
@@ -1000,7 +995,7 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 12px;
+        gap: 16px;
       }
     }
 
@@ -1014,9 +1009,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      body::before { transform: none !important; }
-      .portal-card:hover { transform: none !important; }
-      .btn-solid:hover { transform: none !important; }
+      .portal-card:hover, .btn-solid:hover, .btn-outline:hover, .modal-close:hover { transform: none !important; box-shadow: none !important; }
       * { transition-duration: 0.01ms !important; }
     }
   </style>
@@ -1036,7 +1029,7 @@
       </a>
       <div class="nav-actions">
         <a href="{{ url('/register') }}" class="btn-outline" aria-label="Register Account">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <line x1="19" y1="8" x2="19" y2="14"/>
@@ -1045,11 +1038,11 @@
           <span class="btn-text">Register</span>
         </a>
         <button class="btn-outline theme-toggle-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <circle cx="12" cy="12" r="4"/>
             <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
           </svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
           </svg>
         </button>
@@ -1096,7 +1089,7 @@
           <!-- Employee Portal -->
           <a href="{{ url('/employee/login') }}" class="portal-card portal-card--employee">
             <div class="portal-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
@@ -1106,7 +1099,7 @@
               <p>View digital payslips, inspect attendance records, and manage personal timesheets.</p>
             </div>
             <div class="portal-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </div>
@@ -1115,17 +1108,17 @@
           <!-- Attendance Log Portal -->
           <a href="{{ url('/attendance/attendlog') }}" class="portal-card portal-card--attendance">
             <div class="portal-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </div>
             <div class="portal-info">
-              <h3>Attendance Log <span class="portal-badge" style="color: var(--text-primary); background: var(--border-color);">On-Site</span></h3>
+              <h3>Attendance Log <span class="portal-badge" style="color: #ffffff; background: #0f172a;">On-Site</span></h3>
               <p>Clock in, verify hours, and log on-site daily attendance. Restricted to authorized terminal check-in.</p>
             </div>
             <div class="portal-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </div>
@@ -1134,17 +1127,17 @@
           <!-- App Download Button -->
           <button type="button" class="portal-card portal-card--app" id="portal-download" aria-haspopup="dialog" aria-controls="qrModalOverlay">
             <span class="portal-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
                 <line x1="12" y1="18" x2="12.01" y2="18"/>
               </svg>
             </span>
             <span class="portal-info">
-              <h3>Download Mobile App <span class="portal-badge" style="color: var(--accent-maroon); background: var(--accent-maroon-soft);">Android APK</span></h3>
+              <h3>Download Mobile App <span class="portal-badge" style="color: #ffffff; background: var(--accent-maroon);">Android APK</span></h3>
               <p>Verify timesheets, check logs, and view pay-periods instantly on-the-go.</p>
             </span>
             <span class="portal-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </span>
@@ -1158,7 +1151,7 @@
       <section class="features-strip" aria-label="System Capabilities">
         <div class="feature-item">
           <div class="feature-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
@@ -1170,7 +1163,7 @@
         </div>
         <div class="feature-item">
           <div class="feature-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="12" y1="1" x2="12" y2="23"/>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
@@ -1182,7 +1175,7 @@
         </div>
         <div class="feature-item">
           <div class="feature-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
@@ -1205,7 +1198,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 How do I register or activate an account?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1217,7 +1210,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 I forgot my password. How do I reset it?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1229,7 +1222,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 When are pay period payslips uploaded?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1241,7 +1234,7 @@
             <div class="faq-item" data-faq>
               <button type="button" class="faq-q" aria-expanded="false">
                 Is my personal payroll and timesheet data secure?
-                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="faq-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
@@ -1262,7 +1255,7 @@
           <div class="support-list">
             <div class="support-row">
               <div class="support-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
@@ -1275,7 +1268,7 @@
             </div>
             <div class="support-row">
               <div class="support-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                 </svg>
               </div>
@@ -1287,7 +1280,7 @@
             </div>
             <div class="support-row">
               <div class="support-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
@@ -1325,7 +1318,7 @@
   <div class="modal-overlay" id="qrModalOverlay" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
     <div class="modal">
       <button type="button" class="modal-close" id="qrModalClose" aria-label="Close dialog">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M18 6 6 18M6 6l12 12"/>
         </svg>
       </button>
@@ -1341,7 +1334,7 @@
       </div>
 
       <a href="{{ asset('downloads/mcc-employee-app.apk') }}" class="btn-solid" download>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
           <path d="M12 5v14M19 12l-7 7-7-7"/>
         </svg>
         Download APK Directly
