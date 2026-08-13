@@ -286,12 +286,16 @@
       overflow: hidden;
       box-shadow: var(--shadow-lg);
       border: 1px solid var(--border);
+      width: 100%;
+      height: 600px;
+      margin-left: auto;
     }
     .hero-image img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      transform: scale(1.02); /* Slight scale to ensure no edge gaps */
     }
     
     /* Quick Access Cards */
