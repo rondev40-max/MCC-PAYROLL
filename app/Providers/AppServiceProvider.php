@@ -3,11 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Auth\Events\Login;
-use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,14 +32,10 @@ class AppServiceProvider extends ServiceProvider
             config(['view.compiled' => '/tmp/views']);
         }
 
-        Event::listen(Login::class, function (Login $event) {
-            /** @var User $user */
-            $user = $event->user;
-
-            if (Hash::needsRehash($user->getAuthPassword())) {
-                $user->password = Hash::make($user->getAuthPassword());
-                $user->save();
-            }
-        });
+        // NOTE: there used to be a Login-event listener here that rehashed
+        // $user->getAuthPassword(). That returns the stored *hash*, not the
+        // plaintext, so it saved bcrypt(<old hash>) and locked the account out
+        // for good. Rehash-on-login now lives in PasswordHash::checkAndUpgrade(),
+        // which is the only place that actually has the submitted password.
     }
 }

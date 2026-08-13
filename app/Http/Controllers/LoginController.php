@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\OtpMail;
+use App\Support\PasswordHash;
 
 class LoginController extends Controller
 {
@@ -39,7 +39,24 @@ class LoginController extends Controller
         }
 
         // 2. Initial Validation: Wrong Password
-        if (!Hash::check($credentials['password'], $user->password)) {
+        //
+        // PasswordHash handles accounts whose stored hash predates the current
+        // bcrypt default and upgrades them in place on success. It is written
+        // not to throw, but this is a public unauthenticated form, so an
+        // unexpected hashing failure still degrades to the normal error alert
+        // rather than a stack-trace 500 page.
+        try {
+            $passwordOk = PasswordHash::checkAndUpgrade($credentials['password'], $user);
+        } catch (\Throwable $e) {
+            Log::error('Login password verification failed unexpectedly', [
+                'user_id' => $user->id,
+                'email'   => $user->email,
+                'error'   => $e->getMessage(),
+            ]);
+            $passwordOk = false;
+        }
+
+        if (!$passwordOk) {
             // Gumamit ng session('error') para gumana ang SweetAlert sa Blade
             return back()->with('error', 'Password is wrong. Please try again.')->withInput();
         }

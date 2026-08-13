@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\PasswordHash;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class MobileAuthController extends Controller
 {
@@ -17,7 +17,7 @@ class MobileAuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (! $user || ! PasswordHash::checkAndUpgrade($request->password, $user)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 

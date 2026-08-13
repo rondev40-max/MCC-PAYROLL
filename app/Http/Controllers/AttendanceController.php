@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
+use App\Support\PasswordHash;
 use App\Mail\AttendanceOtpMail;
 
 class AttendanceController extends Controller
@@ -97,7 +98,7 @@ class AttendanceController extends Controller
             ->where('role', 'attendance_checker')
             ->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !PasswordHash::checkAndUpgradeRow($request->password, $user)) {
             $attempts = (int) $request->session()->get('attendance_attempts', 0) + 1;
             $request->session()->put('attendance_attempts', $attempts);
 
@@ -113,12 +114,6 @@ class AttendanceController extends Controller
         }
 
         $request->session()->forget(['attendance_attempts', 'attendance_lockout_until']);
-
-        if (Hash::needsRehash($user->password)) {
-            DB::table('users')
-                ->where('id', $user->id)
-                ->update(['password' => Hash::make($request->password)]);
-        }
 
         // Regenerate session ID on login to prevent session-fixation attacks.
         $request->session()->regenerate();
@@ -301,9 +296,10 @@ class AttendanceController extends Controller
             }
 
             // Wrong code: count the attempt and lock the code after too many
-            // consecutive misses. bcrypt's Hash::check is already constant-time,
-            // so this closes the brute-force gap the flow previously had.
-            if (!Hash::check($request->otp, $record->otp_hash)) {
+            // consecutive misses. The underlying password_verify is already
+            // constant-time, so this closes the brute-force gap the flow
+            // previously had.
+            if (!PasswordHash::check($request->otp, $record->otp_hash)) {
                 Log::warning('Invalid OTP attempt', ['email' => $email, 'ip' => $request->ip()]);
 
                 if ($hasLockCols) {

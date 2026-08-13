@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Support\PasswordHash;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -289,7 +290,7 @@ class EmployeeController extends Controller
         $user->email = $data['email'];
 
         if (!empty($data['new_password'])) {
-            if (empty($data['current_password']) || !Hash::check($data['current_password'], $user->password)) {
+            if (empty($data['current_password']) || !PasswordHash::check($data['current_password'], $user->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect.']);
             }
             $user->password = Hash::make($data['new_password']);
