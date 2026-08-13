@@ -177,45 +177,89 @@ class AttendanceController extends Controller
                 ->where('role', 'attendance_checker')
                 ->first();
 
+            // SECURITY: don't reveal whether an email is registered. Whether the
+            // account exists or not, we respond identically (and only actually
+            // send mail when it exists), so this endpoint can't be used to
+            // enumerate valid attendance-checker accounts.
             if (!$user) {
                 Log::warning('Password reset attempt for non-existent user', [
                     'email' => $request->email,
                     'ip' => $request->ip(),
                 ]);
-                return back()->with('error', 'Email not found or invalid role.');
+
+                $request->session()->put('reset_email_pending', $request->email);
+                return redirect()->route('attendance.reset.form')
+                    ->with('success', 'If that email is registered, a 6-digit code has been sent. It is valid for 10 minutes.');
             }
 
-            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Build the update payload. A brand-new code always starts with a
+            // clean attempt/lock budget; the columns are written only when the
+            // migration that adds them has run, so the flow still works if not.
+            $payload = [
+                'otp_hash'   => Hash::make($otp),
+                'expires_at' => now()->addMinutes(10),
+                'used_at'    => null,
+                'updated_at' => now(),
+            ];
+            if (Schema::hasColumn('attendance_password_otps', 'attempts')) {
+                $payload['attempts'] = 0;
+            }
+            if (Schema::hasColumn('attendance_password_otps', 'locked_until')) {
+                $payload['locked_until'] = null;
+            }
+
+            // Only stamp created_at when inserting a fresh row so re-requests
+            // don't keep rewriting the original creation time.
+            $exists = DB::table('attendance_password_otps')->where('email', $request->email)->exists();
+            if (!$exists) {
+                $payload['created_at'] = now();
+            }
 
             DB::table('attendance_password_otps')->updateOrInsert(
                 ['email' => $request->email],
-                [
-                    'otp_hash' => Hash::make($otp),
-                    'expires_at' => now()->addMinutes(10),
-                    'used_at' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $payload
             );
+
+            $request->session()->put('reset_email_pending', $request->email);
 
             try {
                 Mail::to($request->email)->send(new AttendanceOtpMail($otp, $user->name));
                 Log::info('OTP sent for password reset', ['email' => $request->email]);
-                return back()->with('success', 'OTP sent to your email. Valid for 10 minutes.');
             } catch (\Exception $e) {
                 Log::error('Failed to send OTP email: ' . $e->getMessage());
-                return back()->with('error', 'Failed to send OTP. Please try again.');
+                return back()->with('error', 'Failed to send the verification code. Please try again.')->withInput();
             }
+
+            // FIX: previously this returned back() to the forgot-password page,
+            // leaving the user with no way to actually enter the code. Now we
+            // advance them straight to the OTP-entry screen with the email
+            // remembered in the session so the field is pre-filled.
+            return redirect()->route('attendance.reset.form')
+                ->with('success', 'A 6-digit code has been sent to your email. It is valid for 10 minutes.');
 
         } catch (\Exception $e) {
             Log::error('sendOtp failed: ' . $e->getMessage());
-            return back()->with('error', 'An error occurred. Please try again.');
+            return back()->with('error', 'An error occurred. Please try again.')->withInput();
         }
     }
 
-    public function showResetForm()
+    public function showResetForm(Request $request)
     {
-        return view('attendance.reset_password');
+        // FIX: reset_password.blade references $email. Resolve it from the
+        // session set during sendOtp (falling back to old input on a failed
+        // verify) and pass it explicitly so the view can no longer 500 on an
+        // undefined variable. With no pending request, send the user back to
+        // the start rather than showing an OTP box for an email we don't have.
+        $email = $request->session()->get('reset_email_pending') ?? old('email');
+
+        if (!$email) {
+            return redirect()->route('attendance.forgot.form')
+                ->with('error', 'Please request a verification code first.');
+        }
+
+        return view('attendance.reset_password', ['email' => $email]);
     }
 
     public function verifyOtp(Request $request)
@@ -226,41 +270,115 @@ class AttendanceController extends Controller
         ]);
 
         try {
+            $email  = $request->email;
             $record = DB::table('attendance_password_otps')
-                ->where('email', $request->email)
+                ->where('email', $email)
                 ->first();
 
             if (!$record) {
-                Log::warning('OTP verification failed - no record', ['email' => $request->email]);
-                return back()->with('error', 'No OTP request found for this email.');
+                Log::warning('OTP verification failed - no record', ['email' => $email]);
+                return back()->with('error', 'No verification request found for this email. Please request a new code.')->withInput();
+            }
+
+            $hasLockCols = Schema::hasColumn('attendance_password_otps', 'attempts')
+                && Schema::hasColumn('attendance_password_otps', 'locked_until');
+
+            // Hard stop once the attempt budget for this code has been spent,
+            // regardless of what is entered, until the lock window elapses.
+            if ($hasLockCols && !empty($record->locked_until) && Carbon::parse($record->locked_until)->isFuture()) {
+                $minutesLeft = max(1, (int) ceil(Carbon::now()->diffInSeconds(Carbon::parse($record->locked_until), true) / 60));
+                return back()->with('error', "Too many incorrect attempts. Please wait about {$minutesLeft} minute(s), or request a new code.")->withInput();
+            }
+
+            // A code may only be used once.
+            if (!empty($record->used_at)) {
+                return back()->with('error', 'This code has already been used. Please request a new one.')->withInput();
             }
 
             if (Carbon::parse($record->expires_at)->isPast()) {
-                DB::table('attendance_password_otps')->where('email', $request->email)->delete();
-                return back()->with('error', 'OTP has expired. Please request a new one.');
+                DB::table('attendance_password_otps')->where('email', $email)->delete();
+                return back()->with('error', 'The code has expired. Please request a new one.')->withInput();
             }
 
+            // Wrong code: count the attempt and lock the code after too many
+            // consecutive misses. bcrypt's Hash::check is already constant-time,
+            // so this closes the brute-force gap the flow previously had.
             if (!Hash::check($request->otp, $record->otp_hash)) {
-                Log::warning('Invalid OTP attempt', ['email' => $request->email]);
-                return back()->with('error', 'Invalid OTP. Please try again.');
+                Log::warning('Invalid OTP attempt', ['email' => $email, 'ip' => $request->ip()]);
+
+                if ($hasLockCols) {
+                    $maxAttempts = 5;
+                    $attempts    = (int) ($record->attempts ?? 0) + 1;
+
+                    if ($attempts >= $maxAttempts) {
+                        DB::table('attendance_password_otps')->where('email', $email)->update([
+                            'attempts'     => 0,
+                            'locked_until' => Carbon::now()->addMinutes(15),
+                            'updated_at'   => now(),
+                        ]);
+                        return back()->with('error', 'Too many incorrect attempts. Please wait 15 minutes, or request a new code.')->withInput();
+                    }
+
+                    DB::table('attendance_password_otps')->where('email', $email)->update([
+                        'attempts'   => $attempts,
+                        'updated_at' => now(),
+                    ]);
+
+                    $remaining = $maxAttempts - $attempts;
+                    return back()->with('error', "Invalid code. {$remaining} attempt(s) remaining before a temporary lock.")->withInput();
+                }
+
+                return back()->with('error', 'Invalid code. Please try again.')->withInput();
             }
 
+            // SUCCESS: consume the code (single-use) and clear the lock budget.
+            $update = ['used_at' => now(), 'updated_at' => now()];
+            if ($hasLockCols) {
+                $update['attempts']     = 0;
+                $update['locked_until'] = null;
+            }
+            DB::table('attendance_password_otps')->where('email', $email)->update($update);
+
+            // Regenerate the session id on this privilege transition to prevent
+            // session-fixation, then open a time-boxed window to set a password.
+            $request->session()->regenerate();
+            $request->session()->forget('reset_email_pending');
             $request->session()->put([
-                'otp_verified' => true,
-                'reset_email' => $request->email,
+                'otp_verified'    => true,
+                'reset_email'     => $email,
+                'otp_verified_at' => now()->timestamp,
             ]);
 
-            return redirect()->route('attendance.change.form')->with('success', 'OTP verified successfully.');
+            return redirect()->route('attendance.change.form')->with('success', 'Code verified. You can now set a new password.');
 
         } catch (\Exception $e) {
             Log::error('verifyOtp failed: ' . $e->getMessage());
-            return back()->with('error', 'An error occurred. Please try again.');
+            return back()->with('error', 'An error occurred. Please try again.')->withInput();
         }
+    }
+
+    /**
+     * The password-reset window is valid only for a short time after the OTP
+     * was verified, so a stale "verified" session can't be reused much later.
+     */
+    private function hasValidResetSession(): bool
+    {
+        if (!session('otp_verified') || !session('reset_email')) {
+            return false;
+        }
+
+        $verifiedAt = session('otp_verified_at');
+        if ($verifiedAt && (now()->timestamp - (int) $verifiedAt) > 900) { // 15 minutes
+            session()->forget(['otp_verified', 'reset_email', 'otp_verified_at']);
+            return false;
+        }
+
+        return true;
     }
 
     public function showChangePasswordForm()
     {
-        if (!session('otp_verified') || !session('reset_email')) {
+        if (!$this->hasValidResetSession()) {
             return redirect()->route('attendance.forgot.form')->with('error', 'Please verify your email first.');
         }
 
@@ -269,7 +387,7 @@ class AttendanceController extends Controller
 
     public function resetPassword(Request $request)
     {
-        if (!session('otp_verified') || !session('reset_email')) {
+        if (!$this->hasValidResetSession()) {
             return redirect()->route('attendance.forgot.form')->with('error', 'Session expired. Please start over.');
         }
 
@@ -290,7 +408,7 @@ class AttendanceController extends Controller
                     ->where('email', $email)
                     ->update(['used_at' => now()]);
 
-                $request->session()->forget(['otp_verified', 'reset_email']);
+                $request->session()->forget(['otp_verified', 'reset_email', 'otp_verified_at', 'reset_email_pending']);
 
                 Log::info('Attendance user password reset successfully', ['email' => $email]);
                 return redirect()->route('attendance.attendlog.form')

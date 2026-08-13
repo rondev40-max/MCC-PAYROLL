@@ -134,6 +134,7 @@ class LoginController extends Controller
         // the user away. Other flows still go to the dedicated verification page.
         if (($request->input('user_type') ?? '') === 'admin') {
             return redirect()->route('admin.login.form')
+                ->withInput($request->except('password'))
                 ->with('show_otp_modal', true)
                 ->with('info', 'Enter the OTP code sent to your email to verify your login.');
         }

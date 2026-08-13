@@ -377,7 +377,7 @@
         }
     </style>
 </head>
-<body data-show-otp="{{ session('show_otp_modal') ? '1' : '0' }}" data-otp-info="{{ e(session('info','')) }}" data-otp-email="{{ e(old('email','')) }}">
+<body data-show-otp="{{ session('show_otp_modal') ? '1' : '0' }}" data-otp-info="{{ e(session('info','')) }}" data-otp-email="{{ e(old('email','')) }}" data-otp-error="{{ e($errors->first('otp')) }}">
 
     <!-- ===================== BACK LINK ===================== -->
     <a href="{{ url('/') }}" class="back-link">
@@ -581,59 +581,177 @@
 
     <!-- ===================== OTP MODAL ===================== -->
     <style>
-        .otp-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .otp-modal { background: #fff; width: 100%; max-width: 420px; border-radius: 12px; padding: 22px; box-shadow: 0 20px 40px rgba(2,6,23,0.4); }
-        .otp-modal h3 { margin: 0 0 8px; font-size: 1.05rem; }
-        .otp-modal p { margin: 0 0 12px; color: #55606a; font-size: 0.95rem; }
-        .otp-modal .form-row { margin-bottom: 12px; }
-        .otp-modal input[type="text"], .otp-modal input[type="email"] { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; }
-        .otp-modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top: 8px; }
-        .otp-modal .btn { padding: 10px 14px; border-radius: 8px; border: none; cursor: pointer; }
-        .otp-modal .btn-primary { background: #2563eb; color:#fff; }
-        .otp-modal .btn-ghost { background: transparent; color:#374151; border:1px solid #e6eefc; }
+        .otp-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(8, 12, 22, 0.55);
+            backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999; padding: 20px;
+            animation: otpFade 0.2s ease;
+        }
+        @keyframes otpFade { from { opacity: 0; } to { opacity: 1; } }
+        .otp-modal {
+            background: #fff; width: 100%; max-width: 420px;
+            border-radius: 18px; padding: 30px 28px 24px;
+            box-shadow: 0 24px 56px rgba(2, 6, 23, 0.45);
+            text-align: center;
+            animation: otpPop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes otpPop { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .otp-modal .otp-shield {
+            width: 58px; height: 58px; margin: 0 auto 16px;
+            border-radius: 50%; background: var(--accent-soft);
+            border: 1px solid var(--accent-ring);
+            display: flex; align-items: center; justify-content: center; color: var(--accent);
+        }
+        .otp-modal .otp-shield svg { width: 26px; height: 26px; }
+        .otp-modal h3 { margin: 0 0 8px; font-size: 1.2rem; font-weight: 800; color: var(--text-primary); }
+        .otp-modal p.otp-sub { margin: 0 0 22px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+
+        .otp-boxes { display: flex; gap: 9px; justify-content: space-between; margin-bottom: 6px; }
+        .otp-boxes input {
+            width: 100%; aspect-ratio: 1 / 1; min-width: 0;
+            text-align: center; font-family: var(--font);
+            font-size: 1.4rem; font-weight: 700; color: var(--text-primary);
+            background: #f8fafc; border: 1.5px solid var(--border-input);
+            border-radius: 11px; outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        .otp-boxes input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-ring); }
+        .otp-boxes input.filled { border-color: var(--accent); background: #fff; }
+        .otp-boxes.error input { border-color: #dc2626; background: #fef2f2; }
+        .otp-boxes.error { animation: otpShake 0.4s ease; }
+        @keyframes otpShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+        .otp-modal .actions { display: flex; gap: 10px; margin-top: 20px; }
+        .otp-modal .btn { flex: 1; padding: 12px 14px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font); font-size: 0.9rem; font-weight: 650; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s ease; }
+        .otp-modal .btn-primary { background: var(--accent); color: #fff; }
+        .otp-modal .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+        .otp-modal .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        .otp-modal .btn-ghost { background: #f1f5f9; color: #374151; }
+        .otp-modal .btn-ghost:hover { background: #e2e8f0; }
+        .otp-modal .btn svg { width: 16px; height: 16px; }
+        .otp-modal .otp-resend { margin: 18px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
+        .otp-modal .resend-btn { background: none; border: none; color: var(--accent); font-family: var(--font); font-weight: 650; font-size: 0.85rem; cursor: pointer; padding: 0; }
+        .otp-modal .resend-btn:disabled { color: var(--text-tertiary); cursor: not-allowed; }
+        .otp-modal .resend-btn:not(:disabled):hover { text-decoration: underline; }
+        .otp-modal .otp-spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
     </style>
 
     <div id="otpModalOverlay" class="otp-modal-overlay" aria-hidden="true">
         <div class="otp-modal" role="dialog" aria-modal="true" aria-labelledby="otpTitle">
+            <div class="otp-shield">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
             <h3 id="otpTitle">Enter verification code</h3>
-            <p>{{ session('info', 'Please enter the 6-digit code recently sent to your registered email to complete sign in.') }}</p>
+            <p class="otp-sub">{{ session('info', 'Enter the 6-digit code sent to your registered email to finish signing in.') }}</p>
 
-            <form id="otpModalForm" method="POST" action="{{ route('otp.verify') }}">
+            <form id="otpModalForm" method="POST" action="{{ route('otp.verify') }}" autocomplete="off">
                 @csrf
                 <input type="hidden" name="email" id="otpModalEmail" value="">
-                <div class="form-row">
-                    <label for="otpModalInput" style="display:block; font-weight:600; margin-bottom:6px;">One-Time Code</label>
-                    <input id="otpModalInput" name="otp" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="123456" required autofocus>
+
+                <div class="otp-boxes" id="otpModalBoxes" role="group" aria-label="6-digit verification code">
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Digit 1">
+                    <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+                    <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+                    <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+                    <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+                    <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
                 </div>
+                <input type="hidden" name="otp" id="otpModalValue">
+
+                <p id="otpModalError" role="alert" style="display:none; margin:12px 0 0; color:#dc2626; font-size:0.83rem; font-weight:500;"></p>
 
                 <div class="actions">
                     <button type="button" id="otpCancel" class="btn btn-ghost">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Verify and continue</button>
+                    <button type="submit" class="btn btn-primary" id="otpSubmitBtn">
+                        <span id="otpSubmitText">Verify &amp; continue</span>
+                    </button>
                 </div>
             </form>
 
-            <p style="margin-top:12px; font-size:0.9rem; color:#6b7280;">Didn't receive a code? <a href="{{ route('otp.resend') }}">Resend</a></p>
+            <p class="otp-resend">Didn't receive a code?
+                <button type="button" class="resend-btn" id="otpResendBtn" data-href="{{ route('otp.resend') }}">Resend</button>
+            </p>
         </div>
     </div>
 
     <script>
     (function () {
-        const overlay = document.getElementById('otpModalOverlay');
-        const input = document.getElementById('otpModalInput');
-        const emailEl = document.getElementById('otpModalEmail');
-        const cancel = document.getElementById('otpCancel');
+        const overlay   = document.getElementById('otpModalOverlay');
+        const emailEl   = document.getElementById('otpModalEmail');
+        const cancel    = document.getElementById('otpCancel');
+        const form      = document.getElementById('otpModalForm');
+        const boxesWrap = document.getElementById('otpModalBoxes');
+        const boxes     = Array.from(boxesWrap.querySelectorAll('input'));
+        const hidden    = document.getElementById('otpModalValue');
+        const submitBtn = document.getElementById('otpSubmitBtn');
+        const submitTxt = document.getElementById('otpSubmitText');
+
+        function sync() {
+            const code = boxes.map(b => b.value).join('');
+            hidden.value = code;
+            boxes.forEach(b => b.classList.toggle('filled', b.value !== ''));
+            return code;
+        }
+        function focusBox(i) { if (i >= 0 && i < boxes.length) boxes[i].focus(); }
+
+        function distribute(str, start) {
+            const digits = str.replace(/\D/g, '').slice(0, boxes.length - start).split('');
+            digits.forEach((d, k) => { boxes[start + k].value = d; });
+            focusBox(Math.min(start + digits.length, boxes.length - 1));
+            if (sync().length === boxes.length) maybeSubmit();
+        }
+
+        let submitting = false;
+        function maybeSubmit() {
+            if (submitting) return;
+            submitting = true;
+            submitBtn.disabled = true;
+            submitTxt.innerHTML = '<span class="otp-spinner"></span> Verifying…';
+            setTimeout(() => form.submit(), 150);
+        }
+
+        boxes.forEach((box, i) => {
+            box.addEventListener('input', function () {
+                if (this.value.length > 1) { distribute(this.value, i); return; }
+                this.value = this.value.replace(/\D/g, '');
+                if (this.value) focusBox(i + 1);
+                if (sync().length === boxes.length) maybeSubmit();
+            });
+            box.addEventListener('keydown', function (e) {
+                if (e.key === 'Backspace' && !this.value && i > 0) {
+                    focusBox(i - 1); boxes[i - 1].value = ''; sync();
+                } else if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); focusBox(i - 1); }
+                else if (e.key === 'ArrowRight' && i < boxes.length - 1) { e.preventDefault(); focusBox(i + 1); }
+            });
+            box.addEventListener('paste', function (e) {
+                e.preventDefault();
+                distribute((e.clipboardData || window.clipboardData).getData('text'), i);
+            });
+            box.addEventListener('focus', function () { this.select(); });
+        });
+
+        form.addEventListener('submit', function (e) {
+            if (sync().length !== boxes.length) {
+                e.preventDefault();
+                boxesWrap.classList.add('error');
+                focusBox(boxes.findIndex(b => !b.value));
+                setTimeout(() => boxesWrap.classList.remove('error'), 500);
+                return;
+            }
+            submitBtn.disabled = true;
+            submitTxt.innerHTML = '<span class="otp-spinner"></span> Verifying…';
+        });
 
         function showModal(prefillEmail) {
             if (prefillEmail) emailEl.value = prefillEmail;
             overlay.style.display = 'flex';
             overlay.setAttribute('aria-hidden', 'false');
-            // requestAnimationFrame guarantees the browser has painted the
-            // now-visible modal before we try to focus the input inside it —
-            // a plain focus() call here can silently no-op on a still-hidden
-            // element, which is why the code field could fail to appear ready.
-            requestAnimationFrame(() => requestAnimationFrame(() => input.focus()));
+            // Double rAF guarantees the modal has painted before we focus,
+            // otherwise focus() can silently no-op on the still-hidden input.
+            requestAnimationFrame(() => requestAnimationFrame(() => focusBox(0)));
         }
-
         function hideModal() {
             overlay.style.display = 'none';
             overlay.setAttribute('aria-hidden', 'true');
@@ -641,15 +759,47 @@
 
         cancel.addEventListener('click', hideModal);
         overlay.addEventListener('click', function (e) { if (e.target === overlay) hideModal(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && overlay.style.display === 'flex') hideModal();
+        });
 
-        // If server requested showing the OTP modal, display it. The message
-        // is rendered inside the modal itself (see the <p> above the form) —
-        // we intentionally don't also pop a SweetAlert here, since stacking
-        // two overlays for one event just fights for focus and looks messy.
-        const showOtp = document.body.dataset.showOtp === '1' || (document.body.dataset.otpInfo && document.body.dataset.otpInfo.length > 0);
+        // ── Resend cooldown (persists across the resend page navigation) ──
+        const resendBtn = document.getElementById('otpResendBtn');
+        const COOLDOWN = 45, KEY = 'adminOtpResendUntil';
+        function startCooldown(until) {
+            const tick = () => {
+                const left = Math.ceil((until - Date.now()) / 1000);
+                if (left <= 0) { resendBtn.disabled = false; resendBtn.textContent = 'Resend'; localStorage.removeItem(KEY); clearInterval(t); return; }
+                resendBtn.disabled = true; resendBtn.textContent = `Resend in ${left}s`;
+            };
+            tick(); const t = setInterval(tick, 1000);
+        }
+        const saved = parseInt(localStorage.getItem(KEY) || '0', 10);
+        if (saved && Date.now() < saved) startCooldown(saved);
+        resendBtn.addEventListener('click', function () {
+            const until = Date.now() + COOLDOWN * 1000;
+            localStorage.setItem(KEY, String(until));
+            startCooldown(until);
+            window.location.href = this.dataset.href;
+        });
+
+        // Open the OTP step when the server asks for it (fresh login) OR when a
+        // submitted code was rejected — previously a wrong code bounced back to
+        // a blank-looking login form with no feedback and the modal closed.
+        const otpError = document.body.dataset.otpError || '';
+        const showOtp = document.body.dataset.showOtp === '1'
+            || (document.body.dataset.otpInfo && document.body.dataset.otpInfo.length > 0)
+            || otpError.length > 0;
+
         if (showOtp) {
-            const prefill = document.body.dataset.otpEmail || '';
-            showModal(prefill);
+            showModal(document.body.dataset.otpEmail || '');
+            if (otpError) {
+                const errEl = document.getElementById('otpModalError');
+                errEl.textContent = otpError;
+                errEl.style.display = 'block';
+                boxesWrap.classList.add('error');
+                setTimeout(() => boxesWrap.classList.remove('error'), 500);
+            }
         }
     })();
     </script>
