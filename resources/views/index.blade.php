@@ -197,10 +197,14 @@
     
     /* Hero */
     .hero {
-      text-align: center;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
       padding: 64px 0 48px;
-      max-width: 800px;
-      margin: 0 auto;
+    }
+    .hero-content {
+      text-align: left;
     }
     .hero-kicker {
       display: inline-block;
@@ -228,7 +232,6 @@
     .hero-actions {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 16px;
       margin-bottom: 32px;
     }
@@ -246,6 +249,18 @@
       box-shadow: var(--shadow-sm);
     }
     .hero-clock strong { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .hero-image {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     
     /* Quick Access Cards */
     .quick-access {
@@ -612,9 +627,11 @@
       .bottom-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
-      .hero-title { font-size: 2rem; }
-      .hero-actions { flex-direction: column; }
+      .hero { grid-template-columns: 1fr; gap: 32px; }
+      .hero-content { text-align: center; }
+      .hero-actions { flex-direction: column; justify-content: center; }
       .hero-actions .btn { width: 100%; }
+      .hero-title { font-size: 2rem; }
       .nav-container { height: 64px; }
       .brand-subtitle { display: none; }
       .footer-content { flex-direction: column; text-align: center; }
@@ -654,19 +671,24 @@
   <main>
     <!-- Hero -->
     <section class="hero container">
-      <span class="hero-kicker">Madridejos Community College</span>
-      <h1 class="hero-title">Payroll & Attendance Portal</h1>
-      <p class="hero-desc">Welcome to the central administrative hub. Access your digital payslips, review logs, verify attendance, and submit weekly timesheets securely.</p>
-      <div class="hero-actions">
-        <a href="{{ url('/employee/login') }}" class="btn btn-primary">
-          Employee Portal
-        </a>
-        <a href="{{ url('/attendance/attendlog') }}" class="btn btn-outline">
-          Attendance Log
-        </a>
+      <div class="hero-content">
+        <span class="hero-kicker">Madridejos Community College</span>
+        <h1 class="hero-title">Payroll & Attendance Portal</h1>
+        <p class="hero-desc">Welcome to the central administrative hub. Access your digital payslips, review logs, verify attendance, and submit weekly timesheets securely.</p>
+        <div class="hero-actions">
+          <a href="{{ url('/employee/login') }}" class="btn btn-primary">
+            Employee Portal
+          </a>
+          <a href="{{ url('/attendance/attendlog') }}" class="btn btn-outline">
+            Attendance Log
+          </a>
+        </div>
+        <div class="hero-clock" aria-label="Real-time Institutional Clock">
+          <strong id="clockTime">--:--:--</strong> <span id="clockDate">&hellip;</span>
+        </div>
       </div>
-      <div class="hero-clock" aria-label="Real-time Institutional Clock">
-        <strong id="clockTime">--:--:--</strong> <span id="clockDate">&hellip;</span>
+      <div class="hero-image">
+        <img src="{{ asset('images/mcc.jpg') }}" alt="Madridejos Community College">
       </div>
     </section>
 
