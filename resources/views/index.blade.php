@@ -75,6 +75,8 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
+    html { scroll-behavior: smooth; }
+    
     body {
       font-family: var(--font-sans);
       background-color: var(--bg-page);
@@ -95,6 +97,34 @@
       max-width: 1120px;
       margin: 0 auto;
       padding: 0 24px;
+    }
+
+    /* Scroll reveal animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Stagger children within a reveal group */
+    .reveal-stagger > * {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-stagger.visible > *:nth-child(1) { transition-delay: 0ms; }
+    .reveal-stagger.visible > *:nth-child(2) { transition-delay: 80ms; }
+    .reveal-stagger.visible > *:nth-child(3) { transition-delay: 160ms; }
+    .reveal-stagger.visible > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Scroll target offset for sticky header */
+    section[id] {
+      scroll-margin-top: 88px;
     }
 
     /* Header */
@@ -193,7 +223,7 @@
     [data-theme="dark"] .icon-sun { display: none; }
     [data-theme="dark"] .icon-moon { display: block; }
     
-    main { flex: 1; padding-bottom: 64px; }
+    main { flex: 1; padding-bottom: 80px; }
     
     /* Hero */
     .hero {
@@ -201,7 +231,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 48px;
       align-items: center;
-      padding: 64px 0 48px;
+      padding: 80px 0 72px;
     }
     .hero-content {
       text-align: left;
@@ -267,7 +297,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 24px;
-      margin-bottom: 48px;
+      margin-bottom: 72px;
     }
     .qa-card {
       background: var(--bg-panel);
@@ -354,7 +384,7 @@
     .qa-card:hover .qa-action svg { transform: translateX(4px); }
     
     /* Announcement */
-    .announcement { margin-bottom: 48px; }
+    .announcement { margin-bottom: 72px; }
     .announcement-card {
       background: var(--bg-panel);
       border: 1px solid var(--border);
@@ -392,7 +422,7 @@
     }
     
     /* System Status */
-    .system-status { margin-bottom: 48px; }
+    .system-status { margin-bottom: 72px; }
     .status-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -426,7 +456,7 @@
     }
 
     /* Features */
-    .features { margin-bottom: 64px; }
+    .features { margin-bottom: 80px; }
     .features-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -642,6 +672,8 @@
       * { transition-duration: 0.01ms !important; }
       .qa-card:hover { transform: none; }
       .btn-primary:hover { transform: none; }
+      .reveal { opacity: 1; transform: none; }
+      .reveal-stagger > * { opacity: 1; transform: none; }
     }
   </style>
 </head>
@@ -670,19 +702,11 @@
 
   <main>
     <!-- Hero -->
-    <section class="hero container">
+    <section class="hero container reveal">
       <div class="hero-content">
         <span class="hero-kicker">Madridejos Community College</span>
         <h1 class="hero-title">Payroll & Attendance Portal</h1>
         <p class="hero-desc">Welcome to the central administrative hub. Access your digital payslips, review logs, verify attendance, and submit weekly timesheets securely.</p>
-        <div class="hero-actions">
-          <a href="{{ url('/employee/login') }}" class="btn btn-primary">
-            Employee Portal
-          </a>
-          <a href="{{ url('/attendance/attendlog') }}" class="btn btn-outline">
-            Attendance Log
-          </a>
-        </div>
         <div class="hero-clock" aria-label="Real-time Institutional Clock">
           <strong id="clockTime">--:--:--</strong> <span id="clockDate">&hellip;</span>
         </div>
@@ -694,7 +718,7 @@
 
     <div class="container">
       <!-- Quick Access Cards -->
-      <section class="quick-access" aria-label="Quick Access Portals">
+      <section class="quick-access reveal reveal-stagger" aria-label="Quick Access Portals">
         <a href="{{ url('/employee/login') }}" class="qa-card qa-employee">
           <div class="qa-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -743,7 +767,7 @@
 
       <!-- Announcement -->
       @if(isset($announcement) && $announcement)
-      <section class="announcement" aria-label="System Announcement">
+      <section class="announcement reveal" aria-label="System Announcement">
         <div class="announcement-card">
           <div class="announce-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -758,7 +782,7 @@
       @endif
 
       <!-- System Status -->
-      <section class="system-status" aria-label="System Status">
+      <section class="system-status reveal" aria-label="System Status">
         <h2 class="section-title">System Status</h2>
         <div class="status-grid">
           <div class="status-item">
@@ -774,7 +798,7 @@
       </section>
 
       <!-- Features -->
-      <section class="features" aria-label="System Capabilities">
+      <section class="features reveal" aria-label="System Capabilities">
         <h2 class="section-title">Key Features</h2>
         <div class="features-grid">
           <div class="feature-card">
@@ -802,7 +826,7 @@
       </section>
 
       <!-- FAQ & HR Support -->
-      <section class="bottom-grid">
+      <section class="bottom-grid reveal">
         <div class="faq-section">
           <h2 class="section-title">Frequently Asked Questions</h2>
           <div class="faq-list">
@@ -1052,6 +1076,28 @@
         confirmButtonColor: '#7f1d1d'
       });
     @endif
+
+    // Scroll reveal animations
+    (function () {
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var reveals = document.querySelectorAll('.reveal');
+
+      if (prefersReduced) {
+        reveals.forEach(function (el) { el.classList.add('visible'); });
+        return;
+      }
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+      reveals.forEach(function (el) { observer.observe(el); });
+    })();
   </script>
 </body>
 </html>
