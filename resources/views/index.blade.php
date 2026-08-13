@@ -110,6 +110,16 @@
       transition: background-color 0.25s ease;
     }
 
+    /* ===================== ACCESSIBILITY FOCUS ===================== */
+    :focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus);
+    }
+    
+    a:focus-visible, button:focus-visible, input:focus-visible {
+      border-radius: var(--radius-sm);
+    }
+
     /* ===================== LAYOUT CONTAINERS ===================== */
     .app-container {
       width: 100%;
