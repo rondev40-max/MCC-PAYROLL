@@ -71,11 +71,11 @@ test('attendance checker cannot login with wrong role', function () {
     $response->assertSessionHas('error');
 });
 
-test('login form displays role selection', function () {
+test('portal landing page displays main portals', function () {
     $response = $this->get('/');
 
     $response->assertStatus(200);
-    $response->assertSee('Select Role');
-    $response->assertSee('Admin');
-    $response->assertSee('Attendance Checker');
+    $response->assertSee('Madridejos Community College');
+    $response->assertSee('Employee Portal');
+    $response->assertSee('Attendance Log');
 });
