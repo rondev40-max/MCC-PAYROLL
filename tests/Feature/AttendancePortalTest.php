@@ -404,3 +404,45 @@ test('the register hands its route config to the browser intact', function () {
         expect($html)->toContain($key);
     }
 });
+
+/*
+ * The register load failed in production with nothing but "could not be
+ * loaded". Two causes were found and are pinned here.
+ */
+
+test('attendance API responses are never cacheable', function () {
+    $response = $this
+        ->withSession(attendancePortalSession())
+        ->get('/attendance/api/attendance-data/bsit?cutoff_start=2026-08-01');
+
+    $response->assertOk();
+
+    // This host has LiteSpeed cache in front of it. An unmarked GET carrying
+    // one department's roster is fair game for a shared cache to replay to a
+    // different checker.
+    $cacheControl = $response->headers->get('Cache-Control');
+    expect($cacheControl)->toContain('no-store');
+    expect($response->headers->get('X-LiteSpeed-Cache-Control'))->toBe('no-cache');
+});
+
+test('department matching tolerates stray whitespace and casing', function () {
+    insertPortalAttendance();
+
+    // users.course is free text, so the session value is not guaranteed clean.
+    foreach ([' bsit ', 'BSIT', 'bSiT'] as $stored) {
+        $response = $this
+            ->withSession(attendancePortalSession(['user_course' => $stored]))
+            ->get('/attendance/api/attendance-data/bsit?cutoff_start=2026-08-01');
+
+        expect($response->status())
+            ->toBe(200, "session course [{$stored}] should authorise BSIT");
+    }
+});
+
+test('a genuinely different department is still refused', function () {
+    $response = $this
+        ->withSession(attendancePortalSession(['user_course' => 'BSBA']))
+        ->get('/attendance/api/attendance-data/bsit?cutoff_start=2026-08-01');
+
+    $response->assertStatus(403);
+});

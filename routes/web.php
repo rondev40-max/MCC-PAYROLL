@@ -317,11 +317,17 @@ Route::middleware(['auth.attendance'])->prefix('attendance')->name('attendance.'
     Route::get('/dtr/{course}/{employeeId}/print', [AttendanceController::class, 'dtrPrint'])
         ->whereNumber('employeeId')->name('dtr.print');
 
-    Route::get('/api/course-counts', [AttendanceController::class, 'getCourseCounts']);
-    Route::get('/api/attendance-data/{course}', [AttendanceController::class, 'getAttendanceData']);
-    Route::post('/api/save-attendance', [AttendanceController::class, 'saveAttendance']);
-    Route::post('/api/save-attendance-history', [AttendanceController::class, 'saveAttendanceHistory']);
-    Route::post('/api/bulk-delete-attendance', [AttendanceController::class, 'bulkDeleteAttendance']);
+    // These return one checker's roster and saved entries as plain GETs. This
+    // host has LiteSpeed cache in front of it, and an unmarked GET is fair game
+    // for a shared cache to store and replay to somebody else — so the whole
+    // group is explicitly no-store.
+    Route::middleware('no-store')->group(function () {
+        Route::get('/api/course-counts', [AttendanceController::class, 'getCourseCounts']);
+        Route::get('/api/attendance-data/{course}', [AttendanceController::class, 'getAttendanceData']);
+        Route::post('/api/save-attendance', [AttendanceController::class, 'saveAttendance']);
+        Route::post('/api/save-attendance-history', [AttendanceController::class, 'saveAttendanceHistory']);
+        Route::post('/api/bulk-delete-attendance', [AttendanceController::class, 'bulkDeleteAttendance']);
+    });
 });
 
 // Attendance Password Reset Routes

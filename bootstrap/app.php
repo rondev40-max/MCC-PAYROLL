@@ -52,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'                => \App\Http\Middleware\RoleMiddleware::class,
             'log.employee.portal' => \App\Http\Middleware\LogEmployeePortalAccess::class,
             'payslip.unlocked'    => \App\Http\Middleware\EnsurePayslipUnlocked::class,
+            'no-store'            => \App\Http\Middleware\NoStoreResponse::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

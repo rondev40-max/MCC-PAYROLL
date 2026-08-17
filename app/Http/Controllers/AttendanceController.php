@@ -44,10 +44,19 @@ class AttendanceController extends Controller
     // SESSION / AUTH HELPERS
     // ──────────────────────────────────────────────────────────────────────────
 
+    /**
+     * The department this session is allowed to act on, normalised.
+     *
+     * Trimming matters: the value comes straight from users.course, and a
+     * trailing space there made authorizeCourseAccess() fail its strict
+     * comparison, which the browser only ever saw as "the register could not be
+     * loaded". The DTR screens already normalised this way; the API did not.
+     */
     private function getUserCourse(): ?string
     {
-        $course = session('user_course');
-        return $course ? strtoupper($course) : null;
+        $course = trim((string) session('user_course', ''));
+
+        return $course !== '' ? strtoupper($course) : null;
     }
 
     private function getUserId(): ?int
@@ -63,8 +72,14 @@ class AttendanceController extends Controller
     private function authorizeCourseAccess(string $requestedCourse): bool
     {
         $userCourse = $this->getUserCourse();
-        if (!$userCourse) return false;
-        return $requestedCourse === $userCourse;
+
+        if (!$userCourse) {
+            return false;
+        }
+
+        // Normalise both sides. The requested value arrives from a URL segment
+        // and the stored one from the database, so neither is guaranteed clean.
+        return strtoupper(trim($requestedCourse)) === $userCourse;
     }
 
     private function unauthenticatedResponse(): JsonResponse

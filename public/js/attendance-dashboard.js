@@ -167,6 +167,17 @@
                 return;
             }
 
+            // 403 means the session's department does not match the one being
+            // requested. Say so plainly instead of letting it fall through to a
+            // generic "could not be loaded".
+            if (response.status === 403) {
+                showLoadError(
+                    'Your account is not assigned to the ' + course + ' department. '
+                    + 'Sign out and back in, or ask an administrator to check your assigned department.'
+                );
+                return;
+            }
+
             const data = await parseJsonResponse(response);
             if (!response.ok) throw new Error(data.error || data.message || 'Unable to retrieve attendance data.');
             if (!Array.isArray(data)) throw new Error('The attendance service returned an invalid response.');
@@ -739,14 +750,29 @@
 
     async function parseJsonResponse(response) {
         const contentType = response.headers.get('content-type') || '';
+
         if (!contentType.includes('application/json')) {
             if (response.redirected && response.url.includes('/attendance/attendlog')) {
                 window.location.assign(routes.login);
                 return {};
             }
-            throw new Error('The server returned an unexpected response.');
+
+            // Every non-JSON failure used to collapse into one sentence that
+            // said nothing, so a 403, a 500 error page and a cached HTML
+            // response were indistinguishable from the browser. Report enough
+            // to tell them apart.
+            const detail = contentType ? contentType.split(';')[0] : 'no content-type';
+            throw new Error(
+                'The server returned ' + detail + ' instead of JSON (HTTP ' + response.status + '). '
+                + 'If this persists, the response is probably being cached or intercepted.'
+            );
         }
-        return response.json();
+
+        try {
+            return await response.json();
+        } catch (e) {
+            throw new Error('The server sent malformed JSON (HTTP ' + response.status + ').');
+        }
     }
 
     function setButtonBusy(button, busy, label) {
