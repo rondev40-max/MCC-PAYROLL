@@ -691,21 +691,6 @@
       letter-spacing: .3px;
     }
 
-    /* ─── Footer ─────────────────────────────────────── */
-    .footer {
-      background: var(--sidebar-bg);
-      color: rgba(226,232,240,0.55);
-      padding: .8rem 1.4rem;
-      font-size: .73rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      border-top: 1px solid rgba(255,255,255,0.04);
-    }
-
-    .footer strong { color: rgba(226,232,240,0.85); font-weight: 700; }
-
     /* ─── Responsive Sidebar ─────────────────────────── */
     @media (max-width: 991px) {
       .sidebar {
@@ -1118,13 +1103,6 @@
 
     </div><!-- /.page-body -->
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div><strong>MCC Digital Payroll</strong> · Madridejos Community College</div>
-      <div id="footerDate" style="font-family:'JetBrains Mono',monospace; font-size:.7rem;"></div>
-      <div>Version 2.0 · Real-Time Analytics</div>
-    </footer>
-
   </div><!-- /.content -->
 </div><!-- /.app -->
 
@@ -1203,7 +1181,6 @@ function tick() {
   const d = new Date();
   const s = d.toLocaleString('en-PH', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
   document.getElementById('liveClock').textContent = s;
-  document.getElementById('footerDate').textContent = s;
 }
 setInterval(tick, 1000); tick();
 
