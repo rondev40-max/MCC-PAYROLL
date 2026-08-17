@@ -11,6 +11,8 @@ use App\Models\FulltimeTimesheet;
 use App\Models\ParttimeTimesheet;
 use App\Models\StaffTimesheet;
 use App\Models\UtilityTimesheet;
+use App\Models\WatchmanTimesheet;
+use App\Models\AdminPersonnelTimesheet;
 use App\Models\User;
 use App\Models\Department;
 use App\Support\DepartmentAnalytics;
@@ -44,6 +46,8 @@ class DashboardController extends Controller
             'totalParttimeInstructors'  => $stats['totalParttimeInstructors'],
             'totalStaff'                => $stats['totalStaff'],
             'totalUtility'              => $stats['totalUtility'],
+            'totalWatchman'             => $stats['totalWatchman'],
+            'totalAdminPersonnel'       => $stats['totalAdminPersonnel'],
             'departmentAnalysis'        => $departmentAnalysis,
             'departmentCount'           => $departmentAnalysis->count(),
             'userDepartment'            => $userDepartment,
@@ -180,14 +184,18 @@ class DashboardController extends Controller
         $totalParttimeInstructors = $this->countUniqueEmployees(ParttimeTimesheet::class);
         $totalStaff                = $this->countUniqueEmployees(StaffTimesheet::class);
         $totalUtility              = $this->countUniqueEmployees(UtilityTimesheet::class);
+        $totalWatchman             = $this->countUniqueEmployees(WatchmanTimesheet::class);
+        $totalAdminPersonnel       = $this->countUniqueEmployees(AdminPersonnelTimesheet::class);
         $totalEmployees            = $this->calculateTotalUniqueEmployees();
-        
+
         return compact(
             'totalEmployees',
             'totalFulltimeInstructors',
             'totalParttimeInstructors',
             'totalStaff',
-            'totalUtility'
+            'totalUtility',
+            'totalWatchman',
+            'totalAdminPersonnel'
         );
     }
 
@@ -245,10 +253,22 @@ class DashboardController extends Controller
                 ? UtilityTimesheet::select('employee_name')->whereNotNull('employee_name')->where('employee_name', '!=', '')->distinct()->pluck('employee_name')
                 : collect();
 
+            // watchman_timesheets arrived in the Aug 2026 migration, so it is
+            // guarded like the rest rather than assumed present.
+            $watchmanNames = Schema::hasColumn('watchman_timesheets', 'employee_name')
+                ? WatchmanTimesheet::select('employee_name')->whereNotNull('employee_name')->where('employee_name', '!=', '')->distinct()->pluck('employee_name')
+                : collect();
+
+            $adminPersonnelNames = Schema::hasColumn('admin_personnel_timesheets', 'employee_name')
+                ? AdminPersonnelTimesheet::select('employee_name')->whereNotNull('employee_name')->where('employee_name', '!=', '')->distinct()->pluck('employee_name')
+                : collect();
+
             return $fulltimeNames
                 ->concat($parttimeNames)
                 ->concat($staffNames)
                 ->concat($utilityNames)
+                ->concat($watchmanNames)
+                ->concat($adminPersonnelNames)
                 ->unique()
                 ->count();
 

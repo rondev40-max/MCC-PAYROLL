@@ -963,13 +963,14 @@
           <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $teachPct }}%; background:#1d4ed8;"></div></div>
         </div>
 
-        <!-- Non-Teaching -->
+        <!-- Non-Teaching: Staff + Utility + Watchman -->
+        @php $nonTeaching = ($totalStaff ?? 0) + ($totalUtility ?? 0) + ($totalWatchman ?? 0); @endphp
         <div class="stat-card fu d3" style="--sc-color:#3b82f6; --sc-bg:rgba(59,130,246,0.1);">
           <div class="stat-icon"><i class="bi bi-person-gear"></i></div>
-          <div class="stat-value counter" data-target="{{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }}">{{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }}</div>
+          <div class="stat-value counter" data-target="{{ $nonTeaching }}">{{ $nonTeaching }}</div>
           <div class="stat-label">Non-Teaching</div>
-          <div class="stat-footer info"><i class="bi bi-buildings"></i>Staff & Utility</div>
-          @php $nonTeachPct = $totalEmployees > 0 ? round((($totalStaff ?? 0) + ($totalUtility ?? 0)) / $totalEmployees * 100) : 0; @endphp
+          <div class="stat-footer info"><i class="bi bi-buildings"></i>Staff, Utility & Watchman</div>
+          @php $nonTeachPct = $totalEmployees > 0 ? round($nonTeaching / $totalEmployees * 100) : 0; @endphp
           <div class="mini-bar"><div class="mini-bar-fill" style="width:{{ $nonTeachPct }}%; background:#3b82f6;"></div></div>
         </div>
 
@@ -1030,7 +1031,7 @@
           </div>
           <div class="chart-legend">
             <div class="legend-item"><div class="legend-swatch" style="background:#2563eb;"></div>Teaching ({{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Non-Teaching ({{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Non-Teaching ({{ ($totalStaff ?? 0) + ($totalUtility ?? 0) + ($totalWatchman ?? 0) }})</div>
           </div>
         </div>
 
@@ -1170,8 +1171,9 @@ const STATS = {
   parttime: {{ $totalParttimeInstructors ?? 0 }},
   staff:    {{ $totalStaff ?? 0 }},
   utility:  {{ $totalUtility ?? 0 }},
+  watchman: {{ $totalWatchman ?? 0 }},
   teaching: {{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }},
-  nonTeach: {{ ($totalStaff ?? 0) + ($totalUtility ?? 0) }},
+  nonTeach: {{ ($totalStaff ?? 0) + ($totalUtility ?? 0) + ($totalWatchman ?? 0) }},
 };
 
 const DEPARTMENT_STATS = {!! json_encode(isset($departmentAnalysis) ? $departmentAnalysis->toArray() : []) !!};

@@ -332,97 +332,70 @@
       transform: scale(1.02); /* Slight scale to ensure no edge gaps */
     }
     
-    /* Quick Access Cards */
-    .quick-access {
+    /* Mobile App Band — replaces the removed quick-access card row. A single
+       horizontal strip rather than a card in a grid: there is only one item,
+       and a lone card in a three-column grid reads as two missing ones. */
+    .app-band { margin-bottom: 160px; }
+    .app-band-inner {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      margin-bottom: 160px;
-    }
-    .qa-card {
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 28px;
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
+      padding: 32px 36px;
       box-shadow: var(--shadow-md);
-      transition: all var(--transition);
-      text-align: left;
       position: relative;
       overflow: hidden;
     }
-    .qa-card:hover {
-      transform: translateY(-8px);
-      box-shadow: var(--shadow-lg);
-      border-color: var(--primary);
+    /* A maroon edge, the same accent the hero kicker uses, so the band reads
+       as institutional rather than as an advert dropped into the page. */
+    .app-band-inner::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--secondary);
     }
-    .qa-card:focus-visible {
-      outline: 2px solid var(--primary);
-      outline-offset: 2px;
-    }
-    .qa-icon {
-      width: 56px;
-      height: 56px;
+    .app-band-icon {
+      width: 64px;
+      height: 64px;
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 24px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      color: var(--primary);
+      flex-shrink: 0;
     }
-    .qa-icon svg { width: 28px; height: 28px; stroke-width: 2; }
-    .qa-employee .qa-icon { background: rgba(30, 58, 138, 0.1); color: var(--primary); }
-    [data-theme="dark"] .qa-employee .qa-icon { background: rgba(59, 130, 246, 0.15); }
-    .qa-attendance .qa-icon { background: rgba(5, 150, 105, 0.1); color: var(--success); }
-    .qa-app .qa-icon { background: rgba(127, 29, 29, 0.1); color: var(--secondary); }
-    [data-theme="dark"] .qa-app .qa-icon { background: rgba(248, 113, 113, 0.15); }
-    
-    .qa-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
+    .app-band-icon svg { width: 30px; height: 30px; }
+    .app-band-copy { min-width: 0; }
+    .app-band-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 6px;
     }
-    .qa-title {
-      font-size: 1.25rem;
+    .app-band-title {
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--text-main);
+      margin: 0 0 6px;
+      letter-spacing: -0.015em;
     }
-    .qa-badge {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .qa-employee .qa-badge { background: rgba(30, 58, 138, 0.1); color: var(--primary); }
-    [data-theme="dark"] .qa-employee .qa-badge { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
-    .qa-attendance .qa-badge { background: rgba(5, 150, 105, 0.1); color: var(--success); }
-    .qa-app .qa-badge { background: rgba(127, 29, 29, 0.1); color: var(--secondary); }
-    [data-theme="dark"] .qa-app .qa-badge { background: rgba(248, 113, 113, 0.15); color: var(--secondary); }
-    
-    .qa-desc {
+    .app-band-desc {
       font-size: 0.95rem;
       color: var(--text-muted);
-      margin-bottom: 32px;
-      flex: 1;
-      line-height: 1.5;
+      margin: 0;
+      line-height: 1.6;
+      max-width: 62ch;
     }
-    .qa-action {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--primary);
-    }
-    .qa-action svg {
-      width: 18px;
-      height: 18px;
-      transition: transform var(--transition);
-    }
-    .qa-card:hover .qa-action svg { transform: translateX(6px); }
+    .app-band-cta { flex-shrink: 0; white-space: nowrap; }
     
     /* Announcement */
     .announcement { margin-bottom: 160px; }
@@ -750,7 +723,10 @@
 
     /* Responsive */
     @media (max-width: 992px) {
-      .quick-access, .status-grid, .features-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+      .status-grid, .features-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+      /* Stack the band once the copy would be squeezed between icon and CTA. */
+      .app-band-inner { grid-template-columns: auto 1fr; row-gap: 20px; }
+      .app-band-cta { grid-column: 1 / -1; justify-content: center; }
       .bottom-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
@@ -764,6 +740,10 @@
       .hero-desc { margin-inline: auto; }
       .hero-image { height: clamp(220px, 34vh, 300px); order: 2; }
       .status-item { padding: 18px 20px; }
+      /* Full stack on phones — the icon beside the copy leaves too little room. */
+      .app-band-inner { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 28px 22px; }
+      .app-band-desc { margin-inline: auto; }
+      .app-band-cta { width: 100%; }
       .nav-container { height: 64px; }
       .brand-subtitle { display: none; }
       .footer-content { flex-direction: column; text-align: center; }
@@ -772,7 +752,6 @@
     
     @media (prefers-reduced-motion: reduce) {
       * { transition-duration: 0.01ms !important; }
-      .qa-card:hover { transform: none; }
       .btn-primary:hover { transform: none; }
       .reveal { opacity: 1; transform: none; }
       .reveal-stagger > * { opacity: 1; transform: none; }
@@ -832,53 +811,12 @@
     </section>
 
     <div class="container">
-      <!-- Quick Access Cards -->
-      <section class="quick-access reveal reveal-stagger" aria-label="Quick Access Portals">
-        <a href="{{ url('/employee/login') }}" class="qa-card qa-employee">
-          <div class="qa-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div class="qa-header">
-            <h2 class="qa-title">Employee Portal</h2>
-            <span class="qa-badge">Self-Service</span>
-          </div>
-          <p class="qa-desc">View digital payslips, inspect attendance records, and manage personal timesheets.</p>
-          <div class="qa-action">
-            Access Portal
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
-        </a>
-
-        <a href="{{ url('/attendance/attendlog') }}" class="qa-card qa-attendance">
-          <div class="qa-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div class="qa-header">
-            <h2 class="qa-title">Attendance Log</h2>
-            <span class="qa-badge">On-Site</span>
-          </div>
-          <p class="qa-desc">Clock in, verify hours, and log on-site daily attendance. Restricted to authorized check-in.</p>
-          <div class="qa-action">
-            Log Attendance
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
-        </a>
-
-        <button type="button" class="qa-card qa-app" id="portal-download" aria-haspopup="dialog" aria-controls="qrModalOverlay">
-          <div class="qa-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-          </div>
-          <div class="qa-header">
-            <h2 class="qa-title">Mobile App</h2>
-            <span class="qa-badge">Android APK</span>
-          </div>
-          <p class="qa-desc">Verify timesheets, check logs, and view pay-periods instantly on-the-go with our app.</p>
-          <div class="qa-action">
-            Download App
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
-        </button>
-      </section>
+      {{-- The three quick-access cards were removed: "Employee Portal" and
+           "Attendance Log" pointed at exactly the same two URLs as the hero
+           buttons directly above them, so the page asked twice. The third card
+           was the only one carrying something new — the APK — and it now lives
+           in its own band further down, next to the support information people
+           are already scrolling for. --}}
 
       <!-- Announcement -->
       @if(isset($announcement) && $announcement)
@@ -957,6 +895,34 @@
               <p>See the hours logged against your name before payroll is cut, not after.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {{-- Mobile app. Rehomed from the deleted quick-access row into its own
+           band: it is the one thing on this page you cannot get to any other
+           way, so it earns a dedicated strip rather than a third of a card row
+           that mostly repeated the hero. Sits after the features, where the
+           reader already knows what the app would be for. --}}
+      <section class="app-band reveal" aria-label="Mobile Application">
+        <div class="app-band-inner">
+          <div class="app-band-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5" ry="2.5"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+
+          <div class="app-band-copy">
+            <span class="app-band-badge">Android APK</span>
+            <h2 class="app-band-title">Take the portal with you</h2>
+            <p class="app-band-desc">
+              Check your logged hours and pay periods from your phone. Install the MCC Employee app
+              straight from the college &mdash; scan the code or download the installer.
+            </p>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-lg app-band-cta" id="portal-download"
+                  aria-haspopup="dialog" aria-controls="qrModalOverlay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Get the app
+          </button>
         </div>
       </section>
 

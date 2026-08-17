@@ -14,6 +14,8 @@ use App\Models\FulltimeTimesheet;
 use App\Models\ParttimeTimesheet;
 use App\Models\StaffTimesheet;
 use App\Models\UtilityTimesheet;
+use App\Models\WatchmanTimesheet;
+use App\Models\AdminPersonnelTimesheet;
 use App\Models\PayslipHistory;
 use App\Models\Department;
 use App\Support\DepartmentAnalytics;
@@ -40,13 +42,37 @@ class AdminController extends Controller
 
         $currentMonth = now()->month;
         $currentYear = now()->year;
-        $taxQuery = 'COALESCE(withholding_tax, 0) + COALESCE(gsis, 0) + COALESCE(philhealth, 0) + COALESCE(pag_ibig, 0) + COALESCE(sss, 0)';
-        
+
+        // Two column vocabularies. The original four tables spell the
+        // deductions out (withholding_tax / gsis / philhealth / pag_ibig / sss);
+        // the watchman and admin-personnel tables added in Aug 2026 use the
+        // shorter *_amount names and have no gsis column at all. Summing them
+        // with the first expression would fail on an unknown column, which is
+        // why they were simply left out of this total until now.
+        $legacyTax = 'COALESCE(withholding_tax, 0) + COALESCE(gsis, 0) + COALESCE(philhealth, 0) + COALESCE(pag_ibig, 0) + COALESCE(sss, 0)';
+        $amountTax = 'COALESCE(tax_amount, 0) + COALESCE(sss_amount, 0) + COALESCE(phic_amount, 0) + COALESCE(hdmf_amount, 0)';
+
+        $deductionSources = [
+            [FulltimeTimesheet::class,        $legacyTax],
+            [ParttimeTimesheet::class,        $legacyTax],
+            [StaffTimesheet::class,           $legacyTax],
+            [UtilityTimesheet::class,         $legacyTax],
+            [WatchmanTimesheet::class,        $amountTax],
+            [AdminPersonnelTimesheet::class,  $amountTax],
+        ];
+
         $totalGovtDeductions = 0;
-        $totalGovtDeductions += FulltimeTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
-        $totalGovtDeductions += ParttimeTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
-        $totalGovtDeductions += StaffTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
-        $totalGovtDeductions += UtilityTimesheet::where('month', $currentMonth)->where('year', $currentYear)->sum(DB::raw($taxQuery));
+        foreach ($deductionSources as [$model, $expression]) {
+            $table = (new $model)->getTable();
+
+            if (!Schema::hasTable($table)) {
+                continue;
+            }
+
+            $totalGovtDeductions += $model::where('month', $currentMonth)
+                ->where('year', $currentYear)
+                ->sum(DB::raw($expression));
+        }
 
         return view('admin.dashboard', [
             'totalEmployees' => $stats['totalEmployees'],
@@ -54,6 +80,8 @@ class AdminController extends Controller
             'totalParttimeInstructors' => $stats['totalParttimeInstructors'],
             'totalStaff' => $stats['totalStaff'],
             'totalUtility' => $stats['totalUtility'],
+            'totalWatchman' => $stats['totalWatchman'],
+            'totalAdminPersonnel' => $stats['totalAdminPersonnel'],
             'departmentAnalysis' => $departmentAnalysis,
             'departmentCount' => $departmentAnalysis->count(),
             'userDepartment' => $userDepartment,
@@ -820,14 +848,18 @@ class AdminController extends Controller
         $totalParttimeInstructors = $this->countUniqueEmployees(ParttimeTimesheet::class);
         $totalStaff = $this->countUniqueEmployees(StaffTimesheet::class);
         $totalUtility = $this->countUniqueEmployees(UtilityTimesheet::class);
+        $totalWatchman = $this->countUniqueEmployees(WatchmanTimesheet::class);
+        $totalAdminPersonnel = $this->countUniqueEmployees(AdminPersonnelTimesheet::class);
         $totalEmployees = $this->calculateTotalUniqueEmployees();
-        
+
         return [
             'totalEmployees' => $totalEmployees,
             'totalFulltimeInstructors' => $totalFulltimeInstructors,
             'totalParttimeInstructors' => $totalParttimeInstructors,
             'totalStaff' => $totalStaff,
             'totalUtility' => $totalUtility,
+            'totalWatchman' => $totalWatchman,
+            'totalAdminPersonnel' => $totalAdminPersonnel,
         ];
     }
 
@@ -847,15 +879,24 @@ class AdminController extends Controller
     {
         try {
             $allNames = collect();
-            
+
             $tables = [
                 (new FulltimeTimesheet)->getTable(),
                 (new ParttimeTimesheet)->getTable(),
                 (new StaffTimesheet)->getTable(),
-                (new UtilityTimesheet)->getTable()
+                (new UtilityTimesheet)->getTable(),
+                (new WatchmanTimesheet)->getTable(),
+                (new AdminPersonnelTimesheet)->getTable(),
             ];
-            
+
             foreach ($tables as $table) {
+                // Guarded per table: without this, one missing table throws and
+                // the catch below zeroes the entire headcount. watchman_timesheets
+                // in particular only exists after the Aug 2026 migration.
+                if (!Schema::hasTable($table)) {
+                    continue;
+                }
+
                 $names = DB::table($table)->distinct()->pluck('employee_name');
                 $allNames = $allNames->merge($names);
             }
