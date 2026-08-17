@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\OtpMail;
+use App\Rules\ReCaptcha;
 use App\Support\PasswordHash;
 use App\Support\RoleHome;
 
@@ -16,11 +17,26 @@ class LoginController extends Controller
 {
     public function authenticate(Request $request)
     {
-        $credentials = $request->validate([
+        $rules = [
             'email' => ['required', 'email'],
             'password' => ['required'],
             'user_type' => ['required', 'in:admin,attendance,employee'],
+        ];
 
+        // Bot protection on every public sign-in form. Applied only when both
+        // keys are configured: without that guard an unkeyed deployment would
+        // reject all three portals outright, which is a worse failure than the
+        // bots this is here to stop. All login forms post to this one action,
+        // so requiring the token here covers admin, attendance and employee.
+        if (ReCaptcha::isConfigured()) {
+            $rules['g-recaptcha-response'] = [
+                'required',
+                new ReCaptcha(expectedAction: 'login', remoteIp: $request->ip()),
+            ];
+        }
+
+        $credentials = $request->validate($rules, [
+            'g-recaptcha-response.required' => 'Please complete the verification check and try again.',
         ]);
  
         if ($credentials['user_type'] === 'admin') {

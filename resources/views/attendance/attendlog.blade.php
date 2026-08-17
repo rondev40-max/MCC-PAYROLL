@@ -13,7 +13,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    {{-- Only pull in reCAPTCHA when a site key actually exists. Loading it with
+         an empty render= parameter gives you a grecaptcha object that never
+         becomes ready, which is what left the sign-in button stuck. --}}
+    @if(config('services.recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    @endif
+    <script src="{{ asset('js/recaptcha-login.js') }}" defer></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -404,7 +410,11 @@
             <p>Sign in to record logs</p>
         </div>
 
-        <form id="attendance-login-form" action="{{ route('attendance.attendlog') }}" method="POST">
+        <form id="attendance-login-form" action="{{ route('attendance.attendlog') }}" method="POST"
+              data-recaptcha-login
+              data-recaptcha-site-key="{{ config('services.recaptcha.site_key') }}"
+              data-recaptcha-action="login"
+              data-busy-label="Signing in…">
             @csrf
             <input type="hidden" name="user_type" value="attendance">
             <input type="hidden" name="g-recaptcha-response" id="recaptcha_token">
@@ -452,7 +462,7 @@
 
             <button type="submit" class="btn-login" id="login-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
-                <span id="btnText">Sign in</span>
+                <span id="btnText" data-btn-text>Sign in</span>
             </button>
 
             <div class="login-footer">
@@ -467,45 +477,11 @@
     </div>
 
     <script>
-    // reCAPTCHA handling
-    grecaptcha.ready(function () {
-        const form     = document.getElementById('attendance-login-form');
-        const loginBtn = document.getElementById('login-btn');
-
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            loginBtn.disabled = true;
-            document.getElementById('btnText').innerHTML = '<span class="loading-spinner"></span> Verifying…';
-
-            @if(app()->environment('local'))
-                document.getElementById('recaptcha_token').value = 'dev-bypass';
-                HTMLFormElement.prototype.submit.call(form);
-            @else
-                grecaptcha
-                    .execute('{{ config('services.recaptcha.site_key') }}', { action: 'login' })
-                    .then(function (token) {
-                        document.getElementById('recaptcha_token').value = token;
-                        HTMLFormElement.prototype.submit.call(form);
-                    })
-                    .catch(function () {
-                        loginBtn.disabled = false;
-                        document.getElementById('btnText').innerHTML = 'Sign in';
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Verification Failed',
-                            text: 'reCAPTCHA verification failed. Please try again.',
-                            confirmButtonColor: '#0284c7',
-                        });
-                    });
-            @endif
-        });
-    });
+    /*
+     * Submit handling now lives in public/js/recaptcha-login.js, shared with
+     * the admin and employee sign-in pages so all three behave identically.
+     * The form opts in with the data-recaptcha-login attributes above.
+     */
 
     document.addEventListener('DOMContentLoaded', function () {
         const togglePw   = document.getElementById('togglePw');

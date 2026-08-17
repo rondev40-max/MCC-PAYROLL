@@ -35,10 +35,26 @@ return [
         ],
     ],
 
+    /*
+     * reCAPTCHA v3. When either key is missing the rule is not applied at all
+     * (see App\Rules\ReCaptcha::isConfigured), so local development works
+     * without keys and production is protected once they are set.
+     */
     'recaptcha' => [
-    'site_key' => env('RECAPTCHA_SITE_KEY'),
-    'secret_key' => env('RECAPTCHA_SECRET_KEY'),
-],
+        'site_key'   => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+
+        // Tokens scoring below this are treated as automated. 0.5 is Google's
+        // suggested starting point; raise it if you still see bot sign-ups.
+        'min_score'  => env('RECAPTCHA_MIN_SCORE', 0.5),
+
+        // Seconds to wait for siteverify before giving up.
+        'timeout'    => env('RECAPTCHA_TIMEOUT', 5),
+
+        // If Google is unreachable, allow the sign-in rather than locking every
+        // employee out of payroll. Set to false to be strict instead.
+        'fail_open'  => env('RECAPTCHA_FAIL_OPEN', true),
+    ],
 
 
 ];

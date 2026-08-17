@@ -10,6 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if(config('services.recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    @endif
+    <script src="{{ asset('js/recaptcha-login.js') }}" defer></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -446,7 +450,11 @@
             </div>
         @endif
 
-        <form action="{{ route('employee.login') }}" method="POST" id="loginForm">
+        <form action="{{ route('employee.login') }}" method="POST" id="loginForm"
+              data-recaptcha-login
+              data-recaptcha-site-key="{{ config('services.recaptcha.site_key') }}"
+              data-recaptcha-action="login"
+              data-busy-label="Signing in…">
             @csrf
             <input type="hidden" name="user_type" value="employee">
 
@@ -496,7 +504,7 @@
 
             <button type="submit" class="btn-login" id="loginBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
-                <span id="btnText">Sign in</span>
+                <span id="btnText" data-btn-text>Sign in</span>
             </button>
 
             <div class="login-footer">
