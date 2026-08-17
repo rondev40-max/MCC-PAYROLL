@@ -1392,11 +1392,11 @@
         <div class="tb-user" id="profileBtn">
           <div class="tb-avatar">{{ $initials }}</div>
           <div class="d-none d-sm-block">
+            {{-- The email-verified tick used to sit here. Verification state is
+                 only consequential for payslip delivery, so it is stated once in
+                 the Payslips tab and nowhere else. --}}
             <div class="tb-uname">
               {{ Str::words($employee->name ?? 'Employee', 1, '') }}
-              @if(Auth::user()->email_verified_at)
-                <i class="bi bi-patch-check-fill text-primary" title="Email Verified" style="font-size:.7rem;"></i>
-              @endif
             </div>
             <div class="tb-urole">{{ $employee->position ?? 'Employee' }}</div>
           </div>
