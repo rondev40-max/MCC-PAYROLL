@@ -1,163 +1,172 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daily Time Records — MCC Attendance</title>
-  <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  @include('attendance.partials.dtr-styles')
-  <style>
-    .roster { width: 100%; border-collapse: collapse; }
-    .roster thead th {
-      text-align: left; padding: 11px 20px;
-      font-size: .66rem; font-weight: 700; letter-spacing: .09em;
-      text-transform: uppercase; color: var(--text-3);
-      border-bottom: 1px solid var(--border);
-      background: #f8fafc;
-    }
-    .roster tbody td {
-      padding: 14px 20px; border-bottom: 1px solid var(--border-2);
-      font-size: .87rem; vertical-align: middle;
-    }
-    .roster tbody tr:last-child td { border-bottom: none; }
-    .roster tbody tr:hover td { background: #f9fbff; }
-    .roster .num { font-variant-numeric: tabular-nums; }
+@extends('layouts.attendance')
 
-    .emp-name { font-weight: 600; }
-    .emp-meta { font-size: .74rem; color: var(--text-3); margin-top: 1px; }
+@section('title', 'Monthly DTR Records')
 
-    .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 3px 10px; border-radius: 999px;
-      font-size: .7rem; font-weight: 600;
-      background: rgba(37,99,235,.09); color: var(--brand-dark);
-    }
-    .row-actions { display: flex; gap: 7px; justify-content: flex-end; }
-    @media (max-width: 720px) {
-      .roster thead { display: none; }
-      .roster tbody td { display: block; border: none; padding: 4px 18px; }
-      .roster tbody tr { display: block; border-bottom: 1px solid var(--border-2); padding: 12px 0; }
-      .row-actions { justify-content: flex-start; padding-top: 8px; }
-    }
-  </style>
-</head>
-<body>
+@php
+    $employeeCount = $employees->count();
+    $recordedDays = (int) $employees->sum('days_recorded');
+    $recordedHours = (float) $employees->sum('hours');
+    $notStarted = $employees->filter(fn ($employee) => (int) $employee->days_recorded === 0)->count();
+@endphp
 
-  <header class="topbar no-print">
-    <div class="topbar-inner">
-      <a href="{{ route('attendance.dashboard') }}" class="topbar-brand">
-        <i class="bi bi-calendar2-check"></i>
-        <span>MCC Attendance<small>Daily Time Records</small></span>
-      </a>
-      <div class="topbar-actions">
-        <a href="{{ route('attendance.dashboard') }}" class="btn btn-ghost btn-sm">
-          <i class="bi bi-grid"></i> Dashboard
-        </a>
-        <form method="POST" action="{{ route('attendance.logout') }}">
-          @csrf
-          <button type="submit" class="btn btn-ghost btn-sm"><i class="bi bi-box-arrow-right"></i> Sign out</button>
-        </form>
-      </div>
-    </div>
-  </header>
+@section('content')
+    <section class="page-header">
+        <div class="page-header__copy">
+            <p class="page-kicker">Civil Service Form No. 48</p>
+            <h1 class="page-title">Daily Time Records</h1>
+            <p class="page-description">Open, review, and print the official monthly attendance form for personnel in your assigned department.</p>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn--secondary" href="{{ route('attendance.dashboard') }}">
+                <i class="bi bi-table" aria-hidden="true"></i>
+                Attendance register
+            </a>
+        </div>
+    </section>
 
-  <div class="wrap">
+    <section class="summary-strip" aria-label="Monthly record summary">
+        <div class="summary-item">
+            <span class="summary-item__label">Personnel listed</span>
+            <strong class="summary-item__value">{{ number_format($employeeCount) }}</strong>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__label">Days recorded</span>
+            <strong class="summary-item__value summary-item__value--teal">{{ number_format($recordedDays) }}</strong>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__label">Hours rendered</span>
+            <strong class="summary-item__value summary-item__value--blue">{{ number_format($recordedHours, 2) }}</strong>
+        </div>
+        <div class="summary-item">
+            <span class="summary-item__label">Not started</span>
+            <strong class="summary-item__value summary-item__value--amber">{{ number_format($notStarted) }}</strong>
+        </div>
+    </section>
 
-    @if(session('success'))
-      <div class="flash"><i class="bi bi-check-circle-fill"></i>{{ session('success') }}</div>
-    @endif
-
-    <div class="page-head">
-      <div class="eyebrow">Civil Service Form No. 48</div>
-      <h1 class="page-title">Daily Time Records</h1>
-      <p class="page-sub">
-        Pick a period to review, edit or print an employee's DTR.
-      </p>
-    </div>
-
-    <form method="GET" action="{{ route('attendance.dtr.index') }}" class="toolbar no-print">
-      <div class="field">
-        <label for="course">Department</label>
-        <input type="text" id="course" name="course" value="{{ $course }}" placeholder="e.g. BSIT">
-      </div>
-      <div class="field">
-        <label for="month">Period</label>
-        <select id="month" name="month">
-          @foreach($monthOptions as $value => $label)
-            <option value="{{ $value }}" @selected($month->format('Y-m') === $value)>{{ $label }}</option>
-          @endforeach
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Show records</button>
+    <form method="GET" action="{{ route('attendance.dtr.index') }}" class="form-toolbar no-print" id="period-filter">
+        <div class="field">
+            <label for="course-display">Assigned department</label>
+            <input id="course-display" type="text" value="{{ $course }}" readonly>
+            <input type="hidden" name="course" value="{{ $course }}">
+        </div>
+        <div class="field">
+            <label for="month">Record month</label>
+            <select id="month" name="month">
+                @foreach($monthOptions as $value => $label)
+                    <option value="{{ $value }}" @selected($month->format('Y-m') === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <button type="submit" class="btn btn--primary">
+            <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+            Apply period
+        </button>
+        <label class="search-field dtr-roster-search" for="roster-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span class="visually-hidden">Search personnel</span>
+            <input id="roster-search" type="search" placeholder="Search personnel" autocomplete="off">
+        </label>
     </form>
 
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">
-          {{ $course ?: 'No department selected' }} &middot; {{ $month->format('F Y') }}
-        </div>
-        @if($employees->isNotEmpty())
-          <span class="pill">{{ $employees->count() }} employee{{ $employees->count() === 1 ? '' : 's' }}</span>
+    <section class="panel" aria-labelledby="roster-title">
+        <header class="panel-header">
+            <div>
+                <h2 class="panel-title" id="roster-title">{{ $course }} monthly register</h2>
+                <p class="panel-subtitle">{{ $month->format('F Y') }} <span aria-hidden="true">|</span> <span id="visible-record-count">{{ $employeeCount }}</span> personnel</p>
+            </div>
+        </header>
+
+        @if($employees->isEmpty())
+            <div class="roster-empty">
+                <i class="bi bi-calendar2-x" aria-hidden="true"></i>
+                <h2>No monthly records found</h2>
+                <p>Attendance has not been entered for {{ $course }} in {{ $month->format('F Y') }}. Use the attendance register to begin the period.</p>
+            </div>
+        @else
+            <div class="table-scroll">
+                <table class="data-table dtr-roster-table">
+                    <thead>
+                        <tr>
+                            <th class="cell-employee">Personnel</th>
+                            <th class="cell-type">Employment</th>
+                            <th class="cell-number">Days</th>
+                            <th class="cell-number">Hours</th>
+                            <th class="cell-status">Record status</th>
+                            <th class="cell-actions"><span class="visually-hidden">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="roster-body">
+                        @foreach($employees as $employee)
+                            @php
+                                $params = [
+                                    'course' => $course,
+                                    'employeeId' => $employee->employee_id,
+                                    'month' => $month->format('Y-m'),
+                                    'type' => $employee->employee_type,
+                                ];
+                                $search = strtolower(implode(' ', [
+                                    $employee->employee_name,
+                                    $employee->employee_type,
+                                    $employee->employee_id,
+                                ]));
+                                $hasRecords = (int) $employee->days_recorded > 0;
+                            @endphp
+                            <tr data-roster-search="{{ $search }}">
+                                <td class="cell-employee">
+                                    <div class="employee-name">{{ $employee->employee_name ?: 'Employee #'.$employee->employee_id }}</div>
+                                    <div class="employee-meta">Employee ID {{ $employee->employee_id }}</div>
+                                </td>
+                                <td class="cell-type"><span class="type-label">{{ $employee->employee_type ?: 'Employee' }}</span></td>
+                                <td class="cell-number">{{ number_format((int) $employee->days_recorded) }}</td>
+                                <td class="cell-number">{{ number_format((float) $employee->hours, 2) }}</td>
+                                <td class="cell-status">
+                                    <span class="status-badge status-badge--{{ $hasRecords ? 'ready' : 'empty' }}">
+                                        {{ $hasRecords ? 'Recorded' : 'Not started' }}
+                                    </span>
+                                </td>
+                                <td class="cell-actions">
+                                    <div class="row-actions">
+                                        <a class="row-action row-action--edit" href="{{ route('attendance.dtr.show', $params) }}" title="Open DTR" aria-label="Open DTR for {{ $employee->employee_name }}">
+                                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                        </a>
+                                        <a class="row-action" href="{{ route('attendance.dtr.print', $params) }}" target="_blank" rel="noopener" title="Print DTR" aria-label="Print DTR for {{ $employee->employee_name }}">
+                                            <i class="bi bi-printer" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="roster-search-empty" id="roster-search-empty" hidden>No personnel match your search.</div>
         @endif
-      </div>
+    </section>
+@endsection
 
-      @if($employees->isEmpty())
-        <div class="empty">
-          <i class="bi bi-calendar-x" style="font-size:2rem;opacity:.4;"></i>
-          <div class="empty-title">No attendance recorded</div>
-          <p class="empty-sub">
-            Nothing has been logged for {{ $course ?: 'this department' }} in {{ $month->format('F Y') }}.
-            Record attendance on the dashboard first, then come back to produce the DTR.
-          </p>
-        </div>
-      @else
-        <table class="roster">
-          <thead>
-            <tr>
-              <th>Employee</th>
-              <th class="num">Days recorded</th>
-              <th class="num">Hours</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @foreach($employees as $employee)
-              @php
-                $params = [
-                  'course'     => $course,
-                  'employeeId' => $employee->employee_id,
-                  'month'      => $month->format('Y-m'),
-                  'type'       => $employee->employee_type,
-                ];
-              @endphp
-              <tr>
-                <td>
-                  <div class="emp-name">{{ $employee->employee_name ?: 'Employee #'.$employee->employee_id }}</div>
-                  <div class="emp-meta">{{ $employee->employee_type ?: 'Unspecified type' }}</div>
-                </td>
-                <td class="num">{{ $employee->days_recorded }}</td>
-                <td class="num">{{ number_format((float) $employee->hours, 2) }}</td>
-                <td>
-                  <div class="row-actions">
-                    <a href="{{ route('attendance.dtr.show', $params) }}" class="btn btn-outline btn-sm">
-                      <i class="bi bi-pencil-square"></i> Open
-                    </a>
-                    <a href="{{ route('attendance.dtr.print', $params) }}" target="_blank" class="btn btn-outline btn-sm">
-                      <i class="bi bi-printer"></i> Print
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            @endforeach
-          </tbody>
-        </table>
-      @endif
-    </div>
-  </div>
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const search = document.getElementById('roster-search');
+            const body = document.getElementById('roster-body');
+            const count = document.getElementById('visible-record-count');
+            const empty = document.getElementById('roster-search-empty');
+            const month = document.getElementById('month');
 
-</body>
-</html>
+            if (month) month.addEventListener('change', function () { document.getElementById('period-filter').submit(); });
+            if (!search || !body) return;
+
+            search.addEventListener('input', function () {
+                const query = search.value.trim().toLowerCase();
+                let visible = 0;
+                body.querySelectorAll('tr').forEach(function (row) {
+                    const matches = !query || row.dataset.rosterSearch.includes(query);
+                    row.hidden = !matches;
+                    if (matches) visible += 1;
+                });
+                count.textContent = String(visible);
+                empty.hidden = visible !== 0;
+            });
+        });
+    </script>
+@endpush

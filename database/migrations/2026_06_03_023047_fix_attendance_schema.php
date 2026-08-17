@@ -106,26 +106,23 @@ return new class extends Migration
 
         // FIX #4: Add indexes for better query performance
         if (Schema::hasTable('attendances')) {
-            Schema::table('attendances', function (Blueprint $table) {
-                // Add indexes if they don't exist
-                $indexExists = collect(\DB::select("SHOW INDEX FROM attendances WHERE Key_name = 'idx_attendances_employee_date'"))->isNotEmpty();
-                if (!$indexExists) {
+            if (!Schema::hasIndex('attendances', 'idx_attendances_employee_date')) {
+                Schema::table('attendances', function (Blueprint $table) {
                     $table->index(['employee_id', 'date'], 'idx_attendances_employee_date');
-                }
+                });
+            }
 
-                $courseIndexExists = collect(\DB::select("SHOW INDEX FROM attendances WHERE Key_name = 'idx_attendances_course'"))->isNotEmpty();
-                if (!$courseIndexExists) {
+            if (!Schema::hasIndex('attendances', 'idx_attendances_course')) {
+                Schema::table('attendances', function (Blueprint $table) {
                     $table->index(['course'], 'idx_attendances_course');
-                }
-            });
+                });
+            }
         }
 
-        if (Schema::hasTable('attendance_histories')) {
+        if (Schema::hasTable('attendance_histories')
+            && !Schema::hasIndex('attendance_histories', 'idx_history_date')) {
             Schema::table('attendance_histories', function (Blueprint $table) {
-                $dateIndexExists = collect(\DB::select("SHOW INDEX FROM attendance_histories WHERE Key_name = 'idx_history_date'"))->isNotEmpty();
-                if (!$dateIndexExists) {
-                    $table->index(['attendance_date'], 'idx_history_date');
-                }
+                $table->index(['attendance_date'], 'idx_history_date');
             });
         }
     }

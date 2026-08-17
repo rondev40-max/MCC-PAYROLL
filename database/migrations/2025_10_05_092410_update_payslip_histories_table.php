@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasIndex('payslip_histories', 'payslip_histories_batch_id_index')) {
+            Schema::table('payslip_histories', function (Blueprint $table) {
+                $table->dropIndex('payslip_histories_batch_id_index');
+            });
+        }
+
         Schema::table('payslip_histories', function (Blueprint $table) {
             $table->dropColumn(['batch_id', 'status', 'period']);
             $table->integer('days')->default(0);

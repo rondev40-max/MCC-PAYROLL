@@ -19,9 +19,13 @@ class CheckAttendanceRole
             return $next($request);
         }
 
-        Log::warning('Attendance authentication failed - redirecting to login', [
+        Log::warning('Attendance authentication failed', [
             'path' => $request->path(),
         ]);
+
+        if ($request->expectsJson() || $request->is('attendance/api/*')) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
 
         return redirect('/attendance/attendlog')->with('error', 'You must log in to access attendance.');
     }

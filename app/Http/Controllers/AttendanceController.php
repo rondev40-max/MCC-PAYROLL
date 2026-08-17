@@ -22,6 +22,15 @@ class AttendanceController extends Controller
     private const DEFAULT_AM_OUT   = '12:00:00';
     private const DEFAULT_PM_IN    = '13:00:00';
     private const DEFAULT_HOURS    = 8;
+    private const ATTENDANCE_STATUSES = [
+        'present',
+        'absent',
+        'late',
+        'half_day',
+        'leave',
+        'holiday',
+        'official_business',
+    ];
     private const WEEK_DAYS        = [
         'monday'    => 0,
         'tuesday'   => 1,
@@ -61,6 +70,295 @@ class AttendanceController extends Controller
     private function unauthenticatedResponse(): JsonResponse
     {
         return response()->json(['error' => 'Unauthenticated.'], 401);
+    }
+
+    private function unauthorizedCourseResponse(): JsonResponse
+    {
+        return response()->json(['error' => 'Unauthorized access to this department.'], 403);
+    }
+
+    /**
+     * Normalize any submitted date to its payroll half-month.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function cutoffRange(Carbon $date): array
+    {
+        if ($date->day <= 15) {
+            $start = $date->copy()->startOfMonth();
+            $end = $start->copy()->day(15)->endOfDay();
+        } else {
+            $start = $date->copy()->day(16)->startOfDay();
+            $end = $date->copy()->endOfMonth()->endOfDay();
+        }
+
+        return [$start, $end];
+    }
+
+    private function dateWithinCutoff(string $raw, Carbon $start, Carbon $end): ?Carbon
+    {
+        try {
+            $date = Carbon::createFromFormat('Y-m-d', $raw)->startOfDay();
+
+            if ($date->format('Y-m-d') !== $raw || !$date->betweenIncluded($start, $end)) {
+                return null;
+            }
+
+            return $date;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Resolve a client identity such as FT-12 without collapsing its type.
+     *
+     * @return array{id:int, type:string, code:string, typed_id:string}|null
+     */
+    private function employeeIdentity($rawId, ?string $rawType = null): ?array
+    {
+        $value = trim((string) $rawId);
+        $code = null;
+        $id = null;
+
+        if (preg_match('/^(FT|PT|ST|UT)[-:]([1-9][0-9]*)$/i', $value, $matches)) {
+            $code = strtoupper($matches[1]);
+            $id = (int) $matches[2];
+        } elseif (ctype_digit($value) && (int) $value > 0) {
+            $code = Dtr::employeeTypeCode($rawType);
+            $id = (int) $value;
+        }
+
+        if (!$code || !$id) {
+            return null;
+        }
+
+        $payloadCode = Dtr::employeeTypeCode($rawType);
+        if ($payloadCode && $payloadCode !== $code) {
+            return null;
+        }
+
+        $type = Dtr::employeeType($code);
+
+        return [
+            'id'       => $id,
+            'type'     => $type,
+            'code'     => $code,
+            'typed_id' => $code . '-' . $id,
+        ];
+    }
+
+    private function employeeTypeForPrefix(string $prefix): string
+    {
+        return Dtr::employeeType($prefix) ?? 'Employee';
+    }
+
+    private function normalizedTypeSql(string $column): string
+    {
+        return 'UPPER(REPLACE(REPLACE(REPLACE(TRIM(COALESCE('
+            . $column
+            . ', \'\')), \'-\', \'\'), \' \', \'\'), \'_\', \'\')) = ?';
+    }
+
+    private function attendanceIdentityQuery(
+        int $employeeId,
+        string $course,
+        string $employeeType
+    ) {
+        return DB::table('attendances')
+            ->where('employee_id', $employeeId)
+            ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
+            ->whereRaw($this->normalizedTypeSql('employee_type'), [
+                Dtr::employeeTypeKey($employeeType),
+            ]);
+    }
+
+    private function historyIdentityQuery(
+        int $employeeId,
+        string $course,
+        string $employeeType
+    ) {
+        return DB::table('attendance_histories')
+            ->where('employee_id', $employeeId)
+            ->whereRaw('UPPER(TRIM(department)) = ?', [$course])
+            ->whereRaw($this->normalizedTypeSql('employee_type'), [
+                Dtr::employeeTypeKey($employeeType),
+            ]);
+    }
+
+    private function deleteAttendanceDay(
+        int $employeeId,
+        string $course,
+        string $employeeType,
+        string $date
+    ): int {
+        return $this->attendanceIdentityQuery($employeeId, $course, $employeeType)
+            ->whereDate('date', $date)
+            ->delete();
+    }
+
+    private function upsertAttendanceDay(
+        int $employeeId,
+        string $course,
+        string $employeeType,
+        string $date,
+        array $values
+    ): void {
+        $matches = $this->attendanceIdentityQuery($employeeId, $course, $employeeType)
+            ->whereDate('date', $date)
+            ->orderByDesc('id')
+            ->pluck('id');
+
+        if ($matches->isNotEmpty()) {
+            DB::table('attendances')->where('id', $matches->first())->update($values);
+
+            if ($matches->count() > 1) {
+                DB::table('attendances')->whereIn('id', $matches->slice(1)->all())->delete();
+            }
+
+            return;
+        }
+
+        DB::table('attendances')->insert(array_merge([
+            'employee_id'  => $employeeId,
+            'course'       => $course,
+            'employee_type' => $employeeType,
+            'date'         => $date,
+            'created_at'   => now(),
+        ], $values));
+    }
+
+    private function deleteHistoryDay(
+        int $employeeId,
+        string $course,
+        string $employeeType,
+        string $date
+    ): int {
+        if (!Schema::hasTable('attendance_histories')) {
+            return 0;
+        }
+
+        return $this->historyIdentityQuery($employeeId, $course, $employeeType)
+            ->whereDate('attendance_date', $date)
+            ->delete();
+    }
+
+    private function upsertHistoryDay(
+        int $employeeId,
+        string $course,
+        string $employeeType,
+        string $date,
+        array $values
+    ): void {
+        $matches = $this->historyIdentityQuery($employeeId, $course, $employeeType)
+            ->whereDate('attendance_date', $date)
+            ->orderByDesc('id')
+            ->pluck('id');
+
+        if ($matches->isNotEmpty()) {
+            DB::table('attendance_histories')->where('id', $matches->first())->update($values);
+
+            if ($matches->count() > 1) {
+                DB::table('attendance_histories')->whereIn('id', $matches->slice(1)->all())->delete();
+            }
+
+            return;
+        }
+
+        DB::table('attendance_histories')->insert(array_merge([
+            'employee_id'     => $employeeId,
+            'department'      => $course,
+            'employee_type'   => $employeeType,
+            'attendance_date' => $date,
+            'created_at'      => now(),
+        ], $values));
+    }
+
+    private function syncHistoryDay(
+        int $employeeId,
+        string $course,
+        string $employeeType,
+        string $date,
+        ?int $userId,
+        string $employeeName,
+        ?string $email,
+        ?string $designation,
+        array $punches,
+        array $metrics,
+        string $status,
+        ?string $remarks
+    ): void {
+        if (!Schema::hasTable('attendance_histories')) {
+            return;
+        }
+
+        $existing = $this->historyIdentityQuery($employeeId, $course, $employeeType)
+            ->whereDate('attendance_date', $date)
+            ->orderByDesc('id')
+            ->first();
+
+        $values = [
+            'employee_name' => $employeeName,
+            'email'         => $email ?: $existing?->email,
+            'employee_type' => $employeeType,
+            'designation'   => $designation ?: $existing?->designation,
+            'department'    => $course,
+            'is_present'    => $metrics['present'],
+            'hours_worked'  => $metrics['total_hours'],
+            'time_in'       => $punches['am_in'],
+            'time_out'      => $punches['pm_out'],
+            'status'        => $status,
+            'remarks'       => $remarks,
+            'location'      => $existing?->location,
+            'user_id'       => $userId,
+            'updated_at'    => now(),
+        ];
+
+        if (Schema::hasColumn('attendance_histories', 'deleted_at')) {
+            $values['deleted_at'] = null;
+        }
+
+        $this->upsertHistoryDay(
+            $employeeId,
+            $course,
+            $employeeType,
+            $date,
+            $values
+        );
+    }
+
+    /**
+     * @return array{am_in:?string, am_out:?string, pm_in:?string, pm_out:?string}|null
+     */
+    private function dayPunches($dayData): ?array
+    {
+        if (!is_array($dayData)) {
+            $present = (bool) $dayData;
+
+            return [
+                'am_in'  => $present ? substr(self::DEFAULT_TIME_IN, 0, 5) : null,
+                'am_out' => $present ? substr(self::DEFAULT_AM_OUT, 0, 5) : null,
+                'pm_in'  => $present ? substr(self::DEFAULT_PM_IN, 0, 5) : null,
+                'pm_out' => $present ? substr(self::DEFAULT_TIME_OUT, 0, 5) : null,
+            ];
+        }
+
+        $punches = [];
+        foreach (['am_in', 'am_out', 'pm_in', 'pm_out'] as $key) {
+            $value = trim((string) ($dayData[$key] ?? ''));
+            if ($value === '') {
+                $punches[$key] = null;
+                continue;
+            }
+
+            if (!preg_match('/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/', $value)) {
+                return null;
+            }
+
+            $punches[$key] = $value;
+        }
+
+        return $punches;
     }
 
     private function markUserOnline(int $userId, Request $request): void
@@ -200,7 +498,11 @@ class AttendanceController extends Controller
         }
 
         $month = $this->resolveMonth($request->query('month'));
-        $type  = $request->query('type');
+        $type  = Dtr::employeeType($request->query('type'));
+
+        if (!Dtr::employeeTypeCode($type)) {
+            abort(422, 'A valid employee type is required.');
+        }
 
         return view('attendance.dtr', [
             'course'       => $course,
@@ -225,10 +527,15 @@ class AttendanceController extends Controller
         }
 
         $month = $this->resolveMonth($request->query('month'));
+        $type = Dtr::employeeType($request->query('type'));
+
+        if (!Dtr::employeeTypeCode($type)) {
+            abort(422, 'A valid employee type is required.');
+        }
 
         return view('attendance.dtr-print', [
             'course' => $course,
-            'dtr'    => Dtr::build($employeeId, $course, $month, $request->query('type')),
+            'dtr'    => Dtr::build($employeeId, $course, $month, $type),
         ]);
     }
 
@@ -253,19 +560,49 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'month'          => ['required', 'date_format:Y-m'],
             'employee_name'  => ['nullable', 'string', 'max:255'],
-            'employee_type'  => ['nullable', 'string', 'max:50'],
+            'employee_type'  => ['required', 'string', 'max:50'],
             'days'           => ['array'],
+            'days.*'         => [function (string $attribute, $value, $fail) {
+                if (!is_array($value)) {
+                    return;
+                }
+
+                $hasPunches = collect(['am_in', 'am_out', 'pm_in', 'pm_out'])
+                    ->contains(fn ($key) => trim((string) ($value[$key] ?? '')) !== '');
+                $hasRemarks = trim((string) ($value['remarks'] ?? '')) !== '';
+                $hasStatus = trim((string) ($value['status'] ?? '')) !== '';
+
+                if ($hasRemarks && !$hasStatus && !$hasPunches) {
+                    $fail('Choose a status when adding remarks without time entries.');
+                }
+            }],
             'days.*.am_in'   => ['nullable', 'date_format:H:i'],
             'days.*.am_out'  => ['nullable', 'date_format:H:i'],
             'days.*.pm_in'   => ['nullable', 'date_format:H:i'],
             'days.*.pm_out'  => ['nullable', 'date_format:H:i'],
+            'days.*.status'  => [
+                'nullable',
+                'string',
+                'in:' . implode(',', self::ATTENDANCE_STATUSES),
+            ],
+            'days.*.remarks' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $month  = Carbon::createFromFormat('Y-m', $validated['month'])->startOfMonth();
         $userId = $this->getUserId();
         $saved  = 0;
+        $identity = $this->employeeIdentity((string) $employeeId, $validated['employee_type']);
 
-        foreach ($validated['days'] ?? [] as $day => $times) {
+        if (!$identity) {
+            abort(422, 'A valid employee type is required.');
+        }
+
+        $employeeType = $identity['type'];
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($validated['days'] ?? [] as $day => $times) {
             $day = (int) $day;
 
             // A day number outside the month is either a stale form or someone
@@ -274,48 +611,91 @@ class AttendanceController extends Controller
                 continue;
             }
 
-            $date  = $month->copy()->addDays($day - 1)->toDateString();
-            $amIn  = $times['am_in']  ?: null;
-            $amOut = $times['am_out'] ?: null;
-            $pmIn  = $times['pm_in']  ?: null;
-            $pmOut = $times['pm_out'] ?: null;
-
-            $hasTimes = $amIn || $amOut || $pmIn || $pmOut;
-            $key = [
-                'employee_id' => $employeeId,
-                'date'        => $date,
-                'course'      => $course,
-            ];
-
-            // Clearing every field on a day removes the record rather than
-            // leaving an empty row that still counts as "present".
-            if (!$hasTimes) {
-                DB::table('attendances')->where($key)->delete();
+            $date = $month->copy()->addDays($day - 1)->toDateString();
+            $punches = $this->dayPunches($times);
+            if ($punches === null) {
                 continue;
             }
 
-            $worked    = Dtr::workedMinutes($amIn, $amOut, $pmIn, $pmOut);
-            $undertime = max(0, Dtr::REQUIRED_MINUTES - $worked);
+            $statusProvided = is_array($times) && array_key_exists('status', $times);
+            $remarksProvided = is_array($times) && array_key_exists('remarks', $times);
+            $statusValue = $statusProvided
+                ? strtolower(trim((string) ($times['status'] ?? '')))
+                : null;
+            $remarksValue = $remarksProvided ? trim((string) ($times['remarks'] ?? '')) : null;
+            $metrics = Dtr::metrics(
+                $punches['am_in'],
+                $punches['am_out'],
+                $punches['pm_in'],
+                $punches['pm_out'],
+                $statusValue
+            );
+            $hasMetadata = $statusValue !== null && $statusValue !== ''
+                || $remarksValue !== null && $remarksValue !== '';
 
-            DB::table('attendances')->updateOrInsert($key, [
-                'user_id'           => $userId,
-                'time_in'           => $amIn,
-                'time_out'          => $pmOut,
-                'am_in_time'        => $amIn,
-                'am_out_time'       => $amOut,
-                'pm_in_time'        => $pmIn,
-                'pm_out_time'       => $pmOut,
-                'hours_rendered'    => round($worked / 60, 2),
-                'total_hours'       => round($worked / 60, 2),
-                'undertime_minutes' => $undertime,
-                'status'            => 'present',
-                'employee_name'     => $validated['employee_name'] ?? null,
-                'employee_type'     => $validated['employee_type'] ?? null,
-                'updated_at'        => now(),
-                'created_at'        => now(),
+            // Clearing every field on a day removes the record rather than
+            // leaving an empty row that still counts as "present".
+            if (!$metrics['has_entry'] && !$hasMetadata) {
+                $this->deleteAttendanceDay($identity['id'], $course, $employeeType, $date);
+                $this->deleteHistoryDay($identity['id'], $course, $employeeType, $date);
+                continue;
+            }
+
+            $existing = $this->attendanceIdentityQuery($identity['id'], $course, $employeeType)
+                ->whereDate('date', $date)
+                ->orderByDesc('id')
+                ->first();
+            $status = $statusProvided
+                ? ($statusValue ?: ($metrics['has_entry'] ? 'present' : 'absent'))
+                : ($existing?->status ?? ($metrics['has_entry'] ? 'present' : 'absent'));
+            $remarks = $remarksProvided
+                ? ($remarksValue ?: null)
+                : ($existing?->remarks ?? null);
+            $employeeName = $validated['employee_name']
+                ?? $existing?->employee_name
+                ?? 'Employee #' . $identity['id'];
+
+            $this->upsertAttendanceDay($identity['id'], $course, $employeeType, $date, [
+                'user_id'            => $userId,
+                'time_in'            => $punches['am_in'],
+                'time_out'           => $punches['pm_out'],
+                'am_in_time'         => $punches['am_in'],
+                'am_out_time'        => $punches['am_out'],
+                'pm_in_time'         => $punches['pm_in'],
+                'pm_out_time'        => $punches['pm_out'],
+                'hours_rendered'     => $metrics['total_hours'],
+                'lateness_minutes'   => $metrics['lateness'],
+                'undertime_minutes'  => $metrics['undertime'],
+                'overtime_minutes'   => $metrics['overtime'],
+                'total_hours'        => $metrics['total_hours'],
+                'status'             => $status,
+                'remarks'            => $remarks,
+                'employee_name'      => $employeeName,
+                'employee_type'      => $employeeType,
+                'updated_at'         => now(),
             ]);
+            $this->syncHistoryDay(
+                $identity['id'],
+                $course,
+                $employeeType,
+                $date,
+                $userId,
+                $employeeName,
+                null,
+                null,
+                $punches,
+                $metrics,
+                $status,
+                $remarks
+            );
 
-            $saved++;
+                $saved++;
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
         }
 
         return redirect()
@@ -323,7 +703,7 @@ class AttendanceController extends Controller
                 'course'     => $course,
                 'employeeId' => $employeeId,
                 'month'      => $month->format('Y-m'),
-                'type'       => $validated['employee_type'] ?? null,
+                'type'       => $employeeType,
             ])
             ->with('success', "Daily Time Record saved ({$saved} day" . ($saved === 1 ? '' : 's') . ').');
     }
@@ -332,22 +712,88 @@ class AttendanceController extends Controller
     private function rosterFor(string $course, Carbon $month)
     {
         try {
-            if (!Schema::hasTable('attendances')) {
-                return collect();
-            }
+            $rows = Schema::hasTable('attendances')
+                ? DB::table('attendances')
+                    ->select([
+                        'id',
+                        'employee_id',
+                        'employee_name',
+                        'employee_type',
+                        'date',
+                        'total_hours',
+                        'hours_rendered',
+                    ])
+                    ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
+                    ->whereBetween('date', [
+                        $month->copy()->startOfMonth()->toDateString(),
+                        $month->copy()->endOfMonth()->toDateString(),
+                    ])
+                    ->get()
+                : collect();
 
-            return DB::table('attendances')
-                ->selectRaw('employee_id, MAX(employee_name) as employee_name, MAX(employee_type) as employee_type')
-                ->selectRaw('COUNT(*) as days_recorded')
-                ->selectRaw('COALESCE(SUM(total_hours), 0) as hours')
-                ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
-                ->whereBetween('date', [
-                    $month->copy()->startOfMonth()->toDateString(),
-                    $month->copy()->endOfMonth()->toDateString(),
-                ])
-                ->groupBy('employee_id')
-                ->orderBy('employee_name')
-                ->get();
+            $summaries = $rows
+                ->groupBy(fn ($row) => $row->employee_id . '|' . Dtr::employeeTypeKey($row->employee_type))
+                ->map(function ($group) {
+                    $latestByDate = $group->sortBy('id')->keyBy('date');
+                    $identityRow = $group->sortByDesc('id')->first();
+
+                    return (object) [
+                        'employee_id'   => (int) $identityRow->employee_id,
+                        'employee_name' => $group->pluck('employee_name')->filter()->last(),
+                        'employee_type' => Dtr::employeeType($identityRow->employee_type),
+                        'days_recorded' => $latestByDate->count(),
+                        'hours'         => $latestByDate->sum(
+                            fn ($row) => (float) $row->total_hours > 0
+                                ? (float) $row->total_hours
+                                : (float) ($row->hours_rendered ?? 0)
+                        ),
+                    ];
+                });
+
+            $roster = $this->attendanceRoster($course)
+                ->mapWithKeys(function ($employee) use ($summaries) {
+                    $id = (int) $employee['raw_id'];
+                    $type = Dtr::employeeType($employee['employee_type']);
+                    $key = $id . '|' . Dtr::employeeTypeKey($type);
+                    $summary = $summaries->get($key);
+
+                    return [$key => (object) [
+                        'employee_id'   => $id,
+                        'employee_name' => $summary?->employee_name ?: $employee['employee_name'],
+                        'employee_type' => $type,
+                        'days_recorded' => $summary?->days_recorded ?? 0,
+                        'hours'         => $summary?->hours ?? 0,
+                    ]];
+                });
+
+            $summaries->each(function ($summary, $key) use ($roster) {
+                if (!Dtr::employeeTypeCode($summary->employee_type)) {
+                    $matchingKeys = $roster
+                        ->filter(fn ($employee) => $employee->employee_id === $summary->employee_id)
+                        ->keys();
+
+                    if ($matchingKeys->count() === 1) {
+                        $employee = $roster->get($matchingKeys->first());
+                        $employee->employee_name = $summary->employee_name ?: $employee->employee_name;
+                        $employee->days_recorded = $summary->days_recorded;
+                        $employee->hours = $summary->hours;
+                    } else {
+                        Log::warning('Skipped DTR roster row without a resolvable employee type.', [
+                            'employee_id' => $summary->employee_id,
+                        ]);
+                    }
+
+                    return;
+                }
+
+                if (!$roster->has($key)) {
+                    $roster->put($key, $summary);
+                }
+            });
+
+            return $roster
+                ->sortBy('employee_name', SORT_NATURAL | SORT_FLAG_CASE)
+                ->values();
         } catch (\Exception $e) {
             Log::warning('DTR roster failed: ' . $e->getMessage());
             return collect();
@@ -659,31 +1105,20 @@ class AttendanceController extends Controller
         }
 
         try {
-            $course = strtoupper($request->query('course', $this->getUserCourse() ?? ''));
+            $course = strtoupper(trim((string) $request->query(
+                'course',
+                $this->getUserCourse() ?? ''
+            )));
 
             if (!$course) {
                 return response()->json(['count' => 0]);
             }
 
-            // Count all three timesheet types so Staff and Utility
-            // employees are included in the course count badge.
-            $fulltime = DB::table('fulltime_timesheets')
-                ->whereRaw('UPPER(TRIM(department)) = ?', [$course])
-                ->count();
+            if (!$this->authorizeCourseAccess($course)) {
+                return $this->unauthorizedCourseResponse();
+            }
 
-            $parttime = DB::table('parttime_timesheets')
-                ->whereRaw('UPPER(TRIM(department)) = ?', [$course])
-                ->count();
-
-            $staff = DB::table('staff_timesheets')
-                ->whereRaw('UPPER(TRIM(department)) = ?', [$course])
-                ->count();
-
-            $utility = DB::table('utility_timesheets')
-                ->whereRaw('UPPER(TRIM(department)) = ?', [$course])
-                ->count();
-
-            return response()->json(['count' => $fulltime + $parttime + $staff + $utility]);
+            return response()->json(['count' => $this->attendanceRoster($course)->count()]);
 
         } catch (\Exception $e) {
             Log::error('getCourseCounts: ' . $e->getMessage());
@@ -722,7 +1157,7 @@ class AttendanceController extends Controller
         }
 
         try {
-            $course = strtoupper($course);
+            $course = strtoupper(trim($course));
 
             if (!$this->authorizeCourseAccess($course)) {
                 Log::warning('Unauthorized course access attempt', [
@@ -738,35 +1173,17 @@ class AttendanceController extends Controller
             $cutoffStart = null;
             if ($request->has('cutoff_start')) {
                 try {
-                    $cutoffStart = Carbon::parse($request->query('cutoff_start'))->startOfDay();
+                    $rawCutoff = (string) $request->query('cutoff_start');
+                    $cutoffStart = Carbon::createFromFormat('Y-m-d', $rawCutoff)->startOfDay();
+                    if ($cutoffStart->format('Y-m-d') !== $rawCutoff) {
+                        throw new \InvalidArgumentException('Invalid cutoff date.');
+                    }
                 } catch (\Exception $e) {
-                    Log::warning('Invalid cutoff_start param: ' . $e->getMessage());
+                    return response()->json(['error' => 'cutoff_start must use YYYY-MM-DD.'], 422);
                 }
             }
 
-            // Safe mapper that handles missing columns
-            $mapper = fn(string $prefix) => fn($e) => [
-                'id'            => "{$prefix}-{$e->id}",
-                'email'         => $e->email ?? null,
-                'employee_name' => $e->employee_name ?? 'Unknown',
-                'designation'   => $e->designation ?? '',
-                'employee_type' => $this->getEmployeeType($e, $prefix),
-                'days'          => $this->safeDecode($e->days ?? '{}'),
-                'raw_id'        => $e->id,
-            ];
-
-            $data = collect();
-
-            // Query each timesheet type with only columns that exist
-            $fulltime = $this->safeQuery('fulltime_timesheets', $course, 'FT', $mapper('FT'));
-            $parttime = $this->safeQuery('parttime_timesheets', $course, 'PT', $mapper('PT'));
-            $staff = $this->safeQuery('staff_timesheets', $course, 'ST', $mapper('ST'));
-            $utility = $this->safeQuery('utility_timesheets', $course, 'UT', $mapper('UT'));
-
-            $data = $fulltime
-                ->concat($parttime)
-                ->concat($staff)
-                ->concat($utility);
+            $data = $this->attendanceRoster($course);
 
             // Merge saved CSC attendance times if cutoff_start is provided
             if ($cutoffStart) {
@@ -776,10 +1193,6 @@ class AttendanceController extends Controller
             Log::info('getAttendanceData retrieved', [
                 'course'   => $course,
                 'count'    => $data->count(),
-                'fulltime' => $fulltime->count(),
-                'parttime' => $parttime->count(),
-                'staff'    => $staff->count(),
-                'utility'  => $utility->count(),
             ]);
 
             return response()->json($data);
@@ -798,6 +1211,35 @@ class AttendanceController extends Controller
     /**
      * Helper: Safe query with column checking
      */
+    private function attendanceRoster(string $course): \Illuminate\Support\Collection
+    {
+        $mapper = fn (string $prefix) => function ($record) use ($prefix) {
+            $canonicalId = (int) ($record->employee_id ?? 0);
+            $identityId = $canonicalId > 0 ? $canonicalId : (int) $record->id;
+            $employeeType = $this->employeeTypeForPrefix($prefix);
+
+            return [
+                'id'            => $prefix . '-' . $identityId,
+                'email'         => $record->email ?? null,
+                'employee_name' => $record->employee_name ?? 'Unknown',
+                'designation'   => $record->designation ?? '',
+                'employee_type' => $employeeType,
+                'days'          => $this->safeDecode($record->days ?? '{}'),
+                'raw_id'        => $identityId,
+                'source_id'     => (int) $record->id,
+                'source_type'   => $prefix,
+            ];
+        };
+
+        return $this->safeQuery('fulltime_timesheets', $course, 'FT', $mapper('FT'))
+            ->concat($this->safeQuery('parttime_timesheets', $course, 'PT', $mapper('PT')))
+            ->concat($this->safeQuery('staff_timesheets', $course, 'ST', $mapper('ST')))
+            ->concat($this->safeQuery('utility_timesheets', $course, 'UT', $mapper('UT')))
+            ->unique('id')
+            ->sortBy('employee_name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+    }
+
     private function safeQuery(string $table, string $course, string $prefix, $mapper)
     {
         try {
@@ -812,7 +1254,11 @@ class AttendanceController extends Controller
                 $columns[] = 'employee_type';
             }
 
-            return $query->select($columns)->get()->map($mapper);
+            if (Schema::hasColumn($table, 'employee_id')) {
+                $columns[] = 'employee_id';
+            }
+
+            return $query->select($columns)->orderByDesc('id')->get()->map($mapper);
         } catch (\Exception $e) {
             Log::warning("safeQuery failed for {$table}: " . $e->getMessage());
             return collect();
@@ -826,13 +1272,7 @@ class AttendanceController extends Controller
     private function mergeSavedTimes($data, string $course, Carbon $cutoffStart): \Illuminate\Support\Collection
     {
         try {
-            // Determine cutoff end date
-            $cutoffEnd = $cutoffStart->copy();
-            if ($cutoffStart->day <= 15) {
-                $cutoffEnd->day = 15;
-            } else {
-                $cutoffEnd->endOfMonth();
-            }
+            [$cutoffStart, $cutoffEnd] = $this->cutoffRange($cutoffStart);
 
             // Build list of dates for the cutoff period
             $cutoffDates = [];
@@ -843,7 +1283,7 @@ class AttendanceController extends Controller
             }
 
             // Gather all raw employee IDs from the data
-            $rawIds = $data->pluck('raw_id')->filter()->values()->toArray();
+            $rawIds = $data->pluck('raw_id')->filter()->unique()->values()->toArray();
 
             if (empty($rawIds)) {
                 return $data;
@@ -851,43 +1291,76 @@ class AttendanceController extends Controller
 
             // Fetch all saved attendance rows for this cutoff/course
             $savedRows = DB::table('attendances')
-                ->where('course', $course)
+                ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
                 ->whereIn('employee_id', $rawIds)
                 ->whereBetween('date', [
                     $cutoffStart->toDateString(),
                     $cutoffEnd->toDateString(),
                 ])
                 ->select([
-                    'employee_id', 'date',
+                    'id', 'employee_id', 'employee_type', 'date',
+                    'time_in', 'time_out',
                     'am_in_time', 'am_out_time', 'pm_in_time', 'pm_out_time',
-                    'lateness_minutes', 'undertime_minutes', 'overtime_minutes', 'total_hours',
-                    'status',
+                    'lateness_minutes', 'undertime_minutes', 'overtime_minutes',
+                    'total_hours', 'hours_rendered',
+                    'status', 'remarks',
                 ])
+                ->orderBy('id')
                 ->get();
 
-            // Index by employee_id -> date
+            $typeCounts = $data->groupBy('raw_id')->map(
+                fn ($employees) => $employees
+                    ->pluck('employee_type')
+                    ->map(fn ($type) => Dtr::employeeTypeKey($type))
+                    ->unique()
+                    ->count()
+            );
+
             $indexed = [];
             foreach ($savedRows as $row) {
-                $indexed[$row->employee_id][$row->date] = $row;
+                $typeKey = Dtr::employeeTypeKey($row->employee_type);
+                $indexed[$row->employee_id][$typeKey][$row->date] = $row;
             }
 
-            return $data->map(function ($emp) use ($indexed, $cutoffDates) {
+            return $data->map(function ($emp) use ($indexed, $cutoffDates, $typeCounts) {
                 $rawId = $emp['raw_id'];
+                $typeKey = Dtr::employeeTypeKey($emp['employee_type']);
                 $savedTimes = [];
 
                 foreach ($cutoffDates as $dateStr) {
-                    if (isset($indexed[$rawId][$dateStr])) {
-                        $r = $indexed[$rawId][$dateStr];
+                    $row = $indexed[$rawId][$typeKey][$dateStr] ?? null;
+                    if (!$row && ($typeCounts[$rawId] ?? 0) === 1) {
+                        $row = $indexed[$rawId][''][$dateStr] ?? null;
+                    }
+
+                    if ($row) {
+                        $legacyStatus = strtolower(trim((string) ($row->status ?? '')));
+                        $legacyHasWork = in_array($legacyStatus, ['present', 'late', 'half_day'], true)
+                            || ($legacyStatus === '' && (float) ($row->hours_rendered ?? 0) > 0);
+                        $legacyOuterOnly = $legacyHasWork
+                            && !$row->am_in_time
+                            && !$row->am_out_time
+                            && !$row->pm_in_time
+                            && !$row->pm_out_time
+                            && $row->time_in
+                            && $row->time_out;
+                        $amIn = $row->am_in_time ?: ($legacyOuterOnly ? $row->time_in : null);
+                        $amOut = $row->am_out_time ?: ($legacyOuterOnly ? Dtr::AM_DEPARTURE : null);
+                        $pmIn = $row->pm_in_time ?: ($legacyOuterOnly ? Dtr::PM_ARRIVAL : null);
+                        $pmOut = $row->pm_out_time ?: ($legacyOuterOnly ? $row->time_out : null);
                         $savedTimes[$dateStr] = [
-                            'am_in'              => $r->am_in_time   ? substr($r->am_in_time, 0, 5)   : '',
-                            'am_out'             => $r->am_out_time  ? substr($r->am_out_time, 0, 5)  : '',
-                            'pm_in'              => $r->pm_in_time   ? substr($r->pm_in_time, 0, 5)   : '',
-                            'pm_out'             => $r->pm_out_time  ? substr($r->pm_out_time, 0, 5)  : '',
-                            'lateness_minutes'   => $r->lateness_minutes   ?? 0,
-                            'undertime_minutes'  => $r->undertime_minutes  ?? 0,
-                            'overtime_minutes'   => $r->overtime_minutes   ?? 0,
-                            'total_hours'        => $r->total_hours        ?? 0,
-                            'status'             => $r->status ?? 'absent',
+                            'am_in'              => $amIn ? substr($amIn, 0, 5) : '',
+                            'am_out'             => $amOut ? substr($amOut, 0, 5) : '',
+                            'pm_in'              => $pmIn ? substr($pmIn, 0, 5) : '',
+                            'pm_out'             => $pmOut ? substr($pmOut, 0, 5) : '',
+                            'lateness_minutes'   => $row->lateness_minutes ?? 0,
+                            'undertime_minutes'  => $row->undertime_minutes ?? 0,
+                            'overtime_minutes'   => $row->overtime_minutes ?? 0,
+                            'total_hours'        => (float) $row->total_hours > 0
+                                ? $row->total_hours
+                                : ($row->hours_rendered ?? 0),
+                            'status'             => $row->status ?? 'present',
+                            'remarks'            => $row->remarks ?? null,
                         ];
                     } else {
                         $savedTimes[$dateStr] = null;
@@ -947,50 +1420,13 @@ class AttendanceController extends Controller
      */
     private function calculateDayMetrics(?string $amIn, ?string $amOut, ?string $pmIn, ?string $pmOut): array
     {
-        $lateness  = 0;
-        $undertime = 0;
-        $overtime  = 0;
-        $totalMins = 0;
-
-        try {
-            // Lateness: arrived after 08:00
-            if ($amIn) {
-                $official = Carbon::createFromTimeString(self::DEFAULT_TIME_IN);
-                $actual   = Carbon::createFromTimeString($amIn);
-                if ($actual->gt($official)) {
-                    $lateness = $actual->diffInMinutes($official);
-                }
-            }
-
-            // Undertime: left before 17:00
-            if ($pmOut) {
-                $official = Carbon::createFromTimeString(self::DEFAULT_TIME_OUT);
-                $actual   = Carbon::createFromTimeString($pmOut);
-                if ($actual->lt($official)) {
-                    $undertime = $official->diffInMinutes($actual);
-                }
-                // Overtime: stayed past 17:00
-                if ($actual->gt($official)) {
-                    $overtime = $actual->diffInMinutes($official);
-                }
-            }
-
-            // Total worked minutes
-            if ($amIn && $amOut) {
-                $totalMins += Carbon::createFromTimeString($amOut)->diffInMinutes(Carbon::createFromTimeString($amIn));
-            }
-            if ($pmIn && $pmOut) {
-                $totalMins += Carbon::createFromTimeString($pmOut)->diffInMinutes(Carbon::createFromTimeString($pmIn));
-            }
-        } catch (\Exception $e) {
-            Log::warning('calculateDayMetrics error: ' . $e->getMessage());
-        }
+        $metrics = Dtr::metrics($amIn, $amOut, $pmIn, $pmOut);
 
         return [
-            'lateness'    => $lateness,
-            'undertime'   => $undertime,
-            'overtime'    => $overtime,
-            'total_hours' => round($totalMins / 60, 2),
+            'lateness'    => $metrics['lateness'],
+            'undertime'   => $metrics['undertime'],
+            'overtime'    => $metrics['overtime'],
+            'total_hours' => $metrics['total_hours'],
         ];
     }
 
@@ -1006,28 +1442,67 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'course'          => 'required|string|max:50',
-            'cutoff_start'    => 'required|date',
+            'cutoff_start'    => 'required|date_format:Y-m-d',
             'attendance_data' => 'required|array',
+            'attendance_data.*' => 'array',
+            'attendance_data.*.id' => [
+                'required',
+                'regex:/^(?:(?:FT|PT|ST|UT)[-:])?[1-9][0-9]*$/i',
+            ],
+            'attendance_data.*.type' => 'nullable|string|max:50',
+            'attendance_data.*.employee_type' => 'nullable|string|max:50',
+            'attendance_data.*.employee_name' => 'nullable|string|max:255',
+            'attendance_data.*.name' => 'nullable|string|max:255',
+            'attendance_data.*.email' => 'nullable|email|max:255',
+            'attendance_data.*.designation' => 'nullable|string|max:255',
+            'attendance_data.*.attendance' => 'required|array',
+            'attendance_data.*.attendance.*' => [function (string $attribute, $value, $fail) {
+                if (!is_array($value)) {
+                    return;
+                }
+
+                $hasPunches = collect(['am_in', 'am_out', 'pm_in', 'pm_out'])
+                    ->contains(fn ($key) => trim((string) ($value[$key] ?? '')) !== '');
+                $hasRemarks = trim((string) ($value['remarks'] ?? '')) !== '';
+                $hasStatus = trim((string) ($value['status'] ?? '')) !== '';
+
+                if ($hasRemarks && !$hasStatus && !$hasPunches) {
+                    $fail('Choose a status when adding remarks without time entries.');
+                }
+            }],
+            'attendance_data.*.attendance.*.am_in' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.am_out' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.pm_in' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.pm_out' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.status' => [
+                'nullable',
+                'string',
+                'in:' . implode(',', self::ATTENDANCE_STATUSES),
+            ],
+            'attendance_data.*.attendance.*.remarks' => 'nullable|string|max:1000',
         ]);
 
         try {
-            $course        = strtoupper($validated['course']);
-            $cutoffStartDate = Carbon::parse($validated['cutoff_start'])->startOfDay();
+            $course = strtoupper(trim($validated['course']));
+            if (!$this->authorizeCourseAccess($course)) {
+                return $this->unauthorizedCourseResponse();
+            }
+
+            $cutoffDate = Carbon::createFromFormat('Y-m-d', $validated['cutoff_start']);
+            [$cutoffStartDate, $cutoffEndDate] = $this->cutoffRange($cutoffDate);
             $userId        = $this->getUserId();
             $saved         = 0;
             $skipped       = 0;
+            $deleted       = 0;
 
             // Ensure attendances table has required columns
             $this->ensureAttendancesTableStructure();
 
             foreach ($validated['attendance_data'] as $employee) {
-                $empId = $employee['id'] ?? null;
+                $empType = $employee['type'] ?? $employee['employee_type'] ?? null;
+                $identity = $this->employeeIdentity($employee['id'] ?? null, $empType);
 
-                if ($empId) {
-                    $empId = (int) preg_replace('/[^0-9]/', '', $empId);
-                }
-
-                if (!$empId || $empId <= 0) {
+                if (!$identity) {
                     Log::warning('Invalid employee ID skipped', [
                         'original_id' => $employee['id'] ?? null,
                         'course' => $course,
@@ -1037,10 +1512,12 @@ class AttendanceController extends Controller
                 }
 
                 $empName = $employee['name'] ?? $employee['employee_name'] ?? null;
-                $empType = $employee['type'] ?? $employee['employee_type'] ?? null;
 
                 if (!$empName) {
-                    Log::warning('Missing employee name', ['empId' => $empId, 'course' => $course]);
+                    Log::warning('Missing employee name', [
+                        'employee_id' => $identity['typed_id'],
+                        'course' => $course,
+                    ]);
                     $skipped++;
                     continue;
                 }
@@ -1048,61 +1525,114 @@ class AttendanceController extends Controller
                 $employeeDays = $employee['attendance'] ?? [];
 
                 foreach ($employeeDays as $date => $dayData) {
-                    // Basic validation for date format
-                    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                    $attendanceDate = $this->dateWithinCutoff(
+                        (string) $date,
+                        $cutoffStartDate,
+                        $cutoffEndDate
+                    );
+                    if (!$attendanceDate) {
+                        $skipped++;
+                        continue;
+                    }
+                    $date = $attendanceDate->toDateString();
+
+                    $punches = $this->dayPunches($dayData);
+                    if ($punches === null) {
+                        $skipped++;
                         continue;
                     }
 
-                    // Support both time-object format and legacy boolean
-                    if (is_array($dayData)) {
-                        $amIn  = !empty($dayData['am_in'])  ? $dayData['am_in']  : null;
-                        $amOut = !empty($dayData['am_out']) ? $dayData['am_out'] : null;
-                        $pmIn  = !empty($dayData['pm_in'])  ? $dayData['pm_in']  : null;
-                        $pmOut = !empty($dayData['pm_out']) ? $dayData['pm_out'] : null;
-                    } else {
-                        // Legacy boolean present/absent
-                        $isPresent = (bool) $dayData;
-                        $amIn  = $isPresent ? self::DEFAULT_TIME_IN  : null;
-                        $amOut = $isPresent ? self::DEFAULT_AM_OUT   : null;
-                        $pmIn  = $isPresent ? self::DEFAULT_PM_IN    : null;
-                        $pmOut = $isPresent ? self::DEFAULT_TIME_OUT : null;
+                    $statusProvided = is_array($dayData) && array_key_exists('status', $dayData);
+                    $remarksProvided = is_array($dayData) && array_key_exists('remarks', $dayData);
+                    $status = $statusProvided
+                        ? strtolower(trim((string) ($dayData['status'] ?? '')))
+                        : null;
+                    $remarks = $remarksProvided
+                        ? trim((string) ($dayData['remarks'] ?? ''))
+                        : null;
+                    $metrics = Dtr::metrics(
+                        $punches['am_in'],
+                        $punches['am_out'],
+                        $punches['pm_in'],
+                        $punches['pm_out'],
+                        $status
+                    );
+
+                    if (!$metrics['has_entry'] && !$status && !$remarks) {
+                        $deleted += $this->deleteAttendanceDay(
+                            $identity['id'],
+                            $course,
+                            $identity['type'],
+                            $date
+                        );
+                        $this->deleteHistoryDay(
+                            $identity['id'],
+                            $course,
+                            $identity['type'],
+                            $date
+                        );
+                        continue;
                     }
 
-                    $hasTimes = $amIn || $amOut || $pmIn || $pmOut;
-
-                    // Calculate metrics
-                    $metrics   = $this->calculateDayMetrics($amIn, $amOut, $pmIn, $pmOut);
-
                     try {
-                        DB::table('attendances')->updateOrInsert(
+                        DB::beginTransaction();
+                        $existing = $this->attendanceIdentityQuery(
+                            $identity['id'],
+                            $course,
+                            $identity['type']
+                        )->whereDate('date', $date)->orderByDesc('id')->first();
+                        $finalStatus = $statusProvided
+                            ? ($status ?: ($metrics['has_entry'] ? 'present' : 'absent'))
+                            : ($existing?->status ?? ($metrics['has_entry'] ? 'present' : 'absent'));
+                        $finalRemarks = $remarksProvided
+                            ? ($remarks ?: null)
+                            : ($existing?->remarks ?? null);
+
+                        $this->upsertAttendanceDay(
+                            $identity['id'],
+                            $course,
+                            $identity['type'],
+                            $date,
                             [
-                                'employee_id' => $empId,
-                                'user_id'     => $userId,
-                                'date'        => $date,
-                                'course'      => $course,
-                            ],
-                            [
-                                'time_in'            => $amIn,
-                                'time_out'           => $pmOut,
-                                'am_in_time'         => $amIn,
-                                'am_out_time'        => $amOut,
-                                'pm_in_time'         => $pmIn,
-                                'pm_out_time'        => $pmOut,
+                                'user_id'            => $userId,
+                                'time_in'            => $punches['am_in'],
+                                'time_out'           => $punches['pm_out'],
+                                'am_in_time'         => $punches['am_in'],
+                                'am_out_time'        => $punches['am_out'],
+                                'pm_in_time'         => $punches['pm_in'],
+                                'pm_out_time'        => $punches['pm_out'],
                                 'hours_rendered'     => $metrics['total_hours'],
                                 'lateness_minutes'   => $metrics['lateness'],
                                 'undertime_minutes'  => $metrics['undertime'],
                                 'overtime_minutes'   => $metrics['overtime'],
                                 'total_hours'        => $metrics['total_hours'],
-                                'status'             => $hasTimes ? 'present' : 'absent',
-                                'remarks'            => null,
+                                'status'             => $finalStatus,
+                                'remarks'            => $finalRemarks,
                                 'employee_name'      => $empName,
-                                'employee_type'      => $empType,
+                                'employee_type'      => $identity['type'],
                                 'updated_at'         => now(),
-                                'created_at'         => now(),
                             ]
                         );
+                        $this->syncHistoryDay(
+                            $identity['id'],
+                            $course,
+                            $identity['type'],
+                            $date,
+                            $userId,
+                            $empName,
+                            $employee['email'] ?? null,
+                            $employee['designation'] ?? null,
+                            $punches,
+                            $metrics,
+                            $finalStatus,
+                            $finalRemarks
+                        );
+                        DB::commit();
                         $saved++;
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
+                        if (DB::transactionLevel() > 0) {
+                            DB::rollBack();
+                        }
                         Log::warning("Failed to save attendance for {$empName}: " . $e->getMessage());
                         $skipped++;
                     }
@@ -1113,6 +1643,7 @@ class AttendanceController extends Controller
                 'course' => $course,
                 'saved' => $saved,
                 'skipped' => $skipped,
+                'deleted' => $deleted,
                 'user_id' => $userId,
             ]);
 
@@ -1121,6 +1652,7 @@ class AttendanceController extends Controller
                 'message' => "Attendance saved successfully ($saved records).",
                 'saved'   => $saved,
                 'skipped' => $skipped,
+                'deleted' => $deleted,
             ]);
 
         } catch (\Exception $e) {
@@ -1159,25 +1691,70 @@ class AttendanceController extends Controller
 
         $validated = $request->validate([
             'course'          => 'required|string|max:50',
-            'cutoff_start'    => 'required|date',
+            'cutoff_start'    => 'required|date_format:Y-m-d',
             'attendance_data' => 'required|array',
+            'attendance_data.*' => 'array',
+            'attendance_data.*.id' => [
+                'required',
+                'regex:/^(?:(?:FT|PT|ST|UT)[-:])?[1-9][0-9]*$/i',
+            ],
+            'attendance_data.*.type' => 'nullable|string|max:50',
+            'attendance_data.*.employee_type' => 'nullable|string|max:50',
+            'attendance_data.*.employee_name' => 'nullable|string|max:255',
+            'attendance_data.*.name' => 'nullable|string|max:255',
+            'attendance_data.*.email' => 'nullable|email|max:255',
+            'attendance_data.*.designation' => 'nullable|string|max:255',
+            'attendance_data.*.attendance' => 'required|array',
+            'attendance_data.*.attendance.*' => [function (string $attribute, $value, $fail) {
+                if (!is_array($value)) {
+                    return;
+                }
+
+                $hasPunches = collect(['am_in', 'am_out', 'pm_in', 'pm_out'])
+                    ->contains(fn ($key) => trim((string) ($value[$key] ?? '')) !== '');
+                $hasRemarks = trim((string) ($value['remarks'] ?? '')) !== '';
+                $hasStatus = trim((string) ($value['status'] ?? '')) !== '';
+
+                if ($hasRemarks && !$hasStatus && !$hasPunches) {
+                    $fail('Choose a status when adding remarks without time entries.');
+                }
+            }],
+            'attendance_data.*.attendance.*.am_in' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.am_out' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.pm_in' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.pm_out' => 'nullable|date_format:H:i',
+            'attendance_data.*.attendance.*.status' => [
+                'nullable',
+                'string',
+                'in:' . implode(',', self::ATTENDANCE_STATUSES),
+            ],
+            'attendance_data.*.attendance.*.remarks' => 'nullable|string|max:1000',
         ]);
 
         try {
-            $course        = strtoupper($validated['course']);
-            $cutoffStartDate = Carbon::parse($validated['cutoff_start'])->startOfDay();
+            $course = strtoupper(trim($validated['course']));
+            if (!$this->authorizeCourseAccess($course)) {
+                return $this->unauthorizedCourseResponse();
+            }
+            if (!Schema::hasTable('attendance_histories')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Attendance history storage is not available.',
+                ], 503);
+            }
+
+            $cutoffDate = Carbon::createFromFormat('Y-m-d', $validated['cutoff_start']);
+            [$cutoffStartDate, $cutoffEndDate] = $this->cutoffRange($cutoffDate);
             $userId        = $this->getUserId();
             $saved         = 0;
             $skipped       = 0;
+            $deleted       = 0;
 
             foreach ($validated['attendance_data'] as $employee) {
-                $empId = $employee['id'] ?? null;
+                $empType = $employee['type'] ?? $employee['employee_type'] ?? null;
+                $identity = $this->employeeIdentity($employee['id'] ?? null, $empType);
 
-                if ($empId) {
-                    $empId = (int) preg_replace('/[^0-9]/', '', $empId);
-                }
-
-                if (!$empId || $empId <= 0) {
+                if (!$identity) {
                     Log::warning('Invalid employee ID skipped in history', [
                         'original_id' => $employee['id'] ?? null,
                         'course' => $course,
@@ -1187,10 +1764,12 @@ class AttendanceController extends Controller
                 }
 
                 $empName = $employee['name'] ?? $employee['employee_name'] ?? null;
-                $empType = $employee['type'] ?? $employee['employee_type'] ?? null;
 
                 if (!$empName) {
-                    Log::warning('Missing employee name in history', ['empId' => $empId, 'course' => $course]);
+                    Log::warning('Missing employee name in history', [
+                        'employee_id' => $identity['typed_id'],
+                        'course' => $course,
+                    ]);
                     $skipped++;
                     continue;
                 }
@@ -1198,40 +1777,76 @@ class AttendanceController extends Controller
                 $employeeDays = $employee['attendance'] ?? [];
 
                 foreach ($employeeDays as $date => $dayData) {
-                    // Basic validation for date format
-                    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                    $attendanceDate = $this->dateWithinCutoff(
+                        (string) $date,
+                        $cutoffStartDate,
+                        $cutoffEndDate
+                    );
+                    if (!$attendanceDate) {
+                        $skipped++;
+                        continue;
+                    }
+                    $date = $attendanceDate->toDateString();
+
+                    $punches = $this->dayPunches($dayData);
+                    if ($punches === null) {
+                        $skipped++;
+                        continue;
+                    }
+                    $statusProvided = is_array($dayData) && array_key_exists('status', $dayData);
+                    $remarksProvided = is_array($dayData) && array_key_exists('remarks', $dayData);
+                    $status = $statusProvided
+                        ? strtolower(trim((string) ($dayData['status'] ?? '')))
+                        : null;
+                    $remarks = $remarksProvided
+                        ? trim((string) ($dayData['remarks'] ?? ''))
+                        : null;
+                    $metrics = Dtr::metrics(
+                        $punches['am_in'],
+                        $punches['am_out'],
+                        $punches['pm_in'],
+                        $punches['pm_out'],
+                        $status
+                    );
+
+                    if (!$metrics['has_entry'] && !$status && !$remarks) {
+                        $deleted += $this->deleteHistoryDay(
+                            $identity['id'],
+                            $course,
+                            $identity['type'],
+                            $date
+                        );
                         continue;
                     }
 
-                    if (is_array($dayData)) {
-                        $amIn  = !empty($dayData['am_in'])  ? $dayData['am_in']  : null;
-                        $pmOut = !empty($dayData['pm_out']) ? $dayData['pm_out'] : null;
-                        $hasTimes = $amIn || !empty($dayData['am_out']) || !empty($dayData['pm_in']) || $pmOut;
-                    } else {
-                        $hasTimes = (bool) $dayData;
-                        $amIn  = $hasTimes ? self::DEFAULT_TIME_IN  : null;
-                        $pmOut = $hasTimes ? self::DEFAULT_TIME_OUT : null;
-                    }
-
                     try {
-                        DB::table('attendance_histories')->updateOrInsert(
-                            [
-                                'employee_id'     => $empId,
-                                'attendance_date' => $date,
-                                'course'          => $course,
-                            ],
+                        $existing = $this->historyIdentityQuery(
+                            $identity['id'],
+                            $course,
+                            $identity['type']
+                        )->whereDate('attendance_date', $date)->orderByDesc('id')->first();
+
+                        $this->upsertHistoryDay(
+                            $identity['id'],
+                            $course,
+                            $identity['type'],
+                            $date,
                             [
                                 'employee_name' => $empName,
                                 'email'         => $employee['email'] ?? null,
-                                'employee_type' => $empType,
+                                'employee_type' => $identity['type'],
                                 'designation'   => $employee['designation'] ?? null,
                                 'department'    => $course,
-                                'is_present'    => $hasTimes,
-                                'hours_worked'  => $hasTimes ? self::DEFAULT_HOURS : 0,
-                                'time_in'       => $amIn,
-                                'time_out'      => $pmOut,
-                                'status'        => $hasTimes ? 'present' : 'absent',
-                                'remarks'       => null,
+                                'is_present'    => $metrics['present'],
+                                'hours_worked'  => $metrics['total_hours'],
+                                'time_in'       => $punches['am_in'],
+                                'time_out'      => $punches['pm_out'],
+                                'status'        => $statusProvided
+                                    ? ($status ?: ($metrics['has_entry'] ? 'present' : 'absent'))
+                                    : ($existing?->status ?? ($metrics['has_entry'] ? 'present' : 'absent')),
+                                'remarks'       => $remarksProvided
+                                    ? ($remarks ?: null)
+                                    : ($existing?->remarks ?? null),
                                 'location'      => null,
                                 'user_id'       => $userId,
                                 'updated_at'    => now(),
@@ -1249,6 +1864,7 @@ class AttendanceController extends Controller
                 'course' => $course,
                 'saved' => $saved,
                 'skipped' => $skipped,
+                'deleted' => $deleted,
                 'user_id' => $userId,
             ]);
 
@@ -1257,6 +1873,7 @@ class AttendanceController extends Controller
                 'message' => "Attendance history saved ($saved records).",
                 'saved'   => $saved,
                 'skipped' => $skipped,
+                'deleted' => $deleted,
             ]);
 
         } catch (\Exception $e) {
@@ -1280,33 +1897,74 @@ class AttendanceController extends Controller
         }
 
         $validated = $request->validate([
-            'course'       => 'required|string|max:50',
-            'employee_ids' => 'required|array|min:1',
+            'course'           => 'required|string|max:50',
+            'cutoff_start'     => 'required|date_format:Y-m-d',
+            'employee_ids'     => 'required_without:employees|array|max:500',
+            'employee_ids.*'   => [
+                'required',
+                'regex:/^(?:(?:FT|PT|ST|UT)[-:])?[1-9][0-9]*$/i',
+            ],
+            'employees'        => 'required_without:employee_ids|array|max:500',
+            'employees.*.id'   => 'required|integer|min:1',
+            'employees.*.type' => 'required|string|max:50',
         ]);
 
         try {
-            $course      = strtoupper($validated['course']);
-            $employeeIds = array_filter(array_map('intval', $validated['employee_ids']));
+            $course = strtoupper(trim($validated['course']));
+            if (!$this->authorizeCourseAccess($course)) {
+                return $this->unauthorizedCourseResponse();
+            }
 
-            if (empty($employeeIds)) {
+            $structuredIdentities = collect($validated['employees'] ?? [])
+                ->map(fn ($employee) => $this->employeeIdentity(
+                    $employee['id'] ?? null,
+                    $employee['type'] ?? null
+                ));
+            $typedIdentities = collect($validated['employee_ids'] ?? [])
+                ->map(fn ($employeeId) => $this->employeeIdentity($employeeId));
+            $identities = $structuredIdentities
+                ->merge($typedIdentities)
+                ->filter()
+                ->unique('typed_id')
+                ->values();
+
+            if ($identities->isEmpty()) {
                 return response()->json(['error' => 'No valid employee IDs provided.'], 400);
             }
 
-            $deleted = DB::table('attendances')
-                ->where('course', $course)
-                ->whereIn('employee_id', $employeeIds)
-                ->delete();
+            $cutoffDate = Carbon::createFromFormat('Y-m-d', $validated['cutoff_start']);
+            [$cutoffStart, $cutoffEnd] = $this->cutoffRange($cutoffDate);
+            $deleted = 0;
+            $historyDeleted = 0;
 
-            if (Schema::hasTable('attendance_histories')) {
-                DB::table('attendance_histories')
-                    ->where('department', $course)
-                    ->whereIn('employee_id', $employeeIds)
-                    ->delete();
+            foreach ($identities as $identity) {
+                $deleted += $this->attendanceIdentityQuery(
+                    $identity['id'],
+                    $course,
+                    $identity['type']
+                )->whereBetween('date', [
+                    $cutoffStart->toDateString(),
+                    $cutoffEnd->toDateString(),
+                ])->delete();
+
+                if (Schema::hasTable('attendance_histories')) {
+                    $historyDeleted += $this->historyIdentityQuery(
+                        $identity['id'],
+                        $course,
+                        $identity['type']
+                    )->whereBetween('attendance_date', [
+                        $cutoffStart->toDateString(),
+                        $cutoffEnd->toDateString(),
+                    ])->delete();
+                }
             }
 
             Log::info('Attendance records deleted', [
                 'course' => $course,
                 'deleted_count' => $deleted,
+                'history_deleted_count' => $historyDeleted,
+                'cutoff_start' => $cutoffStart->toDateString(),
+                'cutoff_end' => $cutoffEnd->toDateString(),
                 'user_id' => $this->getUserId(),
             ]);
 
@@ -1314,6 +1972,7 @@ class AttendanceController extends Controller
                 'success' => true,
                 'message' => "Successfully deleted $deleted attendance record(s).",
                 'deleted' => $deleted,
+                'history_deleted' => $historyDeleted,
             ]);
 
         } catch (\Exception $e) {

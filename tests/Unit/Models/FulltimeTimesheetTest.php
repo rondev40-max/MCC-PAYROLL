@@ -33,6 +33,9 @@ describe('FulltimeTimesheet Model (no days feature)', function () {
 
     it('has correct fillable attributes', function () {
         $timesheet = new FulltimeTimesheet();
+        // Kept in step with the model. The list below grew as pay-period,
+        // per-weekday hour and government-deduction columns were added; the
+        // test still expected the original eleven.
         $expected = [
             'employee_id',
             'employee_name',
@@ -40,11 +43,30 @@ describe('FulltimeTimesheet Model (no days feature)', function () {
             'designation',
             'prov_abr',
             'department',
+            'month',
+            'year',
+            'date',
+            'period',
+            'days',
+            'mon_hours',
+            'tue_hours',
+            'wed_hours',
+            'thu_hours',
+            'fri_hours',
+            'sat_hours',
+            'sun_hours',
+            'working_days',
+            'number_of_days',
             'details',
             'total_hour',
             'rate_per_hour',
             'deduction',
             'total_honorarium',
+            'withholding_tax',
+            'gsis',
+            'philhealth',
+            'pag_ibig',
+            'sss',
         ];
 
         expect($timesheet->getFillable())->toBe($expected);
@@ -78,12 +100,14 @@ describe('FulltimeTimesheet Model (no days feature)', function () {
             'details' => null,
             'total_hour' => 20,
             'rate_per_hour' => 28.00,
-            'deduction' => null,
+            // `deduction` is deliberately omitted, not passed as null: the
+            // column is decimal(8,2) NOT NULL DEFAULT 0.00, so "no deduction"
+            // is zero pesos. Passing null violated the constraint outright.
             'total_honorarium' => 560.00,
         ]);
 
         expect($timesheet->details)->toBeNull()
-            ->and($timesheet->deduction)->toBeNull()
+            ->and((float) $timesheet->fresh()->deduction)->toBe(0.0)
             ->and($timesheet->employee_name)->not->toBeNull();
     });
 

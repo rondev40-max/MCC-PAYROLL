@@ -11,9 +11,16 @@
 |
 */
 
+// 'Unit' is included because several unit tests exercise Eloquent models and
+// declare uses(RefreshDatabase::class). RefreshDatabase cannot do anything on
+// its own: without Tests\TestCase the Laravel application is never booted, so
+// the models had no connection to resolve and every one of those tests died
+// with "Call to a member function connection() on null".
+//
+// Tests under Unit that need a database still opt in with RefreshDatabase;
+// this only guarantees there is an application for them to opt into.
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Unit');
 
 /*
 |--------------------------------------------------------------------------

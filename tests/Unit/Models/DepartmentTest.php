@@ -147,7 +147,10 @@ describe('Department Model', function () {
             'is_active' => false,
         ]);
 
-        $activeDepartments = Department::active()->get();
+        // Scoped to the two rows this test created. The 2025_09_16 migration
+        // inserts a live BEED department as part of its up(), so the table is
+        // never empty under RefreshDatabase and an unscoped count sees 2.
+        $activeDepartments = Department::active()->whereIn('code', ['ACT', 'INACT'])->get();
 
         expect($activeDepartments)->toHaveCount(1)
             ->and($activeDepartments->first()->name)->toBe('Active Department')
