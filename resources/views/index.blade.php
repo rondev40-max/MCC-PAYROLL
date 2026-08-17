@@ -1,3 +1,4 @@
+@use('Illuminate\Support\Str')
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MCC Payroll — Madridejos Community College</title>
   <meta name="description" content="Payroll Management System for Madridejos Community College. Manage attendance, payroll, and payslips.">
-  <meta name="theme-color" content="#f8fafc">
+  {{-- Two tags, so the mobile browser chrome follows the theme instead of
+       staying light behind a dark page. --}}
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -203,6 +207,15 @@
     .btn-outline:hover {
       background: var(--bg-hover);
     }
+    /* Hero-scale buttons. The outline variant gets a panel background so it
+       still reads as a control against the page rather than dissolving. */
+    .btn-lg {
+      padding: 14px 26px;
+      font-size: 0.98rem;
+      border-radius: var(--radius-md);
+    }
+    .btn-lg.btn-outline { background: var(--bg-panel); }
+    .btn-lg.btn-outline:hover { background: var(--bg-hover); }
     
     .theme-toggle {
       width: 40px;
@@ -226,68 +239,89 @@
     main { flex: 1; padding-bottom: 160px; }
     
     /* Hero */
+    /* The old hero was min-height:85vh + 120px padding around a fixed 600px
+       image — roughly 840px tall, so on a 1366x768 laptop the fold cut it in
+       half and the first screen showed no way in. Sized to fit instead. */
     .hero {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 64px;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 56px;
       align-items: center;
-      min-height: 85vh;
-      padding: 120px 0;
+      padding: 72px 0 80px;
     }
     .hero-content {
       text-align: left;
     }
+    /* Maroon on the kicker resolved to a salmon (#f87171) in dark mode, which
+       reads as an error state. A muted institutional grey lets navy lead, and
+       the maroon rule below ties the kicker to the college mark deliberately
+       rather than by accident. */
     .hero-kicker {
-      display: inline-block;
-      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
       font-weight: 600;
-      color: var(--secondary);
+      color: var(--text-light);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 20px;
+      letter-spacing: 0.12em;
+      margin-bottom: 18px;
     }
-    [data-theme="dark"] .hero-kicker { color: var(--secondary); }
+    .hero-kicker::before {
+      content: '';
+      width: 26px;
+      height: 2px;
+      background: var(--secondary);
+      border-radius: 2px;
+    }
     .hero-title {
-      font-size: 3rem;
+      font-size: clamp(2.1rem, 4.4vw, 3.1rem);
       font-weight: 800;
       color: var(--text-main);
-      line-height: 1.1;
-      margin-bottom: 28px;
-      letter-spacing: -0.02em;
+      line-height: 1.08;
+      margin-bottom: 20px;
+      letter-spacing: -0.025em;
+      text-wrap: balance;
     }
     .hero-desc {
-      font-size: 1.25rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
-      margin-bottom: 40px;
-      line-height: 1.6;
+      margin-bottom: 32px;
+      line-height: 1.65;
+      max-width: 48ch;
     }
     .hero-actions {
       display: flex;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 40px;
+      gap: 14px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
     }
     .hero-clock {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 20px;
+      gap: 9px;
+      padding: 9px 16px;
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: 9999px;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 500;
       color: var(--text-muted);
       box-shadow: var(--shadow-sm);
     }
     .hero-clock strong { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .hero-clock-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--success); flex-shrink: 0;
+    }
     .hero-image {
       border-radius: var(--radius-lg);
       overflow: hidden;
       box-shadow: var(--shadow-lg);
       border: 1px solid var(--border);
       width: 100%;
-      height: 600px;
+      height: clamp(320px, 46vh, 460px);
       margin-left: auto;
     }
     .hero-image img {
@@ -431,6 +465,27 @@
     
     /* System Status */
     .system-status { margin-bottom: 160px; }
+    .status-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .status-head .section-title { margin-bottom: 32px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--status-color, var(--success));
+      margin-bottom: 32px;
+    }
     .status-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -440,30 +495,56 @@
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 24px;
-      display: flex;
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
-      gap: 16px;
+      column-gap: 14px;
+      row-gap: 4px;
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--text-main);
       box-shadow: var(--shadow-sm);
     }
     .status-dot {
-      width: 12px;
-      height: 12px;
+      width: 11px;
+      height: 11px;
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 4px var(--success-bg);
+      background: var(--status-color, var(--success));
+      box-shadow: 0 0 0 4px var(--status-halo, var(--success-bg));
+      flex-shrink: 0;
     }
     .status-text {
-      margin-left: auto;
-      font-size: 0.8rem;
-      color: var(--success);
+      font-size: 0.72rem;
+      color: var(--status-color, var(--success));
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
     }
+    /* The detail line carries the evidence — "last check-in 2 hours ago" is
+       what makes the dot above it mean anything. */
+    .status-detail {
+      grid-column: 2 / -1;
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--text-light);
+    }
+
+    /* State colours, shared by the per-service rows and the summary pill.
+       Each sets both the dot and its halo so the two never disagree. */
+    [data-state="operational"] { --status-color: #059669; --status-halo: rgba(5,150,105,.15); }
+    [data-state="degraded"]    { --status-color: #b45309; --status-halo: rgba(180,83,9,.15); }
+    [data-state="down"]        { --status-color: #b91c1c; --status-halo: rgba(185,28,28,.15); }
+    [data-state="unknown"]     { --status-color: #64748b; --status-halo: rgba(100,116,139,.15); }
+
+    [data-theme="dark"] [data-state="operational"] { --status-color: #34d399; --status-halo: rgba(52,211,153,.18); }
+    [data-theme="dark"] [data-state="degraded"]    { --status-color: #fbbf24; --status-halo: rgba(251,191,36,.18); }
+    [data-theme="dark"] [data-state="down"]        { --status-color: #f87171; --status-halo: rgba(248,113,113,.18); }
+    [data-theme="dark"] [data-state="unknown"]     { --status-color: #94a3b8; --status-halo: rgba(148,163,184,.18); }
+
+    /* The pill's dot is small enough that a 4px halo would swamp it. */
+    .status-pill .status-dot { width: 8px; height: 8px; box-shadow: 0 0 0 3px var(--status-halo); }
 
     /* Features */
     .features { margin-bottom: 160px; }
@@ -673,11 +754,16 @@
       .bottom-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
-      .hero { grid-template-columns: 1fr; gap: 32px; }
+      /* Image below the copy on phones: the message and the way in should
+         come first, not a photo pushing them off-screen. */
+      .hero { grid-template-columns: 1fr; gap: 32px; padding: 44px 0 56px; }
       .hero-content { text-align: center; }
+      .hero-kicker { justify-content: center; }
       .hero-actions { flex-direction: column; justify-content: center; }
       .hero-actions .btn { width: 100%; }
-      .hero-title { font-size: 2rem; }
+      .hero-desc { margin-inline: auto; }
+      .hero-image { height: clamp(220px, 34vh, 300px); order: 2; }
+      .status-item { padding: 18px 20px; }
       .nav-container { height: 64px; }
       .brand-subtitle { display: none; }
       .footer-content { flex-direction: column; text-align: center; }
@@ -722,8 +808,21 @@
       <div class="hero-content">
         <span class="hero-kicker">Madridejos Community College</span>
         <h1 class="hero-title">Payroll & Attendance Portal</h1>
-        <p class="hero-desc">Welcome to the central administrative hub. Access your digital payslips, review logs, verify attendance, and submit weekly timesheets securely.</p>
-        <div class="hero-clock" aria-label="Real-time Institutional Clock">
+        <p class="hero-desc">View your payslips, check your attendance record, and submit timesheets &mdash; all in one place.</p>
+
+        {{-- The CSS for .hero-actions existed from the start, but the markup
+             never did: the hero had no way in, so every visitor had to scroll
+             past the fold to find the portal cards. --}}
+        <div class="hero-actions">
+          <a href="{{ url('/employee/login') }}" class="btn btn-primary btn-lg">
+            Sign in to your portal
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="{{ url('/attendance/attendlog') }}" class="btn btn-outline btn-lg">Log attendance</a>
+        </div>
+
+        <div class="hero-clock" aria-label="Current date and time">
+          <span class="hero-clock-dot" aria-hidden="true"></span>
           <strong id="clockTime">--:--:--</strong> <span id="clockDate">&hellip;</span>
         </div>
       </div>
@@ -797,19 +896,35 @@
       </section>
       @endif
 
-      <!-- System Status -->
+      {{-- System Status. These rows used to be hardcoded to "Operational", so
+           the page would have reported all-clear during an outage. Every value
+           below is now a real check — see App\Support\SystemStatus. --}}
       <section class="system-status reveal" aria-label="System Status">
-        <h2 class="section-title">System Status</h2>
+        <div class="status-head">
+          <h2 class="section-title">System Status</h2>
+          @isset($overallStatus)
+            <span class="status-pill" data-state="{{ $overallStatus }}">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ $overallStatus === 'operational' ? 'All systems normal' : 'Needs attention' }}
+            </span>
+          @endisset
+        </div>
         <div class="status-grid">
-          <div class="status-item">
-            <div class="status-dot"></div> Employee Portal <span class="status-text">Operational</span>
-          </div>
-          <div class="status-item">
-            <div class="status-dot"></div> Attendance Terminal <span class="status-text">Operational</span>
-          </div>
-          <div class="status-item">
-            <div class="status-dot"></div> Mobile App Services <span class="status-text">Operational</span>
-          </div>
+          @forelse($statuses ?? [] as $service)
+            <div class="status-item" data-state="{{ $service['state'] }}">
+              <div class="status-dot" aria-hidden="true"></div>
+              <span>{{ $service['label'] }}</span>
+              <span class="status-text">{{ $service['state'] }}</span>
+              <span class="status-detail">{{ $service['detail'] }}</span>
+            </div>
+          @empty
+            <div class="status-item" data-state="unknown">
+              <div class="status-dot" aria-hidden="true"></div>
+              <span>Service status</span>
+              <span class="status-text">Unknown</span>
+              <span class="status-detail">Checks are not reporting right now.</span>
+            </div>
+          @endforelse
         </div>
       </section>
 
@@ -819,23 +934,27 @@
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            {{-- Was "End-to-end encryption with role-based access tokens",
+                 which the system does not do. Replaced with what it actually
+                 does — an overclaim about security is a liability on a payroll
+                 page, and the truth here is more reassuring anyway. --}}
             <div class="feature-content">
-              <h3>Encrypted Sessions</h3>
-              <p>End-to-end encryption with role-based access tokens.</p>
+              <h3>Two-Step Sign In</h3>
+              <p>Every login is confirmed by a code sent to your email, and opening a payslip asks for a second one.</p>
             </div>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <div class="feature-content">
-              <h3>Direct Payslips</h3>
-              <p>View your calculations and download past receipts instantly.</p>
+              <h3>Payslips On Record</h3>
+              <p>Every payslip stays archived in your portal &mdash; view the breakdown or download the PDF.</p>
             </div>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
             <div class="feature-content">
-              <h3>Live Attendance</h3>
-              <p>Real-time terminal synchronization with HR records.</p>
+              <h3>Attendance You Can Check</h3>
+              <p>See the hours logged against your name before payroll is cut, not after.</p>
             </div>
           </div>
         </div>

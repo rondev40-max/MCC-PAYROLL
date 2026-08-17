@@ -13,6 +13,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OtpVerificationController;
 use App\Http\Controllers\PayslipAccessController;
 use App\Http\Controllers\BsitController; // Course Attendance
@@ -26,9 +27,7 @@ use App\Http\Controllers\Admin\SalaryController;
 // --- PUBLIC & AUTHENTICATION ROUTES ---
 
 // Main Landing Page (Login Form)
-Route::get('/', function () {
-    return view('index');
-})->name('index'); 
+Route::get('/', [HomeController::class, 'index'])->name('index');
 
 // Handle Login Submission
 Route::post('/', [LoginController::class, 'authenticate'])->name('login.submit');
