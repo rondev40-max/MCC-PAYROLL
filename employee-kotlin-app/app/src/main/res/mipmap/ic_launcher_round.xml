@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pre-API-26 fallback. Adaptive icons only exist from API 26, and minSdk is
+     24, so without this the merger fails: "resource mipmap/ic_launcher not found".
+     A plain vector covers 24-25; 26+ resolves to mipmap-anydpi-v26 instead. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#1D4ED8" android:pathData="M0,0h108v108h-108z" />
+    <group android:scaleX="0.62" android:scaleY="0.62"
+        android:translateX="20.5" android:translateY="20.5">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M24,10h44l16,16v56a6,6 0 0,1 -6,6H24a6,6 0 0,1 -6,-6V16a6,6 0 0,1 6,-6z" />
+        <path
+            android:fillColor="#2563EB"
+            android:pathData="M40,42h16a10,10 0 0,1 0,20h-8v10h-8zM48,50v4h8a2,2 0 0,0 0,-4z" />
+        <path
+            android:fillColor="#2563EB"
+            android:pathData="M34,50h30v5H34zM34,58h30v5H34z" />
+    </group>
+</vector>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose draws the entire UI, so the platform theme only needs to cover
+         the window before the first frame. NoActionBar avoids a stray title bar
+         flashing above the Compose content on cold start. -->
+    <style name="Theme.MccPayroll" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/brand_dark</item>
+        <item name="android:windowBackground">@color/surface_light</item>
+    </style>
+</resources>

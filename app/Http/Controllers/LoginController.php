@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\OtpMail;
 use App\Support\PasswordHash;
+use App\Support\RoleHome;
 
 class LoginController extends Controller
 {
@@ -115,15 +116,11 @@ class LoginController extends Controller
                 'is_admin' => in_array($user->role, ['admin', 'super_admin'], true),
             ]);
  
-            if ($user->role === 'super_admin') {
-                return redirect()->route('admin.user-management')->with('success', 'Super Admin login successful!');
-            }
- 
-            if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard')->with('success', 'Admin login successful!');
-            }
- 
-            return redirect('/')->with('success', 'Login successful!');
+            // Same mapping the OTP path uses — an employee landing on '/' here
+            // would look identical to a failed login. See App\Support\RoleHome.
+            return redirect()
+                ->route(RoleHome::routeFor($user->role))
+                ->with('success', RoleHome::messageFor($user->role));
         }
  
         // Admin and employee accounts require a second factor before Auth::login()

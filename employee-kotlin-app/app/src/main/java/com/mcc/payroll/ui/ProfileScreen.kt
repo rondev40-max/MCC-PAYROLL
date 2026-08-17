@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,175 +12,166 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.outlined.AlternateEmail
+import androidx.compose.material.icons.outlined.Badge
+import androidx.compose.material.icons.outlined.Logout
+import androidx.compose.material.icons.outlined.WorkOutline
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mcc.payroll.api.ProfileResponse
+import com.mcc.payroll.BuildConfig
+import com.mcc.payroll.ui.components.ErrorState
+import com.mcc.payroll.ui.components.LoadingState
+import com.mcc.payroll.ui.components.MccCard
+import com.mcc.payroll.ui.components.SectionLabel
+import com.mcc.payroll.ui.theme.mutedColor
 import com.mcc.payroll.viewmodel.EmployeeViewModel
-import com.mcc.payroll.viewmodel.UiState
 
 @Composable
-fun ProfileScreen(viewModel: EmployeeViewModel, onLogout: () -> Unit) {
-    LaunchedEffect(Unit) {
-        viewModel.fetchProfile()
+fun ProfileScreen(
+    viewModel: EmployeeViewModel,
+    onLogout: () -> Unit,
+) {
+    val state by viewModel.profileState.collectAsState()
+    val data by viewModel.profile.collectAsState()
+    var confirmSignOut by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) { if (data.user == null) viewModel.loadProfile() }
+
+    if (confirmSignOut) {
+        AlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            title = { Text("Sign out?") },
+            text = { Text("You'll need your email and password to sign back in.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmSignOut = false
+                    onLogout()
+                }) { Text("Sign out") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
+            },
+            shape = MaterialTheme.shapes.medium,
+        )
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF1F5F9))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "My Profile",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF0F172A),
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            when (val state = viewModel.profileState) {
-                is UiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFF2563EB))
-                    }
-                }
-                is UiState.Success -> {
-                    ProfileContent(profile = state.data, onLogout = onLogout)
-                }
-                is UiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Info, "Error Icon", tint = Color.Red, modifier = Modifier.size(48.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Failed to load profile: ${state.message}", color = Color.Gray, fontSize = 14.sp)
-                        }
-                    }
-                }
-                else -> {}
-            }
-        }
-    }
-}
-
-@Composable
-fun ProfileContent(profile: ProfileResponse, onLogout: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    when {
+        state.loading -> LoadingState()
+        state.error != null -> ErrorState(state.error!!, onRetry = { viewModel.loadProfile() })
+        else -> LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(54.dp)
-                            .background(Color(0xFFEFF6FF), CircleShape),
-                        contentAlignment = Alignment.Center
+                            .size(76.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                                RoundedCornerShape(24.dp),
+                            ),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = profile.user.name.take(1).uppercase(),
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF2563EB)
+                            text = Format.initials(data.user?.name),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column {
-                        Text(
-                            text = profile.user.name,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF0F172A)
-                        )
-                        Text(
-                            text = profile.user.email,
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B),
-                            modifier = Modifier.padding(top = 1.dp)
-                        )
-                    }
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        QuickStatChip(label = "Present", value = (profile.stats?.present_days ?: 0).toString())
-                        QuickStatChip(label = "Late", value = (profile.stats?.late_days ?: 0).toString())
-                        QuickStatChip(label = "Absent", value = (profile.stats?.absent_days ?: 0).toString())
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ProfileField(label = "Employee Role", value = profile.user.role.uppercase())
-                    ProfileField(label = "Designation/Rank", value = profile.employee?.position ?: profile.employee?.designation ?: "Staff")
-                    ProfileField(label = "Assigned Department", value = profile.employee?.department ?: "General")
-                    ProfileField(
-                        label = "Hourly/Basic Salary",
-                        value = "₱${String.format("%,.2f", profile.employee?.hourly_salary ?: profile.employee?.basic_salary ?: 0.0)}"
+                    Text(
+                        text = data.user?.name.orEmpty(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(top = 14.dp),
                     )
+                    Text(
+                        text = data.employee?.position ?: data.user?.role.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = mutedColor,
+                    )
+                    Spacer(Modifier.height(22.dp))
                 }
             }
-        }
 
-        Button(
-            onClick = onLogout,
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .padding(bottom = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(Icons.Default.ExitToApp, "Logout Icon", tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
+            item { SectionLabel("Account") }
+
+            item {
+                MccCard {
+                    Column {
+                        DetailRow(Icons.Outlined.AlternateEmail, "Email", data.user?.email)
+                        DetailRow(Icons.Outlined.Badge, "Role", data.user?.role)
+                        DetailRow(
+                            Icons.Outlined.WorkOutline,
+                            "Position",
+                            data.employee?.position,
+                            last = true,
+                        )
+                    }
+                }
+            }
+
+            item {
+                Spacer(Modifier.height(4.dp))
+                SectionLabel("Attendance summary")
+            }
+
+            item {
+                MccCard {
+                    Column {
+                        DetailRow(Icons.Outlined.Badge, "Days present", data.stats.presentDays.toString())
+                        DetailRow(Icons.Outlined.Badge, "Days late", data.stats.lateDays.toString())
+                        DetailRow(Icons.Outlined.Badge, "Days absent", data.stats.absentDays.toString())
+                        DetailRow(Icons.Outlined.Badge, "Total hours", data.stats.totalHours, last = true)
+                    }
+                }
+            }
+
+            item {
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = { confirmSignOut = true },
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                ) {
+                    Icon(Icons.Outlined.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text("Sign out", modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+
+            item {
                 Text(
-                    text = "Log Out Account",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color.White
+                    text = "MCC Payroll v${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = mutedColor,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                 )
             }
         }
@@ -187,36 +179,46 @@ fun ProfileContent(profile: ProfileResponse, onLogout: () -> Unit) {
 }
 
 @Composable
-fun ProfileField(label: String, value: String) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+private fun DetailRow(
+    icon: ImageVector,
+    label: String,
+    value: String?,
+    last: Boolean = false,
+) {
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = mutedColor,
+            modifier = Modifier.size(18.dp),
+        )
         Text(
             text = label,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF94A3B8),
-            letterSpacing = 0.5.sp
+            style = MaterialTheme.typography.bodyMedium,
+            color = mutedColor,
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .weight(1f),
         )
         Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF334155),
-            modifier = Modifier.padding(top = 2.dp)
+            text = value?.takeIf { it.isNotBlank() } ?: "—",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
-}
 
-@Composable
-fun QuickStatChip(label: String, value: String) {
-    Card(
-        modifier = Modifier.weight(1f),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
-    ) {
-        Column(modifier = Modifier.padding(10.dp)) {
-            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF0F172A))
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = label, fontSize = 10.sp, color = Color(0xFF64748B))
-        }
+    if (!last) {
+        Box(
+            Modifier
+                .padding(start = 46.dp)
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outline)
+        )
     }
 }

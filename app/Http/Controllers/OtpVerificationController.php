@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
-use App\Mail\OtpMail; 
+use App\Mail\OtpMail;
+use App\Support\RoleHome;
 use Carbon\Carbon;
 
 class OtpVerificationController extends Controller
@@ -116,23 +117,13 @@ class OtpVerificationController extends Controller
                 // user_id and user_name can usually be accessed via Auth::user()
             ]);
             
-            // Conditional redirect based on role
-            if ($user->role === 'super_admin') {
-                return redirect()->route('admin.user-management')->with('success', 'Super Admin login successful!');
-            } 
-            
-            if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard')->with('success', 'Admin login successful!');
-            }
-            
-            if ($user->role === 'attendance_checker') {
-                // Use intended() for a more flexible redirect after login
-                return redirect()->intended('/attendance/dashboard')->with('success', 'Attendance checker login successful!');
-            }
-
-            // Fallback redirect
-            return redirect('/')->with('success', 'Login successful!');
-
+            // Role-based landing page. This used to be an if-chain that covered
+            // super_admin, admin and attendance_checker and then fell through to
+            // redirect('/') — which meant an employee with a CORRECT code was
+            // logged in and dumped back on the public landing page. See RoleHome.
+            return redirect()
+                ->route(RoleHome::routeFor($user->role))
+                ->with('success', RoleHome::messageFor($user->role));
         }
 
         // Failure: OTP is incorrect or expired. Track the attempt and lock out

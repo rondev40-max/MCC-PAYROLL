@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors the brand and background tokens from the web portal so the
+         launcher and splash match the site this app is a companion to. -->
+    <color name="brand">#2563EB</color>
+    <color name="brand_dark">#1D4ED8</color>
+    <color name="surface_light">#F6F8FB</color>
+    <color name="surface_dark">#0B0F16</color>
+    <color name="white">#FFFFFF</color>
+</resources>

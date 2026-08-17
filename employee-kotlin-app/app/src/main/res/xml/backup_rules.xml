@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- The session token must never ride along in a cloud backup: restoring it
+         onto a different device would hand over an authenticated session. -->
+    <exclude domain="file" path="datastore/" />
+</full-backup-content>

@@ -1,262 +1,250 @@
 package com.mcc.payroll.viewmodel
 
 import android.app.Application
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.mcc.payroll.api.DashboardResponse
-import com.mcc.payroll.api.LoginRequest
-import com.mcc.payroll.api.Payslip
-import com.mcc.payroll.api.ProfileResponse
-import com.mcc.payroll.api.RetrofitClient
-import com.mcc.payroll.storage.TokenManager
+import com.mcc.payroll.MccApp
+import com.mcc.payroll.data.remote.Announcement
+import com.mcc.payroll.data.remote.Attendance
+import com.mcc.payroll.data.remote.Employee
+import com.mcc.payroll.data.remote.Payslip
+import com.mcc.payroll.data.remote.Stats
+import com.mcc.payroll.data.remote.User
+import com.mcc.payroll.data.repo.Outcome
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import retrofit2.Response
 
-sealed interface UiState<out T> {
-    object Idle : UiState<Nothing>
-    object Loading : UiState<Nothing>
-    data class Success<out T>(val data: T) : UiState<T>
-    data class Error(val message: String) : UiState<Nothing>
+/** Whether a screen is loading, has content, or failed. */
+data class ScreenState(
+    val loading: Boolean = false,
+    val refreshing: Boolean = false,
+    val error: String? = null,
+)
+
+data class HomeData(
+    val user: User? = null,
+    val employee: Employee? = null,
+    val stats: Stats = Stats(),
+    val announcements: List<Announcement> = emptyList(),
+    val payslips: List<Payslip> = emptyList(),
+    val attendances: List<Attendance> = emptyList(),
+)
+
+data class AttendanceData(
+    val attendances: List<Attendance> = emptyList(),
+    val stats: Stats = Stats(),
+)
+
+sealed interface AuthEvent {
+    /** The server rejected the stored token; the UI must return to sign-in. */
+    data object SessionExpired : AuthEvent
 }
 
-class EmployeeViewModel(application: Application) : AndroidViewModel(application) {
-    private val tokenManager = TokenManager(application)
-    private val api = RetrofitClient.apiService
+class EmployeeViewModel(app: Application) : AndroidViewModel(app) {
 
-    // Authentication token flow
-    private val _tokenFlow = MutableStateFlow<String?>(null)
-    val tokenFlow: StateFlow<String?> = _tokenFlow.asStateFlow()
+    private val repo = (app as MccApp).repository
+    private val session = (app as MccApp).session
 
-    // Screen States
-    var loginState by mutableStateOf<UiState<String>>(UiState.Idle)
-        private set
+    /** null while DataStore is still being read — distinct from "signed out". */
+    val token: StateFlow<String?> = session.token
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    var dashboardState by mutableStateOf<UiState<DashboardResponse>>(UiState.Idle)
-        private set
+    /** True only once DataStore has actually answered, so the UI can hold the
+     *  splash instead of flashing the login screen at an already-signed-in user. */
+    val sessionResolved: StateFlow<Boolean> = session.token
+        .map { true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    var payslipsState by mutableStateOf<UiState<List<Payslip>>>(UiState.Idle)
-        private set
+    val cachedName: StateFlow<String?> = session.name
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    var profileState by mutableStateOf<UiState<ProfileResponse>>(UiState.Idle)
-        private set
+    // ── Sign in ─────────────────────────────────────────────────────────────
+    private val _loginState = MutableStateFlow(ScreenState())
+    val loginState: StateFlow<ScreenState> = _loginState.asStateFlow()
 
-    init {
-        // Collect saved token on init
+    fun login(email: String, password: String, onSuccess: () -> Unit) {
+        if (email.isBlank() || password.isBlank()) {
+            _loginState.value = ScreenState(error = "Enter your email and password.")
+            return
+        }
+
+        _loginState.value = ScreenState(loading = true)
+
         viewModelScope.launch {
-            _tokenFlow.value = tokenManager.token.first()
-        }
-    }
-
-    private fun resolveErrorMessage(
-        response: Response<*>?,
-        fallback: String,
-        throwable: Throwable? = null
-    ): String {
-        val bodyText = response?.errorBody()?.string().orEmpty().trim()
-        val parsedMessage = bodyText.extractApiMessage()
-        if (parsedMessage != null) {
-            return parsedMessage
-        }
-
-        return when (response?.code()) {
-            401 -> "Your session has expired. Please sign in again."
-            403 -> "You don't have permission to access this information."
-            404 -> "The requested information could not be found."
-            in 500..599 -> "The server is currently unavailable. Please try again shortly."
-            else -> {
-                val message = throwable?.message.orEmpty().lowercase()
-                when {
-                    message.contains("timeout") || message.contains("timed out") ->
-                        "The request timed out. Please check your connection and try again."
-                    message.contains("unable to resolve host") || message.contains("unknownhost") ||
-                        message.contains("connection refused") || message.contains("socket") ||
-                        message.contains("network") || message.contains("ssl") ->
-                        "We couldn't reach the server. Please check your connection and try again."
-                    else -> fallback
-                }
-            }
-        }
-    }
-
-    private fun String.extractApiMessage(): String? {
-        val trimmed = trim()
-        if (trimmed.isEmpty()) return null
-
-        val patterns = listOf(
-            Regex("\"message\"\\s*:\\s*\"([^\"]+)\""),
-            Regex("\"error\"\\s*:\\s*\"([^\"]+)\""),
-            Regex("\"detail\"\\s*:\\s*\"([^\"]+)\""),
-            Regex("\"msg\"\\s*:\\s*\"([^\"]+)\"")
-        )
-
-        for (pattern in patterns) {
-            val match = pattern.find(trimmed)
-            val value = match?.groupValues?.getOrNull(1)?.trim()
-            if (!value.isNullOrBlank()) {
-                return value.replace("\\n", " ").replace("\\r", " ")
-            }
-        }
-
-        return trimmed.takeIf {
-            it.length < 300 && !it.contains("<") && !it.contains("html", ignoreCase = true)
-        }
-    }
-
-    /**
-     * Submit login request
-     */
-    fun login(email: String, javaPassword: String, onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            loginState = UiState.Loading
-            try {
-                val response = api.login(LoginRequest(email, javaPassword))
-                if (response.isSuccessful && response.body() != null) {
-                    val body = response.body()!!
-                    tokenManager.saveToken(body.token)
-                    _tokenFlow.value = body.token
-                    loginState = UiState.Success("Login successful!")
+            when (val result = repo.login(email, password)) {
+                is Outcome.Ok -> {
+                    _loginState.value = ScreenState()
+                    loadHome()
                     onSuccess()
-                } else {
-                    loginState = UiState.Error(
-                        resolveErrorMessage(
-                            response,
-                            "Invalid email or password. Please try again."
-                        )
-                    )
                 }
-            } catch (e: Exception) {
-                loginState = UiState.Error(
-                    resolveErrorMessage(
-                        null,
-                        "We couldn't sign you in right now. Please try again.",
-                        e
-                    )
-                )
+
+                is Outcome.Failed -> _loginState.value = ScreenState(error = result.message)
             }
         }
     }
 
-    /**
-     * Load Dashboard Data
-     */
-    fun fetchDashboard() {
+    fun dismissLoginError() {
+        _loginState.value = _loginState.value.copy(error = null)
+    }
+
+    // ── Home ────────────────────────────────────────────────────────────────
+    private val _homeState = MutableStateFlow(ScreenState(loading = true))
+    val homeState: StateFlow<ScreenState> = _homeState.asStateFlow()
+
+    private val _home = MutableStateFlow(HomeData())
+    val home: StateFlow<HomeData> = _home.asStateFlow()
+
+    fun loadHome(refresh: Boolean = false) {
+        _homeState.value = if (refresh) {
+            _homeState.value.copy(refreshing = true, error = null)
+        } else {
+            ScreenState(loading = true)
+        }
+
         viewModelScope.launch {
-            dashboardState = UiState.Loading
-            val rawToken = _tokenFlow.value ?: run {
-                dashboardState = UiState.Error("Please sign in again to continue.")
-                return@launch
-            }
-            val bearerToken = "Bearer $rawToken"
-            try {
-                val response = api.getDashboard(bearerToken)
-                if (response.isSuccessful && response.body() != null) {
-                    dashboardState = UiState.Success(response.body()!!)
-                } else {
-                    dashboardState = UiState.Error(
-                        resolveErrorMessage(
-                            response,
-                            "We couldn't load your dashboard right now."
-                        )
+            when (val result = repo.dashboard()) {
+                is Outcome.Ok -> {
+                    _home.value = HomeData(
+                        user = result.data.user,
+                        employee = result.data.employee,
+                        stats = result.data.stats ?: Stats(),
+                        announcements = result.data.announcements.orEmpty(),
+                        payslips = result.data.payslips.orEmpty(),
+                        attendances = result.data.attendances.orEmpty(),
                     )
+                    _homeState.value = ScreenState()
                 }
-            } catch (e: Exception) {
-                dashboardState = UiState.Error(
-                    resolveErrorMessage(
-                        null,
-                        "We couldn't load your dashboard right now.",
-                        e
-                    )
-                )
+
+                is Outcome.Failed -> {
+                    _homeState.value = ScreenState(error = result.message)
+                    if (result.unauthorized) expireSession()
+                }
             }
         }
     }
 
-    /**
-     * Load Payslip Records
-     */
-    fun fetchPayslips() {
+    // ── Attendance ──────────────────────────────────────────────────────────
+    private val _attendanceState = MutableStateFlow(ScreenState(loading = true))
+    val attendanceState: StateFlow<ScreenState> = _attendanceState.asStateFlow()
+
+    private val _attendance = MutableStateFlow(AttendanceData())
+    val attendance: StateFlow<AttendanceData> = _attendance.asStateFlow()
+
+    fun loadAttendance(refresh: Boolean = false) {
+        _attendanceState.value = if (refresh) {
+            _attendanceState.value.copy(refreshing = true, error = null)
+        } else {
+            ScreenState(loading = true)
+        }
+
         viewModelScope.launch {
-            payslipsState = UiState.Loading
-            val rawToken = _tokenFlow.value ?: run {
-                payslipsState = UiState.Error("Please sign in again to continue.")
-                return@launch
-            }
-            val bearerToken = "Bearer $rawToken"
-            try {
-                val response = api.getPayslips(bearerToken)
-                if (response.isSuccessful && response.body() != null) {
-                    payslipsState = UiState.Success(response.body()!!.payslips)
-                } else {
-                    payslipsState = UiState.Error(
-                        resolveErrorMessage(
-                            response,
-                            "We couldn't load your payslips right now."
-                        )
+            when (val result = repo.attendance()) {
+                is Outcome.Ok -> {
+                    _attendance.value = AttendanceData(
+                        attendances = result.data.attendances.orEmpty(),
+                        stats = result.data.stats ?: Stats(),
                     )
+                    _attendanceState.value = ScreenState()
                 }
-            } catch (e: Exception) {
-                payslipsState = UiState.Error(
-                    resolveErrorMessage(
-                        null,
-                        "We couldn't load your payslips right now.",
-                        e
-                    )
-                )
+
+                is Outcome.Failed -> {
+                    _attendanceState.value = ScreenState(error = result.message)
+                    if (result.unauthorized) expireSession()
+                }
             }
         }
     }
 
-    /**
-     * Load Employee Profile Info
-     */
-    fun fetchProfile() {
+    // ── Payslips ────────────────────────────────────────────────────────────
+    private val _payslipsState = MutableStateFlow(ScreenState(loading = true))
+    val payslipsState: StateFlow<ScreenState> = _payslipsState.asStateFlow()
+
+    private val _payslips = MutableStateFlow<List<Payslip>>(emptyList())
+    val payslips: StateFlow<List<Payslip>> = _payslips.asStateFlow()
+
+    fun loadPayslips(refresh: Boolean = false) {
+        _payslipsState.value = if (refresh) {
+            _payslipsState.value.copy(refreshing = true, error = null)
+        } else {
+            ScreenState(loading = true)
+        }
+
         viewModelScope.launch {
-            profileState = UiState.Loading
-            val rawToken = _tokenFlow.value ?: run {
-                profileState = UiState.Error("Please sign in again to continue.")
-                return@launch
-            }
-            val bearerToken = "Bearer $rawToken"
-            try {
-                val response = api.getProfile(bearerToken)
-                if (response.isSuccessful && response.body() != null) {
-                    profileState = UiState.Success(response.body()!!)
-                } else {
-                    profileState = UiState.Error(
-                        resolveErrorMessage(
-                            response,
-                            "We couldn't load your profile right now."
-                        )
-                    )
+            when (val result = repo.payslips()) {
+                is Outcome.Ok -> {
+                    _payslips.value = result.data.payslips.orEmpty()
+                    _payslipsState.value = ScreenState()
                 }
-            } catch (e: Exception) {
-                profileState = UiState.Error(
-                    resolveErrorMessage(
-                        null,
-                        "We couldn't load your profile right now.",
-                        e
-                    )
-                )
+
+                is Outcome.Failed -> {
+                    _payslipsState.value = ScreenState(error = result.message)
+                    if (result.unauthorized) expireSession()
+                }
             }
         }
     }
 
-    /**
-     * Sign out / Clear token
-     */
-    fun logout(onComplete: () -> Unit) {
+    // ── Profile ─────────────────────────────────────────────────────────────
+    private val _profileState = MutableStateFlow(ScreenState(loading = true))
+    val profileState: StateFlow<ScreenState> = _profileState.asStateFlow()
+
+    private val _profile = MutableStateFlow(HomeData())
+    val profile: StateFlow<HomeData> = _profile.asStateFlow()
+
+    fun loadProfile(refresh: Boolean = false) {
+        _profileState.value = if (refresh) {
+            _profileState.value.copy(refreshing = true, error = null)
+        } else {
+            ScreenState(loading = true)
+        }
+
         viewModelScope.launch {
-            tokenManager.clearToken()
-            _tokenFlow.value = null
-            loginState = UiState.Idle
-            onComplete()
+            when (val result = repo.profile()) {
+                is Outcome.Ok -> {
+                    _profile.value = HomeData(
+                        user = result.data.user,
+                        employee = result.data.employee,
+                        stats = result.data.stats ?: Stats(),
+                    )
+                    _profileState.value = ScreenState()
+                }
+
+                is Outcome.Failed -> {
+                    _profileState.value = ScreenState(error = result.message)
+                    if (result.unauthorized) expireSession()
+                }
+            }
+        }
+    }
+
+    // ── Session ─────────────────────────────────────────────────────────────
+    private val _authEvents = MutableStateFlow<AuthEvent?>(null)
+    val authEvents: StateFlow<AuthEvent?> = _authEvents.asStateFlow()
+
+    fun consumeAuthEvent() {
+        _authEvents.value = null
+    }
+
+    private fun expireSession() {
+        viewModelScope.launch {
+            repo.logout()
+            _authEvents.value = AuthEvent.SessionExpired
+        }
+    }
+
+    fun logout(onDone: () -> Unit) {
+        viewModelScope.launch {
+            repo.logout()
+            _home.value = HomeData()
+            _payslips.value = emptyList()
+            _attendance.value = AttendanceData()
+            _profile.value = HomeData()
+            onDone()
         }
     }
 }
