@@ -29,7 +29,7 @@ class PasswordResetSeeder extends Seeder
     /**
      * Account created only when the users table is completely empty.
      */
-    private const FALLBACK_EMAIL = 'admin@mcc.edu.ph';
+    private const FALLBACK_EMAIL = 'admin@mcclawis.edu.ph';
 
     /**
      * Run the database seeds.
