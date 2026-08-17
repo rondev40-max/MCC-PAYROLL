@@ -372,17 +372,7 @@
       <a class="nav-link" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
 
       <div class="nav-section-label">Management</div>
-      <div class="dropdown">
-        <button class="sidebar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-          <i class="bi bi-people"></i><span>Employees</span>
-        </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="{{ route('fulltime.index') }}"><i class="bi bi-person-badge"></i>Full-Time Instructors</a></li>
-          <li><a class="dropdown-item" href="{{ route('parttime.index') }}"><i class="bi bi-person-check"></i>Part-Time Instructors</a></li>
-          <li><a class="dropdown-item" href="{{ route('utility.index') }}"><i class="bi bi-tools"></i>Utility Workers</a></li>
-          <li><a class="dropdown-item" href="{{ route('staff.index') }}"><i class="bi bi-person-workspace"></i>Staff</a></li>
-        </ul>
-      </div>
+      @include('partials.employees-menu')
       <div class="dropdown">
         <button class="sidebar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
           <i class="bi bi-building"></i><span>Department</span>

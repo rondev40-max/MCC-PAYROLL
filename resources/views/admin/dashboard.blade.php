@@ -797,23 +797,7 @@
 
       <div class="nav-label">Management</div>
 
-      <div class="dropdown">
-        <button
-          class="sidebar-btn dropdown-toggle {{ request()->routeIs('fulltime.*', 'parttime.*', 'utility.*', 'staff.*') ? 'active' : '' }}"
-          type="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="bi bi-people"></i><span>Employees</span>
-        </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="{{ route('fulltime.index') }}"><i
-                class="bi bi-person-badge"></i>Full-Time Instructors</a></li>
-          <li><a class="dropdown-item" href="{{ route('parttime.index') }}"><i
-                class="bi bi-person-check"></i>Part-Time Instructors</a></li>
-          <li><a class="dropdown-item" href="{{ route('utility.index') }}"><i class="bi bi-tools"></i>Utility
-              Workers</a></li>
-          <li><a class="dropdown-item" href="{{ route('staff.index') }}"><i
-                class="bi bi-person-workspace"></i>Staff</a></li>
-        </ul>
-      </div>
+      @include('partials.employees-menu')
 
       <div class="dropdown">
         <button class="sidebar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -1090,23 +1074,21 @@
           <div class="chart-card-header">
             <div>
               <div class="chart-card-title">Department Analytics</div>
-              <div class="chart-card-sub">Headcount by active department</div>
+              <div class="chart-card-sub">Instructor headcount by department</div>
             </div>
             <span class="live-badge"><span class="dot"></span>Live</span>
           </div>
           <div class="chart-area">
             @if(isset($departmentAnalysis) && $departmentAnalysis->isNotEmpty())
-              <canvas id="departmentChart" role="img" aria-label="Bar chart showing full-time and part-time counts per active department."></canvas>
+              <canvas id="departmentChart" role="img" aria-label="Bar chart showing full-time and part-time instructor counts for BSIT, BSBA, BSHM and Education."></canvas>
             @else
-              <div class="p-4 text-center" style="color:var(--text-3);">No active department analytics available.</div>
+              <div class="p-4 text-center" style="color:var(--text-3);">No department analytics available.</div>
             @endif
           </div>
           @if(isset($departmentAnalysis) && $departmentAnalysis->isNotEmpty())
           <div class="chart-legend">
             <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6;"></div>Staff</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Utility</div>
           </div>
           @endif
         </div>
@@ -1417,12 +1399,12 @@ function initDepartment() {
  const ctx = document.getElementById('departmentChart');
  if (!ctx) return;
   
- const labels = DEPARTMENT_STATS.map(d => d.code);
+ // Academic departments only, and only the two instructor types — staff,
+ // utility and watchman belong to no department. See App\Support\DepartmentAnalytics.
+ const labels = DEPARTMENT_STATS.map(d => d.name || d.code);
  const ftData = DEPARTMENT_STATS.map(d => d.fulltime);
  const ptData = DEPARTMENT_STATS.map(d => d.parttime);
- const stData = DEPARTMENT_STATS.map(d => d.staff || 0);
- const utData = DEPARTMENT_STATS.map(d => d.utility || 0);
-  
+
  deptChart = new Chart(ctx.getContext('2d'), {
    type: 'bar',
    data: {
@@ -1439,20 +1421,6 @@ function initDepartment() {
          label: 'Part-Time',
          data: ptData,
          backgroundColor: 'rgba(245,158,11,0.85)',
-         borderRadius: { topLeft: 6, topRight: 6 },
-         borderSkipped: false,
-       },
-       {
-         label: 'Staff',
-         data: stData,
-         backgroundColor: 'rgba(59,130,246,0.85)',
-         borderRadius: { topLeft: 6, topRight: 6 },
-         borderSkipped: false,
-       },
-       {
-         label: 'Utility',
-         data: utData,
-         backgroundColor: 'rgba(147,197,253,0.85)',
          borderRadius: { topLeft: 6, topRight: 6 },
          borderSkipped: false,
        }

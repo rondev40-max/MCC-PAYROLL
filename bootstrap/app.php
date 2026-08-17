@@ -51,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.superadmin'     => \App\Http\Middleware\CheckSuperAdminRole::class,
             'role'                => \App\Http\Middleware\RoleMiddleware::class,
             'log.employee.portal' => \App\Http\Middleware\LogEmployeePortalAccess::class,
+            'payslip.unlocked'    => \App\Http\Middleware\EnsurePayslipUnlocked::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

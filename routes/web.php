@@ -14,6 +14,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OtpVerificationController;
+use App\Http\Controllers\PayslipAccessController;
 use App\Http\Controllers\BsitController; // Course Attendance
 use App\Http\Controllers\BsbaController; // Course Attendance
 use App\Http\Controllers\BshmController; // Course Attendance
@@ -261,11 +262,26 @@ Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('emp
     Route::post('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'storeEvaluation'])
         ->name('evaluation.store'); 
 
-    // Payslips (used by employee/dashboard.blade.php via fetch & download)
+    // Payslip step-up verification. Opening a payslip needs a code emailed to
+    // the address on the account — see App\Support\PayslipGate.
+    Route::get('/payslip-access/status', [PayslipAccessController::class, 'status'])->name('payslip.access.status');
+    Route::post('/payslip-access/send', [PayslipAccessController::class, 'send'])
+        ->middleware('throttle:6,10')
+        ->name('payslip.access.send');
+    Route::post('/payslip-access/verify', [PayslipAccessController::class, 'verify'])
+        ->middleware('throttle:20,10')
+        ->name('payslip.access.verify');
+    Route::post('/payslip-access/lock', [PayslipAccessController::class, 'lock'])->name('payslip.access.lock');
+
+    // Payslips. The listing stays open (it is only metadata the dashboard
+    // already shows); every route that reveals payslip contents is sealed.
     Route::get('/payslips', [EmployeeController::class, 'portalPayslips'])->name('payslips');
-    Route::get('/payslips/{payslip}', [EmployeeController::class, 'portalPayslipJson'])->name('payslip.json');
-    Route::get('/payslips/{payslip}/download', [EmployeeController::class, 'portalPayslipDownload'])->name('payslip.download');
-    Route::get('/payslips/{payslip}/view', [EmployeeController::class, 'portalPayslipView'])->name('payslip.view');
+
+    Route::middleware('payslip.unlocked')->group(function () {
+        Route::get('/payslips/{payslip}', [EmployeeController::class, 'portalPayslipJson'])->name('payslip.json');
+        Route::get('/payslips/{payslip}/download', [EmployeeController::class, 'portalPayslipDownload'])->name('payslip.download');
+        Route::get('/payslips/{payslip}/view', [EmployeeController::class, 'portalPayslipView'])->name('payslip.view');
+    });
 
     // Attendance
     Route::get('/attendance', [EmployeeController::class, 'portalAttendance'])->name('attendance');

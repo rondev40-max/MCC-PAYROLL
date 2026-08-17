@@ -13,6 +13,7 @@ use App\Models\StaffTimesheet;
 use App\Models\UtilityTimesheet;
 use App\Models\User;
 use App\Models\Department;
+use App\Support\DepartmentAnalytics;
 
 
 class DashboardController extends Controller
@@ -191,99 +192,11 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get department-level analytics for active departments.
+     * Get department-level analytics for the four academic departments.
      */
     private function getDepartmentAnalytics()
     {
-        try {
-            // Collect department codes from the departments table AND all timesheet tables
-            // so the chart works even if the departments table wasn't fully seeded.
-            $deptCodes = collect();
-
-            // From departments table
-            if (Schema::hasTable('departments')) {
-                $deptCodes = $deptCodes->merge(
-                    Department::active()->pluck('code')->filter()
-                );
-            }
-
-            // From all timesheet tables
-            $timesheetModels = [
-                FulltimeTimesheet::class,
-                ParttimeTimesheet::class,
-            ];
-
-            if (Schema::hasTable('staff_timesheets') && Schema::hasColumn('staff_timesheets', 'department')) {
-                $timesheetModels[] = StaffTimesheet::class;
-            }
-            if (Schema::hasTable('utility_timesheets') && Schema::hasColumn('utility_timesheets', 'department')) {
-                $timesheetModels[] = UtilityTimesheet::class;
-            }
-
-            foreach ($timesheetModels as $model) {
-                $deptCodes = $deptCodes->merge(
-                    $model::whereNotNull('department')
-                        ->where('department', '!=', '')
-                        ->distinct()
-                        ->pluck('department')
-                        ->filter()
-                );
-            }
-
-            $uniqueCodes = $deptCodes->unique()->sort()->values();
-
-            if ($uniqueCodes->isEmpty()) {
-                return collect();
-            }
-
-            return $uniqueCodes->map(function ($code) {
-                // Look up the friendly name from the departments table
-                $dept = Department::where('code', $code)->first();
-                $name = $dept ? $dept->name : $code;
-
-                $fulltime = FulltimeTimesheet::where('department', $code)
-                    ->whereNotNull('employee_name')
-                    ->where('employee_name', '!=', '')
-                    ->distinct()
-                    ->count('employee_name');
-
-                $parttime = ParttimeTimesheet::where('department', $code)
-                    ->whereNotNull('employee_name')
-                    ->where('employee_name', '!=', '')
-                    ->distinct()
-                    ->count('employee_name');
-
-                $staff = 0;
-                if (Schema::hasTable('staff_timesheets') && Schema::hasColumn('staff_timesheets', 'department')) {
-                    $staff = StaffTimesheet::where('department', $code)
-                        ->whereNotNull('employee_name')
-                        ->where('employee_name', '!=', '')
-                        ->distinct()
-                        ->count('employee_name');
-                }
-
-                $utility = 0;
-                if (Schema::hasTable('utility_timesheets') && Schema::hasColumn('utility_timesheets', 'department')) {
-                    $utility = UtilityTimesheet::where('department', $code)
-                        ->whereNotNull('employee_name')
-                        ->where('employee_name', '!=', '')
-                        ->distinct()
-                        ->count('employee_name');
-                }
-
-                return [
-                    'name'     => $name,
-                    'code'     => $code,
-                    'fulltime' => $fulltime,
-                    'parttime' => $parttime,
-                    'staff'    => $staff,
-                    'utility'  => $utility,
-                    'total'    => $fulltime + $parttime + $staff + $utility,
-                ];
-            });
-        } catch (\Exception $e) {
-            return collect();
-        }
+        return DepartmentAnalytics::build();
     }
 
 

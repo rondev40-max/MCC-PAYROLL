@@ -12,7 +12,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  {{-- Instrument Serif was requested here but never used by a single rule —
+       dropped, along with the 300 and italic DM Sans cuts nothing referenced. --}}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 
   <script>
     (function(){
@@ -26,95 +30,116 @@
      DESIGN TOKENS — LIGHT MODE
   ══════════════════════════════════════════════ */
   :root {
+    /* Brand blue is deliberately unchanged — it is the same hue the admin
+       portal uses, and the two halves of the system should read as one product.
+       Everything around it is what was rebuilt. */
     --brand:        #2563eb;
-    --brand-dark:   #1e40af;
-    --brand-light:  #eff6ff;
-    --brand-mid:    #dbeafe;
-    --accent:       #10b981;
-    --warn:         #f59e0b;
-    --danger:       #ef4444;
+    --brand-dark:   #1d4ed8;
+    --brand-light:  #eef4ff;
+    --brand-mid:    #d5e2fd;
+    --accent:       #059669;
+    --warn:         #d97706;
+    --danger:       #dc2626;
+    --safe:         #0f766e;
     --purple:       #7c3aed;
-    --cyan:         #0ea5e9;
+    --cyan:         #0891b2;
 
-    --sb-w: 232px;
-    --tb-h: 58px;
+    --sb-w: 244px;
+    --tb-h: 62px;
 
-    --bg:           #f0f4f8;
-    --bg-2:         #e8edf4;
+    /* Neutrals carry a slight blue bias so they sit under the brand rather
+       than fighting it. A pure grey here reads as unconsidered. */
+    --bg:           #f6f8fb;
+    --bg-2:         #eef2f7;
     --card:         #ffffff;
-    --card-hover:   #fafbff;
+    --card-hover:   #fbfcfe;
 
-    --text:         #0d1526;
-    --text-2:       #44546a;
-    --text-3:       #8595a8;
+    --text:         #0f1729;
+    --text-2:       #4b5a70;
+    --text-3:       #8494a9;
     --text-inv:     #ffffff;
 
-    --border:       #e0e7ef;
-    --border-2:     #f0f4f8;
+    --border:       #e6ebf2;
+    --border-2:     #f1f4f9;
 
-    --th-bg:        #f5f8fc;
-    --tr-hover:     #f0f6ff;
-    --tr-stripe:    #fafcff;
+    --th-bg:        #f8fafc;
+    --tr-hover:     #f4f8ff;
+    --tr-stripe:    #fcfdff;
 
-    --input-bg:     #f7fafc;
+    --input-bg:     #f8fafc;
     --input-focus:  #ffffff;
 
-    --sb-bg-1:      #071022;
-    --sb-bg-2:      #0e1f4a;
-    --sb-bg-3:      #1845c2;
-    --sb-link-hover: rgba(255,255,255,.08);
-    --sb-link-active: rgba(255,255,255,.15);
-    --sb-text:      rgba(255,255,255,.52);
-    --sb-text-hi:   rgba(255,255,255,.92);
-    --sb-label:     rgba(255,255,255,.2);
-    --sb-border:    rgba(255,255,255,.06);
+    /* Flat deep slate. The old three-stop navy-to-electric-blue gradient was
+       the single most dated element on the page and fought every card next
+       to it for attention. */
+    --sb-bg-1:      #101725;
+    --sb-bg-2:      #0d1420;
+    --sb-link-hover: rgba(255,255,255,.06);
+    --sb-link-active: rgba(37,99,235,.9);
+    --sb-text:      rgba(226,232,240,.62);
+    --sb-text-hi:   #ffffff;
+    --sb-label:     rgba(255,255,255,.26);
+    --sb-border:    rgba(255,255,255,.07);
 
-    --sh-xs: 0 1px 3px rgba(13,21,38,.05), 0 1px 2px rgba(13,21,38,.04);
-    --sh-sm: 0 2px 8px rgba(13,21,38,.07), 0 1px 3px rgba(13,21,38,.05);
-    --sh-md: 0 6px 24px rgba(13,21,38,.10), 0 2px 8px rgba(13,21,38,.06);
-    --sh-lg: 0 16px 48px rgba(13,21,38,.14);
+    /* Shadows are a hint of depth, not a drop-shadow showcase. */
+    --sh-xs: 0 1px 2px rgba(15,23,41,.04);
+    --sh-sm: 0 1px 2px rgba(15,23,41,.04), 0 2px 6px rgba(15,23,41,.05);
+    --sh-md: 0 2px 4px rgba(15,23,41,.04), 0 8px 20px -6px rgba(15,23,41,.10);
+    --sh-lg: 0 12px 40px -10px rgba(15,23,41,.18);
 
-    --r-sm: 8px;
-    --r-md: 12px;
-    --r-lg: 16px;
-    --r-xl: 20px;
+    --r-sm: 9px;
+    --r-md: 13px;
+    --r-lg: 17px;
+    --r-xl: 22px;
 
     --ease: cubic-bezier(.4,0,.2,1);
-    --t:    all .18s var(--ease);
-    --t-slow: all .3s var(--ease);
+    --t:    all .16s var(--ease);
+    --t-slow: all .28s var(--ease);
   }
 
   /* ══════════════════════════════════════════════
      DARK MODE TOKENS
   ══════════════════════════════════════════════ */
   [data-theme="dark"] {
-    --bg:           #0d1117;
-    --bg-2:         #111823;
-    --card:         #161d2b;
-    --card-hover:   #1c2436;
+    /* Not a naive inversion: text-3 in particular was #4a6080, which failed
+       to read as text against the old card. Contrast was rebuilt per token. */
+    --brand:        #4d82f3;
+    --brand-dark:   #2563eb;
+    --accent:       #34d399;
+    --warn:         #fbbf24;
+    --danger:       #f87171;
+    --safe:         #5eead4;
+
+    --bg:           #0b0f16;
+    --bg-2:         #10151f;
+    --card:         #141a24;
+    --card-hover:   #1a212d;
 
     --text:         #e8edf5;
-    --text-2:       #8fa3be;
-    --text-3:       #4a6080;
-    --text-inv:     #0d1526;
+    --text-2:       #9aabc2;
+    --text-3:       #6c7f96;
+    --text-inv:     #0f1729;
 
-    --border:       #1e2d42;
-    --border-2:     #162030;
+    --border:       #222b3a;
+    --border-2:     #1a222e;
 
-    --th-bg:        #121a28;
-    --tr-hover:     #1a2540;
-    --tr-stripe:    #131c2a;
+    --th-bg:        #121822;
+    --tr-hover:     #1b2434;
+    --tr-stripe:    #121822;
 
-    --input-bg:     #121a28;
-    --input-focus:  #1a2540;
+    --input-bg:     #111721;
+    --input-focus:  #19212e;
 
-    --brand-light:  rgba(37,99,235,.15);
-    --brand-mid:    rgba(37,99,235,.25);
+    --brand-light:  rgba(77,130,243,.14);
+    --brand-mid:    rgba(77,130,243,.28);
 
-    --sh-xs: 0 1px 3px rgba(0,0,0,.25);
-    --sh-sm: 0 2px 8px rgba(0,0,0,.3);
-    --sh-md: 0 6px 24px rgba(0,0,0,.4);
-    --sh-lg: 0 16px 48px rgba(0,0,0,.5);
+    --sb-bg-1:      #0c111b;
+    --sb-bg-2:      #090d15;
+
+    --sh-xs: 0 1px 2px rgba(0,0,0,.3);
+    --sh-sm: 0 1px 2px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.35);
+    --sh-md: 0 2px 4px rgba(0,0,0,.3), 0 8px 20px -6px rgba(0,0,0,.5);
+    --sh-lg: 0 12px 40px -10px rgba(0,0,0,.6);
   }
 
   /* ══════════════════════════════════════════════
@@ -123,15 +148,34 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
 
+  /* The portal's real legibility problem was scale: sizes ran from .56rem to
+     .82rem, i.e. 9px to 13px, and much of it is set inline across the page.
+     Lifting the root lifts every rem in one move — including the inline ones —
+     without touching two thousand lines of markup. */
+  html { font-size: 17px; }
+
+  @media (max-width: 640px) { html { font-size: 16px; } }
+
   body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    transition: background .3s var(--ease), color .3s var(--ease);
+    text-rendering: optimizeLegibility;
+    transition: background .28s var(--ease), color .28s var(--ease);
   }
 
-  h1,h2,h3,h4,h5,h6 { font-family: 'Sora', sans-serif; }
+  h1,h2,h3,h4,h5,h6 { font-family: 'Sora', sans-serif; text-wrap: balance; }
+
+  /* Digits that stack in columns — pay figures, hours, dates — must align. */
+  .data-table td, .kpi-val, .psu-digit, .ps-item strong { font-variant-numeric: tabular-nums; }
+
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
 
   /* ══════════════════════════════════════════════
      APP SHELL
@@ -147,7 +191,7 @@
   ══════════════════════════════════════════════ */
   .sidebar {
     width: var(--sb-w);
-    background: linear-gradient(180deg, var(--sb-bg-1) 0%, var(--sb-bg-2) 55%, var(--sb-bg-3) 100%);
+    background: linear-gradient(180deg, var(--sb-bg-1) 0%, var(--sb-bg-2) 100%);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -208,17 +252,16 @@
   }
   .sb-profile-inner:hover { background: rgba(255,255,255,.11); }
   .sb-avatar {
-    width: 34px; height: 34px; border-radius: 9px;
-    background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--brand);
     display: grid; place-items: center;
-    font-family: 'Sora', sans-serif; font-size: .72rem; font-weight: 800;
+    font-family: 'Sora', sans-serif; font-size: .74rem; font-weight: 800;
     color: #fff; flex-shrink: 0; position: relative;
-    box-shadow: 0 2px 8px rgba(59,130,246,.35);
   }
   .sb-avatar-dot {
     position: absolute; bottom: -2px; right: -2px;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #10b981; border: 2px solid #0d1a3a;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--sb-bg-1);
   }
   .sb-name { font-family: 'Sora', sans-serif; font-size: .75rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
   .sb-role { font-size: .6rem; color: rgba(255,255,255,.36); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
@@ -249,17 +292,13 @@
   .sb-link i { font-size: .82rem; width: 16px; flex-shrink: 0; transition: transform .15s; }
   .sb-link:hover { background: var(--sb-link-hover); color: var(--sb-text-hi); }
   .sb-link:hover i { transform: translateX(1px); }
+  /* The active row is the brand block itself — no extra accent rail needed
+     once the sidebar behind it is flat. */
   .sb-link.active {
     background: var(--sb-link-active);
     color: #fff; font-weight: 600;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
   }
-  .sb-link.active::before {
-    content: '';
-    position: absolute; left: 0; top: 22%; bottom: 22%;
-    width: 3px; background: linear-gradient(180deg, #93c5fd, #3b82f6);
-    border-radius: 0 3px 3px 0;
-  }
+  .sb-link.active i { opacity: 1; }
 
   .sb-badge {
     margin-left: auto; font-size: .54rem; font-weight: 800;
@@ -409,20 +448,20 @@
     transition: background .3s, border-color .3s, box-shadow .2s;
   }
   .card-hd {
-    padding: .82rem 1.15rem;
-    border-bottom: 1px solid var(--border);
+    padding: .95rem 1.25rem;
+    border-bottom: 1px solid var(--border-2);
     display: flex; align-items: center; justify-content: space-between; gap: .7rem;
     transition: border-color .3s;
   }
   .card-title {
-    font-family: 'Sora', sans-serif; font-size: .78rem; font-weight: 800;
-    color: var(--text); display: flex; align-items: center; gap: 8px; letter-spacing: -.01em;
+    font-family: 'Sora', sans-serif; font-size: .82rem; font-weight: 700;
+    color: var(--text); display: flex; align-items: center; gap: 9px; letter-spacing: -.01em;
   }
   .ct-icon {
-    width: 26px; height: 26px; border-radius: 7px;
-    display: grid; place-items: center; font-size: .75rem; flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 8px;
+    display: grid; place-items: center; font-size: .78rem; flex-shrink: 0;
   }
-  .card-body { padding: .95rem 1.15rem; }
+  .card-body { padding: 1.1rem 1.25rem; }
 
   /* ══════════════════════════════════════════════
      KPI CARDS
@@ -729,8 +768,8 @@
   .pw-toggle:hover { color: var(--brand); }
   .f-input {
     border: 1.5px solid var(--border);
-    border-radius: 9px; padding: .52rem .88rem;
-    font-size: .82rem; font-family: 'DM Sans', sans-serif;
+    border-radius: var(--r-sm); padding: .58rem .9rem;
+    font-size: .84rem; font-family: 'DM Sans', sans-serif;
     width: 100%; color: var(--text);
     background: var(--input-bg); outline: none;
     transition: border-color .15s, box-shadow .15s, background .15s;
@@ -745,27 +784,29 @@
   /* ══════════════════════════════════════════════
      BUTTONS
   ══════════════════════════════════════════════ */
+  /* Flat fill, not a gradient with a glow. A solid button reads as a control;
+     a glowing one reads as an advert. */
   .btn-primary {
-    background: linear-gradient(135deg, var(--brand-dark), var(--brand) 70%, #3b82f6);
-    color: #fff; border: none; border-radius: 9px; padding: .52rem 1.15rem;
-    font-family: 'Sora', sans-serif; font-size: .76rem; font-weight: 700;
-    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: 6px;
-    box-shadow: 0 2px 8px rgba(37,99,235,.25); text-decoration: none;
+    background: var(--brand);
+    color: #fff; border: none; border-radius: var(--r-sm); padding: .55rem 1.15rem;
+    font-family: 'Sora', sans-serif; font-size: .78rem; font-weight: 700;
+    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: 7px;
+    box-shadow: var(--sh-xs); text-decoration: none;
     letter-spacing: .01em;
   }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(37,99,235,.38); color: #fff; }
-  .btn-primary:active { transform: none; }
-  .btn-primary.btn-sm { padding: .37rem .88rem; font-size: .72rem; border-radius: 8px; }
+  .btn-primary:hover { background: var(--brand-dark); box-shadow: var(--sh-sm); color: #fff; }
+  .btn-primary:active { transform: translateY(.5px); }
+  .btn-primary.btn-sm { padding: .4rem .9rem; font-size: .74rem; }
 
   .btn-outline {
-    background: transparent; color: var(--brand); border: 1.5px solid var(--brand-mid);
-    border-radius: 9px; padding: .48rem 1rem;
-    font-family: 'Sora', sans-serif; font-size: .75rem; font-weight: 700;
-    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: 5px;
+    background: var(--card); color: var(--brand); border: 1.5px solid var(--border);
+    border-radius: var(--r-sm); padding: .5rem 1rem;
+    font-family: 'Sora', sans-serif; font-size: .77rem; font-weight: 700;
+    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: 6px;
     text-decoration: none; letter-spacing: .01em;
   }
-  .btn-outline:hover { background: var(--brand-light); color: var(--brand-dark); border-color: var(--brand); }
-  .btn-outline.btn-sm { padding: .35rem .78rem; font-size: .7rem; border-radius: 8px; }
+  .btn-outline:hover { background: var(--brand-light); color: var(--brand-dark); border-color: var(--brand-mid); }
+  .btn-outline.btn-sm { padding: .38rem .8rem; font-size: .73rem; }
 
   [data-theme="dark"] .btn-outline { border-color: rgba(37,99,235,.35); }
   [data-theme="dark"] .btn-outline:hover { background: rgba(37,99,235,.18); color: #93c5fd; }
@@ -835,6 +876,150 @@
   .empty-state p { color: var(--text-3); margin-top: .6rem; font-size: .8rem; line-height: 1.7; }
 
   /* ══════════════════════════════════════════════
+     PAYSLIP LOCK BAR
+     Sits above the payslip list and states, in plain words, whether the
+     section is sealed. Amber while locked, teal once open — deliberately
+     not the brand blue, so "unlocked" never reads as just another button.
+  ══════════════════════════════════════════════ */
+  .ps-lockbar {
+    display: flex; align-items: center; gap: .9rem;
+    padding: .85rem 1.15rem; margin-bottom: 1rem;
+    border-radius: var(--r-md);
+    border: 1px solid rgba(245,158,11,.28);
+    background: rgba(245,158,11,.07);
+    transition: var(--t);
+  }
+  .ps-lockbar.is-open {
+    border-color: rgba(13,148,136,.3);
+    background: rgba(13,148,136,.07);
+  }
+
+  .ps-lockbar-icon {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: .95rem;
+    background: rgba(245,158,11,.14); color: #b45309;
+    border: 1px solid rgba(245,158,11,.24);
+  }
+  .ps-lockbar.is-open .ps-lockbar-icon {
+    background: rgba(13,148,136,.14); color: #0f766e;
+    border-color: rgba(13,148,136,.26);
+  }
+  [data-theme="dark"] .ps-lockbar-icon         { color: #fbbf24; }
+  [data-theme="dark"] .ps-lockbar.is-open .ps-lockbar-icon { color: #5eead4; }
+
+  .ps-lockbar-copy  { flex: 1; min-width: 0; }
+  .ps-lockbar-title {
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-size: .8rem; color: var(--text); letter-spacing: -.01em;
+  }
+  .ps-lockbar-sub {
+    font-size: .7rem; color: var(--text-2); margin-top: 2px; line-height: 1.5;
+  }
+  .ps-lockbar-sub strong { color: var(--text); font-weight: 600; }
+  .ps-lockbar-action { flex-shrink: 0; }
+
+  @media (max-width: 560px) {
+    .ps-lockbar { flex-wrap: wrap; }
+    .ps-lockbar-action { width: 100%; justify-content: center; }
+  }
+
+  /* ══════════════════════════════════════════════
+     PAYSLIP UNLOCK MODAL
+  ══════════════════════════════════════════════ */
+  .psu-card {
+    border-radius: var(--r-xl) !important;
+    border: 1px solid var(--border) !important;
+    background: var(--card) !important;
+    overflow: hidden;
+  }
+
+  .psu-head {
+    padding: 1.9rem 1.9rem 1.2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-2);
+  }
+  .psu-shield {
+    width: 52px; height: 52px; border-radius: 15px; margin: 0 auto .9rem;
+    display: grid; place-items: center; font-size: 1.35rem;
+    background: rgba(13,148,136,.12); color: #0f766e;
+    border: 1px solid rgba(13,148,136,.22);
+  }
+  [data-theme="dark"] .psu-shield { color: #5eead4; }
+
+  .psu-title {
+    font-family: 'Sora', sans-serif; font-weight: 800;
+    font-size: 1.05rem; color: var(--text); margin: 0 0 .35rem;
+    letter-spacing: -.02em;
+  }
+  .psu-lede {
+    font-size: .78rem; color: var(--text-2); margin: 0;
+    line-height: 1.6; max-width: 34ch; margin-inline: auto;
+  }
+  .psu-lede strong { color: var(--text); font-weight: 600; }
+
+  .psu-body { padding: 1.4rem 1.9rem 1.6rem; }
+
+  .psu-alert {
+    border-radius: var(--r-sm); padding: .6rem .8rem; margin-bottom: 1rem;
+    font-size: .74rem; line-height: 1.5; text-align: center;
+  }
+  .psu-alert-error {
+    background: rgba(239,68,68,.1); color: #b91c1c;
+    border: 1px solid rgba(239,68,68,.2);
+  }
+  [data-theme="dark"] .psu-alert-error { color: #fca5a5; }
+
+  /* Six separate boxes rather than one field: it shows the expected length
+     without a placeholder, and makes a mistyped digit obvious. */
+  .psu-otp {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: .45rem; margin-bottom: 1rem;
+  }
+  .psu-digit {
+    aspect-ratio: 1 / 1.15; width: 100%;
+    border-radius: var(--r-sm);
+    border: 1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text);
+    font-family: 'Sora', sans-serif; font-size: 1.15rem; font-weight: 700;
+    text-align: center; transition: var(--t);
+    font-variant-numeric: tabular-nums;
+  }
+  .psu-digit.is-filled { border-color: var(--brand); background: var(--input-focus); }
+  .psu-digit:focus {
+    outline: none; border-color: var(--brand);
+    background: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.14);
+  }
+
+  .psu-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .6rem; margin-bottom: 1.1rem;
+    font-size: .7rem; color: var(--text-3);
+  }
+  .psu-resend {
+    background: none; border: none; padding: 0;
+    font-family: 'DM Sans', sans-serif; font-size: .72rem; font-weight: 600;
+    color: var(--brand); cursor: pointer; transition: var(--t);
+  }
+  .psu-resend:disabled { color: var(--text-3); cursor: default; }
+  .psu-resend:not(:disabled):hover { text-decoration: underline; }
+
+  .psu-submit { width: 100%; justify-content: center; }
+  .psu-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+  .psu-cancel {
+    display: block; width: 100%; margin-top: .7rem;
+    background: none; border: none; padding: .4rem;
+    font-family: 'DM Sans', sans-serif; font-size: .74rem; font-weight: 500;
+    color: var(--text-3); cursor: pointer;
+  }
+  .psu-cancel:hover { color: var(--text-2); }
+
+  .psu-digit:focus-visible,
+  .psu-resend:focus-visible,
+  .psu-cancel:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ══════════════════════════════════════════════
      PAYSLIP VIEW MODAL
   ══════════════════════════════════════════════ */
   #payslipModal .modal-content {
@@ -858,8 +1043,8 @@
 
   /* Payslip rendered document */
   .ps-doc-header {
-    background: linear-gradient(135deg, #071022 0%, #1843c0 52%, #0ea5e9 110%);
-    padding: 1.5rem 1.8rem;
+    background: linear-gradient(135deg, #101725 0%, #1c2b4a 100%);
+    padding: 1.6rem 1.8rem;
   }
   .ps-doc-section { padding: 0 1.8rem; }
   .ps-doc-section + .ps-doc-section { padding-top: .8rem; }
@@ -1425,7 +1610,7 @@
                         class="btn-primary w-100 btn-sm" style="justify-content:center;">
                         <i class="bi bi-eye"></i> View Payslip
                       </button>
-                      <a href="{{ route('employee.payslip.download', $lp->id) }}" class="btn-outline btn-sm" style="flex-shrink:0;" title="Download">
+                      <a href="{{ route('employee.payslip.download', $lp->id) }}" class="btn-outline btn-sm" style="flex-shrink:0;" title="Download" onclick="return downloadPayslip(event, this.href);">
                         <i class="bi bi-download"></i>
                       </a>
                     </div>
@@ -1599,6 +1784,31 @@
           </div>
         </div>
 
+        {{-- Step-up verification state. Payslips carry net pay and government
+             deduction figures, so opening one needs a code sent to the address
+             on the account — not just a logged-in session. --}}
+        <div class="ps-lockbar {{ ($payslipUnlocked ?? false) ? 'is-open' : '' }}" id="psLockBar">
+          <div class="ps-lockbar-icon">
+            <i class="bi {{ ($payslipUnlocked ?? false) ? 'bi-shield-check' : 'bi-shield-lock' }}" id="psLockIcon"></i>
+          </div>
+          <div class="ps-lockbar-copy">
+            <div class="ps-lockbar-title" id="psLockTitle">
+              {{ ($payslipUnlocked ?? false) ? 'Payslips unlocked' : 'Payslips are protected' }}
+            </div>
+            <div class="ps-lockbar-sub" id="psLockSub">
+              @if($payslipUnlocked ?? false)
+                Re-locks automatically in <span id="psLockCountdown">&mdash;</span>.
+              @else
+                Opening a payslip sends a 6-digit code to <strong>{{ $maskedEmail ?? 'your email' }}</strong>.
+              @endif
+            </div>
+          </div>
+          <button type="button" class="btn-outline btn-sm ps-lockbar-action" id="psLockAction">
+            <i class="bi {{ ($payslipUnlocked ?? false) ? 'bi-lock' : 'bi-unlock' }}" id="psLockActionIcon"></i>
+            <span id="psLockActionText">{{ ($payslipUnlocked ?? false) ? 'Lock now' : 'Unlock' }}</span>
+          </button>
+        </div>
+
         @forelse($payslips ?? [] as $ps)
         <div class="ps-item">
           <div class="ps-icon">
@@ -1623,7 +1833,7 @@
               class="btn-primary btn-sm">
               <i class="bi bi-eye"></i> View
             </button>
-            <a href="{{ route('employee.payslip.download', $ps->id) }}" class="btn-outline btn-sm" title="Download PDF">
+            <a href="{{ route('employee.payslip.download', $ps->id) }}" class="btn-outline btn-sm" title="Download PDF" onclick="return downloadPayslip(event, this.href);">
               <i class="bi bi-download"></i>
             </a>
           </div>
@@ -1946,6 +2156,53 @@
 
 
 <!-- ════════════════════════════
+     PAYSLIP UNLOCK MODAL — step-up email verification
+════════════════════════════ -->
+<div class="modal fade" id="payslipUnlockModal" tabindex="-1" aria-hidden="true" aria-labelledby="psuTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content psu-card">
+
+      <div class="psu-head">
+        <div class="psu-shield"><i class="bi bi-shield-lock-fill"></i></div>
+        <h2 class="psu-title" id="psuTitle">Verify it&rsquo;s you</h2>
+        <p class="psu-lede" id="psuLede">
+          We&rsquo;ll email a 6-digit code to <strong>{{ $maskedEmail ?? 'your address' }}</strong>
+          before opening your payslip.
+        </p>
+      </div>
+
+      <div class="psu-body">
+
+        <div class="psu-alert" id="psuAlert" role="alert" hidden></div>
+
+        <div class="psu-otp" id="psuOtp">
+          <input class="psu-digit" type="text" inputmode="numeric" autocomplete="one-time-code"
+                 maxlength="1" aria-label="Digit 1">
+          <input class="psu-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+          <input class="psu-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+          <input class="psu-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+          <input class="psu-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+          <input class="psu-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+        </div>
+
+        <div class="psu-meta">
+          <span id="psuExpiry">&nbsp;</span>
+          <button type="button" class="psu-resend" id="psuResend" disabled>Resend code</button>
+        </div>
+
+        <button type="button" class="btn-primary psu-submit" id="psuSubmit" disabled>
+          <i class="bi bi-unlock-fill"></i> <span id="psuSubmitText">Unlock payslip</span>
+        </button>
+
+        <button type="button" class="psu-cancel" data-bs-dismiss="modal">Not now</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════
      PAYSLIP VIEW MODAL
 ════════════════════════════ -->
 <div class="modal fade" id="payslipModal" tabindex="-1" aria-hidden="true">
@@ -2033,6 +2290,10 @@ function switchTab(tab) {
 document.querySelectorAll('.sb-link[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
+
+/* The per-section URLs (/employee/payslips, /employee/profile, …) redirect here
+   with ?tab=, so a bookmark or an old link still lands on the right section. */
+switchTab(@json($activeTab ?? 'overview'));
 document.querySelectorAll('[data-switch]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.switch));
 });
@@ -2161,11 +2422,296 @@ async function markAllAnnouncementsRead() {
 }
 
 /* ═══════════════════════════════════════════
+   PAYSLIP STEP-UP VERIFICATION
+
+   A payslip shows net pay, government deductions and an address, so an
+   authenticated session alone is not enough to open one: the employee has to
+   prove they still hold the mailbox the payslip went to. The server is the
+   authority here (see App\Support\PayslipGate) — everything below is
+   convenience so the employee is not bounced into a raw 423 page.
+═══════════════════════════════════════════ */
+const PS_LOCK = {
+  statusUrl: @json(route('employee.payslip.access.status')),
+  sendUrl:   @json(route('employee.payslip.access.send')),
+  verifyUrl: @json(route('employee.payslip.access.verify')),
+  lockUrl:   @json(route('employee.payslip.access.lock')),
+  unlocked:  @json((bool) ($payslipUnlocked ?? false)),
+  expiresIn: @json((int) ($payslipUnlockedFor ?? 0)),
+  maskedEmail: @json($maskedEmail ?? 'your email'),
+  resendIn:  0,
+  /* Resolved when the employee finishes (or abandons) the unlock dialog. */
+  pending:   null,
+};
+
+const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+function psPost(url, body) {
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': csrf(),
+    },
+    body: JSON.stringify(body || {}),
+  });
+}
+
+/* ── Lock bar ─────────────────────────────── */
+let _psCountdownTimer = null;
+
+function psRenderLockBar() {
+  const bar = document.getElementById('psLockBar');
+  if (!bar) return;
+
+  const open = PS_LOCK.unlocked;
+  bar.classList.toggle('is-open', open);
+  document.getElementById('psLockIcon').className   = open ? 'bi bi-shield-check' : 'bi bi-shield-lock';
+  document.getElementById('psLockTitle').textContent = open ? 'Payslips unlocked' : 'Payslips are protected';
+  document.getElementById('psLockActionIcon').className = open ? 'bi bi-lock' : 'bi bi-unlock';
+  document.getElementById('psLockActionText').textContent = open ? 'Lock now' : 'Unlock';
+
+  const sub = document.getElementById('psLockSub');
+  if (open) {
+    sub.innerHTML = 'Re-locks automatically in <span id="psLockCountdown">—</span>.';
+    psStartCountdown();
+  } else {
+    clearInterval(_psCountdownTimer);
+    const masked = document.createElement('strong');
+    masked.textContent = PS_LOCK.maskedEmail;
+    sub.textContent = 'Opening a payslip sends a 6-digit code to ';
+    sub.appendChild(masked);
+    sub.append('.');
+  }
+}
+
+function psStartCountdown() {
+  clearInterval(_psCountdownTimer);
+  const tick = () => {
+    const el = document.getElementById('psLockCountdown');
+    if (PS_LOCK.expiresIn <= 0) {
+      clearInterval(_psCountdownTimer);
+      PS_LOCK.unlocked = false;
+      psRenderLockBar();
+      return;
+    }
+    if (el) {
+      const m = Math.floor(PS_LOCK.expiresIn / 60);
+      const s = String(PS_LOCK.expiresIn % 60).padStart(2, '0');
+      el.textContent = `${m}:${s}`;
+    }
+    PS_LOCK.expiresIn--;
+  };
+  tick();
+  _psCountdownTimer = setInterval(tick, 1000);
+}
+
+/* ── Unlock dialog ────────────────────────── */
+let _psuModal = null;
+let _psuResendTimer = null;
+
+function psuEl(id) { return document.getElementById(id); }
+
+function psuAlert(message, kind = 'error') {
+  const el = psuEl('psuAlert');
+  if (!el) return;
+  if (!message) { el.hidden = true; el.textContent = ''; return; }
+  el.hidden = false;
+  el.className = `psu-alert psu-alert-${kind}`;
+  el.textContent = message;
+}
+
+function psuDigits() { return Array.from(document.querySelectorAll('.psu-digit')); }
+function psuCode()   { return psuDigits().map(i => i.value).join(''); }
+
+function psuClear() {
+  psuDigits().forEach(i => { i.value = ''; i.classList.remove('is-filled'); });
+  psuEl('psuSubmit').disabled = true;
+}
+
+function psuSyncSubmit() {
+  psuEl('psuSubmit').disabled = psuCode().length !== 6;
+}
+
+function psuStartResendTimer(seconds) {
+  clearInterval(_psuResendTimer);
+  PS_LOCK.resendIn = seconds;
+  const btn = psuEl('psuResend');
+
+  const tick = () => {
+    if (PS_LOCK.resendIn <= 0) {
+      clearInterval(_psuResendTimer);
+      btn.disabled = false;
+      btn.textContent = 'Resend code';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = `Resend in ${PS_LOCK.resendIn}s`;
+    PS_LOCK.resendIn--;
+  };
+  tick();
+  _psuResendTimer = setInterval(tick, 1000);
+}
+
+/**
+ * Make sure payslips are open, prompting for a code if they are not.
+ * Resolves true once unlocked, false if the employee backs out.
+ */
+function ensurePayslipUnlocked() {
+  if (PS_LOCK.unlocked) return Promise.resolve(true);
+
+  const modalEl = psuEl('payslipUnlockModal');
+  if (!_psuModal) {
+    _psuModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: true });
+
+    modalEl.addEventListener('shown.bs.modal', () => psuDigits()[0]?.focus());
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      clearInterval(_psuResendTimer);
+      // Backing out is a "no", not a hang — settle any waiting caller.
+      if (PS_LOCK.pending) { PS_LOCK.pending(PS_LOCK.unlocked); PS_LOCK.pending = null; }
+    });
+  }
+
+  // A second call while the dialog is already up must not strand the first
+  // caller's promise — settle it before taking over the slot.
+  if (PS_LOCK.pending) { PS_LOCK.pending(false); PS_LOCK.pending = null; }
+
+  psuClear();
+  psuAlert('');
+  psuEl('psuExpiry').textContent = 'Sending code…';
+  _psuModal.show();
+  psuSendCode();
+
+  return new Promise(resolve => { PS_LOCK.pending = resolve; });
+}
+
+async function psuSendCode() {
+  psuAlert('');
+  try {
+    const res  = await psPost(PS_LOCK.sendUrl);
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.unlocked) {
+      // Server says it is already open — nothing to type.
+      psuFinish(true);
+      return;
+    }
+
+    if (!res.ok) {
+      psuAlert(data.message || 'Could not send the code. Please try again.');
+      psuStartResendTimer(data.resend_in || 15);
+      psuEl('psuExpiry').textContent = '';
+      return;
+    }
+
+    psuEl('psuExpiry').textContent = `Code expires in ${Math.round((data.expires_in || 300) / 60)} minutes`;
+    psuStartResendTimer(data.resend_in || 60);
+  } catch (e) {
+    psuAlert('Network error while sending the code.');
+    psuStartResendTimer(15);
+  }
+}
+
+async function psuSubmitCode() {
+  const code = psuCode();
+  if (code.length !== 6) return;
+
+  const btn = psuEl('psuSubmit');
+  btn.disabled = true;
+  psuEl('psuSubmitText').textContent = 'Verifying…';
+  psuAlert('');
+
+  try {
+    const res  = await psPost(PS_LOCK.verifyUrl, { code });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.ok) {
+      PS_LOCK.expiresIn = data.expires_in || 600;
+      psuFinish(true);
+      return;
+    }
+
+    psuAlert(data.message || 'That code is not correct.');
+    psuClear();
+    psuDigits()[0]?.focus();
+  } catch (e) {
+    psuAlert('Network error while verifying the code.');
+  } finally {
+    psuEl('psuSubmitText').textContent = 'Unlock payslip';
+    psuSyncSubmit();
+  }
+}
+
+function psuFinish(ok) {
+  PS_LOCK.unlocked = ok;
+  psRenderLockBar();
+  _psuModal?.hide();
+  if (PS_LOCK.pending) { PS_LOCK.pending(ok); PS_LOCK.pending = null; }
+}
+
+/* ── Wiring ───────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const digits = psuDigits();
+
+  digits.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(0, 1);
+      input.classList.toggle('is-filled', !!input.value);
+      if (input.value && i < digits.length - 1) digits[i + 1].focus();
+      psuSyncSubmit();
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !input.value && i > 0) digits[i - 1].focus();
+      if (e.key === 'Enter') psuSubmitCode();
+    });
+
+    // Let a whole pasted code fill the row rather than one box.
+    input.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+      text.split('').forEach((ch, n) => {
+        if (digits[n]) { digits[n].value = ch; digits[n].classList.add('is-filled'); }
+      });
+      psuSyncSubmit();
+      digits[Math.min(text.length, digits.length - 1)]?.focus();
+    });
+  });
+
+  psuEl('psuSubmit')?.addEventListener('click', psuSubmitCode);
+  psuEl('psuResend')?.addEventListener('click', psuSendCode);
+
+  psuEl('psLockAction')?.addEventListener('click', async () => {
+    if (PS_LOCK.unlocked) {
+      await psPost(PS_LOCK.lockUrl);
+      PS_LOCK.unlocked = false;
+      PS_LOCK.expiresIn = 0;
+      psRenderLockBar();
+    } else {
+      ensurePayslipUnlocked();
+    }
+  });
+
+  psRenderLockBar();
+});
+
+/* Download goes through the same gate, otherwise the middleware would just
+   bounce the navigation and the employee would see a redirect, not a reason. */
+function downloadPayslip(event, url) {
+  event.preventDefault();
+  ensurePayslipUnlocked().then(ok => { if (ok) window.location.href = url; });
+  return false;
+}
+
+/* ═══════════════════════════════════════════
    PAYSLIP VIEW — FETCH & RENDER
 ═══════════════════════════════════════════ */
 let _psModalInstance = null;
 
 async function viewPayslip(fetchUrl, downloadUrl) {
+  if (!await ensurePayslipUnlocked()) return;
+
   const bodyEl = document.getElementById('psModalBody');
   const modalEl = document.getElementById('payslipModal');
 
@@ -2186,9 +2732,19 @@ async function viewPayslip(fetchUrl, downloadUrl) {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        'X-CSRF-TOKEN': csrf()
       }
     });
+
+    // The window can lapse between the check above and this request.
+    if (res.status === 423) {
+      _psModalInstance.hide();
+      PS_LOCK.unlocked = false;
+      psRenderLockBar();
+      if (await ensurePayslipUnlocked()) viewPayslip(fetchUrl, downloadUrl);
+      return;
+    }
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderPayslipDoc(data, bodyEl, downloadUrl);

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Support\PasswordHash;
+use App\Support\PayslipGate;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -88,6 +89,9 @@ class EmployeeController extends Controller
     // EMPLOYEE PORTAL ROUTES (desktop/web portal)
     // -----------------------------------------------------------------------
 
+    /** Tabs the single-page portal knows how to open. */
+    private const PORTAL_TABS = ['overview', 'attendance', 'timesheets', 'payslips', 'announcements', 'profile'];
+
     public function portalDashboard(Request $request)
     {
         $user        = Auth::user();
@@ -103,18 +107,39 @@ class EmployeeController extends Controller
             ->orWhere('id', $employeeId)
             ->first();
 
+        // The Timesheets tab has always rendered `$timesheets ?? []`, but this
+        // action never passed it — so the tab read "No timesheets submitted yet"
+        // no matter how many the employee had filed.
+        $timesheets = EmployeeTimesheet::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)->orWhere('email', $user->email);
+        })->orderByDesc('date')->take(50)->get();
+
+        // Which tab to open on load. Whitelisted so a crafted ?tab= cannot be
+        // reflected into the page.
+        $requestedTab = (string) $request->query('tab', 'overview');
+        $activeTab    = in_array($requestedTab, self::PORTAL_TABS, true) ? $requestedTab : 'overview';
+
+        $payslipUnlocked    = PayslipGate::unlocked($request);
+        $payslipUnlockedFor = PayslipGate::unlockedFor($request);
+        $maskedEmail        = PayslipGate::maskEmail($user->email);
+
         return view('employee.dashboard-v2', compact(
-            'user', 'employee', 'stats', 'announcements', 'readAnnouncementIds', 'payslips', 'attendances'
+            'user', 'employee', 'stats', 'announcements', 'readAnnouncementIds',
+            'payslips', 'attendances', 'timesheets', 'activeTab',
+            'payslipUnlocked', 'payslipUnlockedFor', 'maskedEmail'
         ));
     }
 
+    /**
+     * The portal is a single tabbed page (employee.dashboard-v2), so the
+     * standalone per-section pages these routes used to render never existed —
+     * every one of them raised "View [employee.payslips] not found" and 500'd.
+     * They redirect into the matching dashboard tab instead, which keeps old
+     * links and bookmarks working.
+     */
     public function portalPayslips(Request $request)
     {
-        $user     = Auth::user();
-        $payslips = PayslipHistory::where('email', $user->email)
-            ->orderByDesc('sent_at')->get();
-
-        return view('employee.payslips', compact('user', 'payslips'));
+        return redirect()->route('employee.dashboard', ['tab' => 'payslips']);
     }
 
     public function portalPayslipJson(Request $request, PayslipHistory $payslip)
@@ -142,24 +167,16 @@ class EmployeeController extends Controller
         return view('employee.payslip-pdf', compact('payslip', 'user'));
     }
 
+    /** @see portalPayslips() for why this redirects rather than renders. */
     public function portalAttendance(Request $request)
     {
-        $user        = Auth::user();
-        $employeeId  = $this->resolveEmployeeId($user);
-        $attendances = $this->getAttendances($employeeId);
-        $stats       = $this->buildStats($attendances);
-
-        return view('employee.attendance', compact('user', 'attendances', 'stats'));
+        return redirect()->route('employee.dashboard', ['tab' => 'attendance']);
     }
 
+    /** @see portalPayslips() for why this redirects rather than renders. */
     public function portalTimesheets(Request $request)
     {
-        $user       = Auth::user();
-        $timesheets = EmployeeTimesheet::where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)->orWhere('email', $user->email);
-        })->orderByDesc('date')->paginate(20);
-
-        return view('employee.timesheets', compact('user', 'timesheets'));
+        return redirect()->route('employee.dashboard', ['tab' => 'timesheets']);
     }
 
     public function portalStoreTimesheet(Request $request)
@@ -201,15 +218,10 @@ class EmployeeController extends Controller
         return back()->with('success', 'Timesheet submitted!');
     }
 
+    /** @see portalPayslips() for why this redirects rather than renders. */
     public function portalAnnouncements(Request $request)
     {
-        $user          = Auth::user();
-        $employeeId    = $this->resolveEmployeeId($user);
-        $announcements = Announcement::orderByDesc('created_at')->get();
-        $readAnnouncementIds = AnnouncementRead::where('employee_id', $employeeId)
-            ->pluck('announcement_id')->all();
-
-        return view('employee.announcements', compact('user', 'announcements', 'readAnnouncementIds'));
+        return redirect()->route('employee.dashboard', ['tab' => 'announcements']);
     }
 
     /**
@@ -263,17 +275,10 @@ class EmployeeController extends Controller
         return response()->json(['success' => true, 'unread' => 0]);
     }
 
+    /** @see portalPayslips() for why this redirects rather than renders. */
     public function portalProfile(Request $request)
     {
-        $user        = Auth::user();
-        $employeeId  = $this->resolveEmployeeId($user);
-        $employee    = Employee::where('email', $user->email)
-            ->orWhere('id', $employeeId)
-            ->first();
-        $attendances = $this->getAttendances($employeeId);
-        $stats       = $this->buildStats($attendances);
-
-        return view('employee.profile', compact('user', 'employee', 'stats'));
+        return redirect()->route('employee.dashboard', ['tab' => 'profile']);
     }
 
     public function portalUpdateProfile(Request $request)
@@ -286,6 +291,21 @@ class EmployeeController extends Controller
             'new_password'     => 'nullable|string|min:8|confirmed',
         ]);
 
+        $emailChanged = strcasecmp($data['email'], (string) $user->email) !== 0;
+
+        // Payslips are released against whatever address is on the account, so
+        // changing that address is a security-relevant act, not a profile edit:
+        // an attacker on a borrowed session could otherwise point the payslip
+        // code at a mailbox they own. Require the password, exactly as a
+        // password change does.
+        if ($emailChanged) {
+            if (empty($data['current_password']) || !PasswordHash::check($data['current_password'], $user->password)) {
+                return back()->withErrors([
+                    'current_password' => 'Enter your current password to change the email address on your account.',
+                ]);
+            }
+        }
+
         $user->name  = $data['name'];
         $user->email = $data['email'];
 
@@ -297,6 +317,14 @@ class EmployeeController extends Controller
         }
 
         $user->save();
+
+        // Re-seal payslips whenever the destination address moves, so the new
+        // address has to prove itself before anything is released to it.
+        if ($emailChanged) {
+            PayslipGate::clear($request);
+
+            return back()->with('success', 'Profile updated. Verify your new email address again to open payslips.');
+        }
 
         return back()->with('success', 'Profile updated successfully!');
     }
