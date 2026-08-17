@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use App\Support\PasswordHash;
+use App\Support\Dtr;
 use App\Mail\AttendanceOtpMail;
 
 class AttendanceController extends Controller
@@ -151,6 +152,234 @@ class AttendanceController extends Controller
         }
 
         return view('attendance.dashboard');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // DAILY TIME RECORD — CSC Form No. 48
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Roster for a month: everyone in the checker's course who has attendance
+     * recorded, with a summary so a DTR that needs attention is visible before
+     * you open it.
+     */
+    public function dtrIndex(Request $request)
+    {
+        if (!$this->isAuthenticated()) {
+            return redirect()->route('attendance.attendlog.form');
+        }
+
+        $course = strtoupper(trim((string) ($request->query('course') ?: $this->getUserCourse())));
+        $month  = $this->resolveMonth($request->query('month'));
+
+        $employees = collect();
+
+        if ($course && $this->authorizeCourseAccess($course)) {
+            $employees = $this->rosterFor($course, $month);
+        }
+
+        return view('attendance.dtr-index', [
+            'course'      => $course,
+            'month'       => $month,
+            'employees'   => $employees,
+            'monthOptions' => $this->monthOptions(),
+        ]);
+    }
+
+    /** The editable DTR for one employee and month. */
+    public function dtrShow(Request $request, string $course, int $employeeId)
+    {
+        if (!$this->isAuthenticated()) {
+            return redirect()->route('attendance.attendlog.form');
+        }
+
+        $course = strtoupper(trim($course));
+
+        if (!$this->authorizeCourseAccess($course)) {
+            abort(403, 'You do not have access to this department.');
+        }
+
+        $month = $this->resolveMonth($request->query('month'));
+        $type  = $request->query('type');
+
+        return view('attendance.dtr', [
+            'course'       => $course,
+            'employeeId'   => $employeeId,
+            'employeeType' => $type,
+            'dtr'          => Dtr::build($employeeId, $course, $month, $type),
+            'monthOptions' => $this->monthOptions(),
+        ]);
+    }
+
+    /** Print view — CSC Form No. 48 as issued, nothing else on the page. */
+    public function dtrPrint(Request $request, string $course, int $employeeId)
+    {
+        if (!$this->isAuthenticated()) {
+            return redirect()->route('attendance.attendlog.form');
+        }
+
+        $course = strtoupper(trim($course));
+
+        if (!$this->authorizeCourseAccess($course)) {
+            abort(403, 'You do not have access to this department.');
+        }
+
+        $month = $this->resolveMonth($request->query('month'));
+
+        return view('attendance.dtr-print', [
+            'course' => $course,
+            'dtr'    => Dtr::build($employeeId, $course, $month, $request->query('type')),
+        ]);
+    }
+
+    /**
+     * Persist edits made on the DTR screen.
+     *
+     * Writes the same columns the dashboard's bulk save uses, so both screens
+     * remain interchangeable views of one table.
+     */
+    public function dtrSave(Request $request, string $course, int $employeeId)
+    {
+        if (!$this->isAuthenticated()) {
+            return redirect()->route('attendance.attendlog.form');
+        }
+
+        $course = strtoupper(trim($course));
+
+        if (!$this->authorizeCourseAccess($course)) {
+            abort(403, 'You do not have access to this department.');
+        }
+
+        $validated = $request->validate([
+            'month'          => ['required', 'date_format:Y-m'],
+            'employee_name'  => ['nullable', 'string', 'max:255'],
+            'employee_type'  => ['nullable', 'string', 'max:50'],
+            'days'           => ['array'],
+            'days.*.am_in'   => ['nullable', 'date_format:H:i'],
+            'days.*.am_out'  => ['nullable', 'date_format:H:i'],
+            'days.*.pm_in'   => ['nullable', 'date_format:H:i'],
+            'days.*.pm_out'  => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $month  = Carbon::createFromFormat('Y-m', $validated['month'])->startOfMonth();
+        $userId = $this->getUserId();
+        $saved  = 0;
+
+        foreach ($validated['days'] ?? [] as $day => $times) {
+            $day = (int) $day;
+
+            // A day number outside the month is either a stale form or someone
+            // poking at the payload; either way it must not create a row.
+            if ($day < 1 || $day > $month->daysInMonth) {
+                continue;
+            }
+
+            $date  = $month->copy()->addDays($day - 1)->toDateString();
+            $amIn  = $times['am_in']  ?: null;
+            $amOut = $times['am_out'] ?: null;
+            $pmIn  = $times['pm_in']  ?: null;
+            $pmOut = $times['pm_out'] ?: null;
+
+            $hasTimes = $amIn || $amOut || $pmIn || $pmOut;
+            $key = [
+                'employee_id' => $employeeId,
+                'date'        => $date,
+                'course'      => $course,
+            ];
+
+            // Clearing every field on a day removes the record rather than
+            // leaving an empty row that still counts as "present".
+            if (!$hasTimes) {
+                DB::table('attendances')->where($key)->delete();
+                continue;
+            }
+
+            $worked    = Dtr::workedMinutes($amIn, $amOut, $pmIn, $pmOut);
+            $undertime = max(0, Dtr::REQUIRED_MINUTES - $worked);
+
+            DB::table('attendances')->updateOrInsert($key, [
+                'user_id'           => $userId,
+                'time_in'           => $amIn,
+                'time_out'          => $pmOut,
+                'am_in_time'        => $amIn,
+                'am_out_time'       => $amOut,
+                'pm_in_time'        => $pmIn,
+                'pm_out_time'       => $pmOut,
+                'hours_rendered'    => round($worked / 60, 2),
+                'total_hours'       => round($worked / 60, 2),
+                'undertime_minutes' => $undertime,
+                'status'            => 'present',
+                'employee_name'     => $validated['employee_name'] ?? null,
+                'employee_type'     => $validated['employee_type'] ?? null,
+                'updated_at'        => now(),
+                'created_at'        => now(),
+            ]);
+
+            $saved++;
+        }
+
+        return redirect()
+            ->route('attendance.dtr.show', [
+                'course'     => $course,
+                'employeeId' => $employeeId,
+                'month'      => $month->format('Y-m'),
+                'type'       => $validated['employee_type'] ?? null,
+            ])
+            ->with('success', "Daily Time Record saved ({$saved} day" . ($saved === 1 ? '' : 's') . ').');
+    }
+
+    /** Employees with attendance in this course for the month, plus a summary. */
+    private function rosterFor(string $course, Carbon $month)
+    {
+        try {
+            if (!Schema::hasTable('attendances')) {
+                return collect();
+            }
+
+            return DB::table('attendances')
+                ->selectRaw('employee_id, MAX(employee_name) as employee_name, MAX(employee_type) as employee_type')
+                ->selectRaw('COUNT(*) as days_recorded')
+                ->selectRaw('COALESCE(SUM(total_hours), 0) as hours')
+                ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
+                ->whereBetween('date', [
+                    $month->copy()->startOfMonth()->toDateString(),
+                    $month->copy()->endOfMonth()->toDateString(),
+                ])
+                ->groupBy('employee_id')
+                ->orderBy('employee_name')
+                ->get();
+        } catch (\Exception $e) {
+            Log::warning('DTR roster failed: ' . $e->getMessage());
+            return collect();
+        }
+    }
+
+    /** Parse ?month=YYYY-MM, falling back to the current month. */
+    private function resolveMonth(?string $raw): Carbon
+    {
+        if ($raw) {
+            try {
+                return Carbon::createFromFormat('Y-m', $raw)->startOfMonth();
+            } catch (\Exception $e) {
+                // Fall through to today.
+            }
+        }
+
+        return Carbon::now()->startOfMonth();
+    }
+
+    /** The last 12 months, for the period picker. */
+    private function monthOptions(): array
+    {
+        $options = [];
+        $cursor  = Carbon::now()->startOfMonth();
+
+        for ($i = 0; $i < 12; $i++) {
+            $options[$cursor->format('Y-m')] = $cursor->format('F Y');
+            $cursor->subMonth();
+        }
+
+        return $options;
     }
 
     // ──────────────────────────────────────────────────────────────────────────

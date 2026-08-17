@@ -308,6 +308,15 @@ Route::middleware(['auth.attendance'])->prefix('attendance')->name('attendance.'
     Route::get('/dashboard', [AttendanceController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [AttendanceController::class, 'logout'])->name('logout');
 
+    // Daily Time Record — CSC Form No. 48
+    Route::get('/dtr', [AttendanceController::class, 'dtrIndex'])->name('dtr.index');
+    Route::get('/dtr/{course}/{employeeId}', [AttendanceController::class, 'dtrShow'])
+        ->whereNumber('employeeId')->name('dtr.show');
+    Route::post('/dtr/{course}/{employeeId}', [AttendanceController::class, 'dtrSave'])
+        ->whereNumber('employeeId')->name('dtr.save');
+    Route::get('/dtr/{course}/{employeeId}/print', [AttendanceController::class, 'dtrPrint'])
+        ->whereNumber('employeeId')->name('dtr.print');
+
     Route::get('/api/course-counts', [AttendanceController::class, 'getCourseCounts']);
     Route::get('/api/attendance-data/{course}', [AttendanceController::class, 'getAttendanceData']);
     Route::post('/api/save-attendance', [AttendanceController::class, 'saveAttendance']);
