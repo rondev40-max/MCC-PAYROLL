@@ -876,6 +876,122 @@
   .empty-state p { color: var(--text-3); margin-top: .6rem; font-size: .8rem; line-height: 1.7; }
 
   /* ══════════════════════════════════════════════
+     WELCOME HEADER
+     Deep slate, matching the sidebar and the payslip document header, so the
+     three dark surfaces in this app read as one family instead of three.
+  ══════════════════════════════════════════════ */
+  .welcome-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, #101725 0%, #1c2b4a 100%);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: var(--r-lg);
+    padding: 1.5rem 1.7rem;
+    margin-bottom: 1rem;
+  }
+
+  .welcome-main { flex: 1 1 320px; min-width: 0; }
+
+  .welcome-eyebrow {
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: rgba(226,232,240,.42);
+    margin-bottom: .5rem;
+  }
+
+  .welcome-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.35rem;
+    letter-spacing: -.025em;
+    color: #fff;
+    margin: 0 0 .3rem;
+  }
+
+  .welcome-sub {
+    font-size: .82rem;
+    color: rgba(226,232,240,.6);
+    margin: 0;
+    max-width: 52ch;
+  }
+
+  /* Two quiet facts, not a glass card. */
+  .welcome-meta {
+    display: flex;
+    gap: 2rem;
+    flex-shrink: 0;
+  }
+
+  .welcome-meta-item { display: flex; flex-direction: column; gap: 3px; }
+
+  .welcome-meta-label {
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(226,232,240,.38);
+  }
+
+  .welcome-meta-value {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: .85rem;
+    color: #fff;
+  }
+
+  @media (max-width: 640px) {
+    .welcome-card { padding: 1.25rem 1.25rem; gap: 1.1rem; }
+    .welcome-title { font-size: 1.15rem; }
+    .welcome-meta { gap: 1.5rem; }
+  }
+
+  /* ══════════════════════════════════════════════
+     UNVERIFIED EMAIL BANNER (Payslips tab only)
+  ══════════════════════════════════════════════ */
+  .verify-banner {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .85rem 1.15rem;
+    margin-bottom: .8rem;
+    border-radius: var(--r-md);
+    border: 1px solid rgba(217,119,6,.28);
+    background: rgba(217,119,6,.07);
+  }
+
+  .verify-banner-icon {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: .95rem;
+    background: rgba(217,119,6,.14); color: #b45309;
+    border: 1px solid rgba(217,119,6,.24);
+  }
+  [data-theme="dark"] .verify-banner-icon { color: #fbbf24; }
+
+  .verify-banner-copy { flex: 1; min-width: 0; }
+
+  .verify-banner-title {
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-size: .8rem; color: var(--text); letter-spacing: -.01em;
+  }
+
+  .verify-banner-sub {
+    font-size: .7rem; color: var(--text-2); margin-top: 2px; line-height: 1.5;
+  }
+  .verify-banner-sub strong { color: var(--text); font-weight: 600; }
+
+  .verify-banner-action { flex-shrink: 0; }
+
+  @media (max-width: 560px) {
+    .verify-banner { flex-wrap: wrap; }
+    .verify-banner-action { width: 100%; }
+    .verify-banner-action .btn-outline { width: 100%; justify-content: center; }
+  }
+
+  /* ══════════════════════════════════════════════
      PAYSLIP LOCK BAR
      Sits above the payslip list and states, in plain words, whether the
      section is sealed. Amber while locked, teal once open — deliberately
@@ -1312,82 +1428,49 @@
         </div>
       @endif
 
-      @if(is_null(Auth::user()->email_verified_at))
-        <div class="alert alert-warning mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-radius: var(--r-md); border-left: 4px solid #f59e0b; background: rgba(245,158,11,0.1); color: var(--text);">
-          <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-envelope-exclamation-fill text-warning fs-4"></i>
-            <div>
-              <strong style="font-size: .85rem;">Email Address Not Verified</strong>
-              <div style="font-size: .75rem; color: var(--text-2);">
-                Please verify your email ({{ Auth::user()->email }}) to ensure secure delivery and access to your e-payslips.
-              </div>
-            </div>
-          </div>
-          <form method="POST" action="{{ route('verification.resend') }}" class="m-0">
-            @csrf
-            <button type="submit" class="btn btn-warning btn-sm fw-bold px-3" style="border-radius: 8px; font-size: .76rem;">
-              <i class="bi bi-send-fill me-1"></i> Resend Verification Email
-            </button>
-          </form>
-        </div>
-      @endif
+      {{-- The "verify your email" notice used to live here, outside every tab,
+           so it followed the employee around the whole portal. It only has
+           consequences for payslip delivery, so it now sits in the Payslips
+           tab where it is actionable. --}}
 
       <!-- ════════════════════════════════
            PANEL: OVERVIEW
       ════════════════════════════════ -->
       <div class="tab-panel active" id="panel-overview">
 
-        <!-- Premium Hero Welcome Banner -->
         @php
-          $hour = (int)date('H');
-          if ($hour < 12) {
-              $greeting = 'Good Morning';
-              $greetingIcon = 'bi-brightness-high-fill';
-          } elseif ($hour < 18) {
-              $greeting = 'Good Afternoon';
-              $greetingIcon = 'bi-sun-fill';
-          } else {
-              $greeting = 'Good Evening';
-              $greetingIcon = 'bi-moon-stars-fill';
-          }
           $latestPayslip = isset($payslips) && $payslips->count() > 0 ? $payslips->first() : null;
-          $netPayVal = $latestPayslip ? '₱' . number_format($latestPayslip->net_pay ?? $latestPayslip->total_net_pay ?? 0, 2) : '—';
+          // PayslipHistory stores the net figure in `total_honorarium`. The old
+          // code read `net_pay` / `total_net_pay`, neither of which exists on
+          // that table, so this KPI silently displayed ₱0.00 for everyone.
+          $netPayVal = $latestPayslip
+            ? '₱' . number_format($latestPayslip->total_honorarium ?? 0, 2)
+            : '—';
         @endphp
 
-        <div class="hero-welcome-card mb-3 p-3 p-md-4 text-white position-relative overflow-hidden"
-             style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%); border-radius: var(--r-xl); box-shadow: 0 10px 30px rgba(37,99,235,0.22); border: 1px solid rgba(255,255,255,0.15);">
-          <!-- Ambient glowing background orbs -->
-          <div style="position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(59,130,246,0.25); filter:blur(30px); pointer-events:none;"></div>
-          <div style="position:absolute; bottom:-60px; right:100px; width:160px; height:160px; border-radius:50%; background:rgba(16,185,129,0.2); filter:blur(35px); pointer-events:none;"></div>
+        {{-- Welcome header. Was a three-stop gradient with two blurred glow
+             orbs, a backdrop-filter panel, a time-of-day badge and an "Active
+             Session" pill — a lot of chrome above the numbers people came for.
+             Flattened to match the rest of the restyled portal. --}}
+        <div class="welcome-card">
+          <div class="welcome-main">
+            <div class="welcome-eyebrow">Employee portal</div>
+            <h2 class="welcome-title">
+              Welcome back, {{ Str::words($employee->name ?? 'Employee', 2, '') }}
+            </h2>
+            <p class="welcome-sub">
+              Your attendance log, timesheets and e-payslips, all in one place.
+            </p>
+          </div>
 
-          <div class="row align-items-center position-relative" style="z-index:2;">
-            <div class="col-lg-8 mb-3 mb-lg-0">
-              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                <span class="badge" style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:.72rem; font-weight:600; border-radius:20px; padding:.3rem .75rem;">
-                  <i class="bi {{ $greetingIcon }} me-1 text-warning"></i> {{ $greeting }}
-                </span>
-                <span class="badge" style="background:rgba(16,185,129,0.25); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; font-size:.72rem; font-weight:600; border-radius:20px; padding:.3rem .75rem;">
-                  <span class="pulse-dot d-inline-block me-1" style="width:6px;height:6px;background:#10b981;border-radius:50%;"></span> Active Session
-                </span>
-              </div>
-              <h2 class="fw-bold mb-1 text-white" style="font-family:'Sora',sans-serif; font-size: 1.4rem; letter-spacing:-.02em;">
-                Welcome back, {{ Str::words($employee->name ?? 'Employee', 2, '') }}! 👋
-              </h2>
-              <p class="mb-0 text-white-50" style="font-size: .83rem; max-width: 620px;">
-                Access your real-time attendance log, monthly timesheets, and downloadable e-payslips anytime from your employee portal.
-              </p>
+          <div class="welcome-meta">
+            <div class="welcome-meta-item">
+              <span class="welcome-meta-label">Employee ID</span>
+              <span class="welcome-meta-value">{{ $employee->employee_id ?? 'EMP-'.$user->id }}</span>
             </div>
-
-            <div class="col-lg-4 text-lg-end">
-              <div class="d-inline-flex flex-column align-items-lg-end p-2 px-3" style="background:rgba(255,255,255,0.1); backdrop-filter:blur(12px); border-radius:var(--r-lg); border:1px solid rgba(255,255,255,0.2);">
-                <div class="text-white-50" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; font-weight:700;">Employee ID / Position</div>
-                <div class="fw-bold text-white mt-1" style="font-size:.88rem; font-family:'Sora',sans-serif;">
-                  <i class="bi bi-person-badge me-1"></i> {{ $employee->employee_id ?? 'EMP-'.$user->id }}
-                </div>
-                <div style="font-size:.72rem; color:rgba(255,255,255,0.85);">
-                  {{ $employee->position ?? 'Faculty / Staff' }}
-                </div>
-              </div>
+            <div class="welcome-meta-item">
+              <span class="welcome-meta-label">Position</span>
+              <span class="welcome-meta-value">{{ $employee->position ?? 'Faculty / Staff' }}</span>
             </div>
           </div>
         </div>
@@ -1783,6 +1866,28 @@
             <div class="ph-sub">View and download your released payslips</div>
           </div>
         </div>
+
+        {{-- Unverified email. Scoped to this tab: it is the payslip flow that
+             depends on the address being reachable, and repeating it on every
+             screen only taught people to ignore it. --}}
+        @if(is_null(Auth::user()->email_verified_at))
+          <div class="verify-banner">
+            <div class="verify-banner-icon"><i class="bi bi-envelope-exclamation-fill"></i></div>
+            <div class="verify-banner-copy">
+              <div class="verify-banner-title">Email address not verified</div>
+              <div class="verify-banner-sub">
+                Payslips and access codes are sent to <strong>{{ Auth::user()->email }}</strong>.
+                Verify it to be sure they reach you.
+              </div>
+            </div>
+            <form method="POST" action="{{ route('verification.resend') }}" class="m-0 verify-banner-action">
+              @csrf
+              <button type="submit" class="btn-outline btn-sm">
+                <i class="bi bi-send-fill"></i> Resend link
+              </button>
+            </form>
+          </div>
+        @endif
 
         {{-- Step-up verification state. Payslips carry net pay and government
              deduction figures, so opening one needs a code sent to the address
