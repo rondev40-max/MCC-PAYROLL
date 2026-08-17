@@ -370,3 +370,37 @@ test('bulk delete removes only the selected identity inside the selected cutoff'
         'date' => '2026-08-03',
     ]);
 });
+
+/*
+ * The attendance register itself had no rendering test, which is how a Blade
+ * ParseError in it reached production: the compiled view failed before emitting
+ * a single byte, so every checker got a 500 straight after signing in.
+ *
+ * Compilation errors only surface when a view is actually rendered, so these
+ * assertions are deliberately about the page loading at all.
+ */
+test('the attendance register renders for a signed-in checker', function () {
+    $response = $this
+        ->withSession(attendancePortalSession())
+        ->get(route('attendance.dashboard'));
+
+    $response
+        ->assertOk()
+        ->assertViewIs('attendance.dashboard')
+        ->assertSee('Attendance Register');
+});
+
+test('the register hands its route config to the browser intact', function () {
+    $html = $this
+        ->withSession(attendancePortalSession())
+        ->get(route('attendance.dashboard'))
+        ->getContent();
+
+    // Blade previously truncated this payload mid-array. Every key has to
+    // survive, or the dashboard JS silently loses an endpoint.
+    expect($html)->toContain('window.attendancePortal');
+
+    foreach (['attendanceData', 'saveAttendance', 'saveHistory', 'bulkDelete', 'login', 'dtrBase'] as $key) {
+        expect($html)->toContain($key);
+    }
+});

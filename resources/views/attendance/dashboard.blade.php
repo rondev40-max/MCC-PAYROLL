@@ -197,19 +197,32 @@
     <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
 @endsection
 
+@php
+    // Built here rather than inline in @json(...).
+    //
+    // Blade finds the end of a directive's argument by counting parentheses, so
+    // a multi-line array literal containing nested url()/route() calls gets cut
+    // short at the first point where the counts happen to balance. That emitted
+    // a truncated json_encode( ... ) with an unclosed '[', and the dashboard
+    // died with a ParseError before rendering a single byte.
+    //
+    // Passing one variable gives the directive nothing it can miscount.
+    $attendancePortalConfig = [
+        'course' => $course,
+        'routes' => [
+            'attendanceData' => url('/attendance/api/attendance-data'),
+            'saveAttendance' => url('/attendance/api/save-attendance'),
+            'saveHistory'    => url('/attendance/api/save-attendance-history'),
+            'bulkDelete'     => url('/attendance/api/bulk-delete-attendance'),
+            'login'          => route('attendance.attendlog.form'),
+            'dtrBase'        => url('/attendance/dtr'),
+        ],
+    ];
+@endphp
+
 @push('scripts')
     <script>
-        window.attendancePortal = @json([
-            'course' => $course,
-            'routes' => [
-                'attendanceData' => url('/attendance/api/attendance-data'),
-                'saveAttendance' => url('/attendance/api/save-attendance'),
-                'saveHistory' => url('/attendance/api/save-attendance-history'),
-                'bulkDelete' => url('/attendance/api/bulk-delete-attendance'),
-                'login' => route('attendance.attendlog.form'),
-                'dtrBase' => url('/attendance/dtr'),
-            ],
-        ]);
+        window.attendancePortal = @json($attendancePortalConfig);
     </script>
     <script src="{{ asset('js/attendance-dashboard.js') }}" defer></script>
 @endpush
