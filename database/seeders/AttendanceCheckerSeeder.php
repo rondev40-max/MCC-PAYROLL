@@ -15,7 +15,7 @@ class AttendanceCheckerSeeder extends Seeder
         $attendanceCheckers = [
             [
                 'name' => 'BSIT Attendance Checker',
-                'email' => 'bsit@mcc.edu',
+                'email' => 'bsit@gmail.com',
                 'password' => \Illuminate\Support\Facades\Hash::make('password123'),
                 'role' => 'attendance_checker',
                 'course' => 'bsit',
@@ -24,7 +24,7 @@ class AttendanceCheckerSeeder extends Seeder
             ],
             [
                 'name' => 'BSBA Attendance Checker',
-                'email' => 'bsba@mcc.edu',
+                'email' => 'bsba@gmail.com',
                 'password' => \Illuminate\Support\Facades\Hash::make('password123'),
                 'role' => 'attendance_checker',
                 'course' => 'bsba',
@@ -33,7 +33,7 @@ class AttendanceCheckerSeeder extends Seeder
             ],
             [
                 'name' => 'BSHM Attendance Checker',
-                'email' => 'bshm@mcc.edu',
+                'email' => 'bshm@gmail.com',
                 'password' => \Illuminate\Support\Facades\Hash::make('password123'),
                 'role' => 'attendance_checker',
                 'course' => 'bshm',
@@ -42,7 +42,7 @@ class AttendanceCheckerSeeder extends Seeder
             ],
             [
                 'name' => 'BSED Attendance Checker',
-                'email' => 'bsed@mcc.edu',
+                'email' => 'bsed@gmail.com',
                 'password' => \Illuminate\Support\Facades\Hash::make('password123'),
                 'role' => 'attendance_checker',
                 'course' => 'bsed',
