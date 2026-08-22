@@ -1045,13 +1045,14 @@
             <span class="live-badge"><span class="dot"></span>Live</span>
           </div>
           <div class="chart-area">
-            <canvas id="employmentChart" role="img" aria-label="Horizontal bar chart showing count of Full-Time, Part-Time, Staff, and Utility workers."></canvas>
+            <canvas id="employmentChart" role="img" aria-label="Horizontal bar chart showing count of Full-Time, Part-Time, Staff, Utility, and Watchman personnel."></canvas>
           </div>
           <div class="chart-legend">
             <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time ({{ $totalFulltimeInstructors ?? 0 }})</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time ({{ $totalParttimeInstructors ?? 0 }})</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6;"></div>Staff ({{ $totalStaff ?? 0 }})</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Utility ({{ $totalUtility ?? 0 }})</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#8b5cf6;"></div>Watchman ({{ $totalWatchman ?? 0 }})</div>
           </div>
         </div>
  
@@ -1246,14 +1247,15 @@ function initEmployment() {
   empChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Full-Time', 'Part-Time', 'Staff', 'Utility'],
+      labels: ['Full-Time', 'Part-Time', 'Staff', 'Utility', 'Watchman'],
       datasets: [{
-        data: [STATS.fulltime, STATS.parttime, STATS.staff, STATS.utility],
+        data: [STATS.fulltime, STATS.parttime, STATS.staff, STATS.utility, STATS.watchman],
         backgroundColor: [
           'rgba(16,185,129,0.85)',
           'rgba(245,158,11,0.85)',
           'rgba(59,130,246,0.85)',
-          'rgba(147,197,253,0.85)'
+          'rgba(147,197,253,0.85)',
+          'rgba(139,92,246,0.85)'
         ],
         borderRadius: { topRight: 6, bottomRight: 6 },
         borderSkipped: false,
