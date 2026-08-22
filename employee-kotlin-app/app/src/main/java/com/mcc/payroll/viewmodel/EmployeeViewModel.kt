@@ -189,6 +189,35 @@ class EmployeeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ── Announcements ───────────────────────────────────────────────────────
+    private val _announcementsState = MutableStateFlow(ScreenState(loading = true))
+    val announcementsState: StateFlow<ScreenState> = _announcementsState.asStateFlow()
+
+    private val _announcements = MutableStateFlow<List<Announcement>>(emptyList())
+    val announcements: StateFlow<List<Announcement>> = _announcements.asStateFlow()
+
+    fun loadAnnouncements(refresh: Boolean = false) {
+        _announcementsState.value = if (refresh) {
+            _announcementsState.value.copy(refreshing = true, error = null)
+        } else {
+            ScreenState(loading = true)
+        }
+
+        viewModelScope.launch {
+            when (val result = repo.announcements()) {
+                is Outcome.Ok -> {
+                    _announcements.value = result.data.announcements.orEmpty()
+                    _announcementsState.value = ScreenState()
+                }
+
+                is Outcome.Failed -> {
+                    _announcementsState.value = ScreenState(error = result.message)
+                    if (result.unauthorized) expireSession()
+                }
+            }
+        }
+    }
+
     // ── Profile ─────────────────────────────────────────────────────────────
     private val _profileState = MutableStateFlow(ScreenState(loading = true))
     val profileState: StateFlow<ScreenState> = _profileState.asStateFlow()
@@ -244,6 +273,7 @@ class EmployeeViewModel(app: Application) : AndroidViewModel(app) {
             _payslips.value = emptyList()
             _attendance.value = AttendanceData()
             _profile.value = HomeData()
+            _announcements.value = emptyList()
             onDone()
         }
     }

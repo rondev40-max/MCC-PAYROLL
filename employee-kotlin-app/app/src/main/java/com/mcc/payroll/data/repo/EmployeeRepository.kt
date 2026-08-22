@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.mcc.payroll.data.local.SessionStore
 import com.mcc.payroll.data.remote.ApiError
 import com.mcc.payroll.data.remote.ApiService
+import com.mcc.payroll.data.remote.AnnouncementsResponse
 import com.mcc.payroll.data.remote.AttendanceResponse
 import com.mcc.payroll.data.remote.DashboardResponse
 import com.mcc.payroll.data.remote.LoginRequest
@@ -47,6 +48,9 @@ class EmployeeRepository(
     suspend fun payslips(): Outcome<PayslipsResponse> = call { unwrap(api.payslips()) }
 
     suspend fun profile(): Outcome<ProfileResponse> = call { unwrap(api.profile()) }
+
+    /** Full notice board. The dashboard only carries the newest five. */
+    suspend fun announcements(): Outcome<AnnouncementsResponse> = call { unwrap(api.announcements()) }
 
     suspend fun logout() = session.clear()
 

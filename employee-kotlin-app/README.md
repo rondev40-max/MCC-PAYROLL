@@ -20,6 +20,7 @@ Built with Kotlin + Jetpack Compose (Material 3), talking to the Laravel API in
 ./gradlew :app:assembleDebug     # -> app/build/outputs/apk/debug/app-debug.apk
 ./gradlew :app:assembleRelease   # -> app/build/outputs/apk/release/app-release-unsigned.apk
 ./gradlew :app:lintDebug
+./gradlew :app:testDebugUnitTest   # 11 JVM unit tests
 ```
 
 ## Pointing it at your server
@@ -48,7 +49,8 @@ data/repo     EmployeeRepository — returns Outcome.Ok / Outcome.Failed(message
 viewmodel     EmployeeViewModel — one StateFlow per screen (data + loading/error)
 ui/theme      Material 3 scheme, type scale and shapes derived from the web portal
 ui/components Shared card, icon tile, status chip, loading / error / empty states
-ui            LoginScreen, DashboardScreen, AttendanceScreen, PayslipsScreen, ProfileScreen
+ui            LoginScreen, DashboardScreen, AttendanceScreen, PayslipsScreen,
+              AnnouncementsScreen, ProfileScreen
 ```
 
 Dependencies are wired by hand in `MccApp` rather than with Hilt — five screens
@@ -60,8 +62,11 @@ A 401 anywhere clears the session and returns the user to sign-in.
 
 ## Notes for whoever ships this
 
-- **The release APK is unsigned.** Generate a keystore and configure
-  `signingConfigs` before distributing, or the install will be rejected.
+- **Signing is wired but needs your key.** Copy `keystore.properties.example`
+  to `keystore.properties` and fill it in; the release build picks it up
+  automatically. Without that file the build still succeeds and produces an
+  *unsigned* APK, which Android will refuse to install. The properties file
+  and any `.jks` are gitignored — never commit key material.
 - `applicationId` is `com.mcc.payroll`, the same id as the Capacitor wrapper in
   `/android`. Two APKs cannot share an id on one device — retire one, or change
   this to something like `com.mcc.payroll.native`.

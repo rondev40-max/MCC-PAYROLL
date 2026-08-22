@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +41,7 @@ import com.mcc.payroll.ui.components.EmptyState
 import com.mcc.payroll.ui.components.ErrorState
 import com.mcc.payroll.ui.components.IconTile
 import com.mcc.payroll.ui.components.LoadingState
+import com.mcc.payroll.ui.components.Refreshable
 import com.mcc.payroll.ui.components.MccCard
 import com.mcc.payroll.ui.components.SectionLabel
 import com.mcc.payroll.ui.theme.mutedColor
@@ -47,7 +49,10 @@ import com.mcc.payroll.ui.theme.statusColors
 import com.mcc.payroll.viewmodel.EmployeeViewModel
 
 @Composable
-fun DashboardScreen(viewModel: EmployeeViewModel) {
+fun DashboardScreen(
+    viewModel: EmployeeViewModel,
+    onSeeAllAnnouncements: () -> Unit = {},
+) {
     val state by viewModel.homeState.collectAsState()
     val data by viewModel.home.collectAsState()
     val cachedName by viewModel.cachedName.collectAsState()
@@ -57,13 +62,19 @@ fun DashboardScreen(viewModel: EmployeeViewModel) {
     when {
         state.loading -> LoadingState()
         state.error != null -> ErrorState(state.error!!, onRetry = { viewModel.loadHome() })
-        else -> DashboardContent(
-            name = data.user?.name ?: cachedName,
-            position = data.employee?.position,
-            stats = data.stats,
-            payslips = data.payslips,
-            announcements = data.announcements,
-        )
+        else -> Refreshable(
+            refreshing = state.refreshing,
+            onRefresh = { viewModel.loadHome(refresh = true) },
+        ) {
+            DashboardContent(
+                name = data.user?.name ?: cachedName,
+                position = data.employee?.position,
+                stats = data.stats,
+                payslips = data.payslips,
+                announcements = data.announcements,
+                onSeeAllAnnouncements = onSeeAllAnnouncements,
+            )
+        }
     }
 }
 
@@ -74,6 +85,7 @@ private fun DashboardContent(
     stats: Stats,
     payslips: List<Payslip>,
     announcements: List<Announcement>,
+    onSeeAllAnnouncements: () -> Unit,
 ) {
     val status = statusColors
 
@@ -178,7 +190,14 @@ private fun DashboardContent(
         }
 
         // ── Announcements ───────────────────────────────────────────────────
-        item { SectionLabel("Announcements") }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SectionLabel("Announcements", Modifier.weight(1f))
+                // The dashboard payload is capped at five by the server, so
+                // there is always a chance more exist than are shown here.
+                TextButton(onClick = onSeeAllAnnouncements) { Text("See all") }
+            }
+        }
 
         if (announcements.isEmpty()) {
             item {

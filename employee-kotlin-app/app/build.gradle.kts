@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -18,6 +20,19 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+
+    signingConfigs {
+        create("release") {
+            val props = rootProject.file("keystore.properties")
+            if (props.exists()) {
+                val creds = Properties().apply { load(props.inputStream()) }
+                storeFile = file(creds.getProperty("storeFile"))
+                storePassword = creds.getProperty("storePassword")
+                keyAlias = creds.getProperty("keyAlias")
+                keyPassword = creds.getProperty("keyPassword")
+            }
+        }
+    }
     buildTypes {
         debug {
             // Points at the Laravel dev server as seen from the Android emulator:
@@ -28,6 +43,9 @@ android {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
         release {
+            if (rootProject.file("keystore.properties").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("String", "API_BASE_URL", "\"https://mcc-payroll-abfm-pi.vercel.app/api/\"")
             manifestPlaceholders["usesCleartextTraffic"] = "false"
             isMinifyEnabled = true
@@ -69,6 +87,10 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    // Pull-to-refresh only. Material3 1.1.2 (compose-bom 2024.01.00) has no
+    // PullToRefreshBox — that lands in 1.3 — and the Material 2 modifier
+    // composes fine inside Material 3 surfaces.
+    implementation("androidx.compose.material:material")
     // The default icon set has no Receipt/Logout/Badge glyphs this app needs.
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")

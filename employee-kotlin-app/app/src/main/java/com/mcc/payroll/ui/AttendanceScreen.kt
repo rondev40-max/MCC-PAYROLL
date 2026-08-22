@@ -28,6 +28,7 @@ import com.mcc.payroll.ui.components.EmptyState
 import com.mcc.payroll.ui.components.ErrorState
 import com.mcc.payroll.ui.components.IconTile
 import com.mcc.payroll.ui.components.LoadingState
+import com.mcc.payroll.ui.components.Refreshable
 import com.mcc.payroll.ui.components.MccCard
 import com.mcc.payroll.ui.components.SectionLabel
 import com.mcc.payroll.ui.components.StatusChip
@@ -45,43 +46,48 @@ fun AttendanceScreen(viewModel: EmployeeViewModel) {
     when {
         state.loading -> LoadingState()
         state.error != null -> ErrorState(state.error!!, onRetry = { viewModel.loadAttendance() })
-        else -> LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        else -> Refreshable(
+            refreshing = state.refreshing,
+            onRefresh = { viewModel.loadAttendance(refresh = true) },
         ) {
-            item {
-                Column {
-                    Text(
-                        text = "Attendance",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    Text(
-                        text = "${data.attendances.size} record" +
-                            (if (data.attendances.size == 1) "" else "s") +
-                            " · ${data.stats.totalHours} logged",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = mutedColor,
-                    )
-                    Spacer(Modifier.height(18.dp))
-                    SectionLabel("Log")
-                }
-            }
-
-            if (data.attendances.isEmpty()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 item {
-                    MccCard {
-                        EmptyState(
-                            icon = Icons.Outlined.CalendarMonth,
-                            title = "No attendance recorded",
-                            detail = "Check-ins logged at the terminal will appear here.",
+                    Column {
+                        Text(
+                            text = "Attendance",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
                         )
+                        Text(
+                            text = "${data.attendances.size} record" +
+                                (if (data.attendances.size == 1) "" else "s") +
+                                " · ${data.stats.totalHours} logged",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = mutedColor,
+                        )
+                        Spacer(Modifier.height(18.dp))
+                        SectionLabel("Log")
                     }
                 }
-            } else {
-                items(data.attendances, key = { it.id ?: it.hashCode() }) { record ->
-                    AttendanceRow(record)
+
+                if (data.attendances.isEmpty()) {
+                    item {
+                        MccCard {
+                            EmptyState(
+                                icon = Icons.Outlined.CalendarMonth,
+                                title = "No attendance recorded",
+                                detail = "Check-ins logged at the terminal will appear here.",
+                            )
+                        }
+                    }
+                } else {
+                    items(data.attendances, key = { it.id ?: it.hashCode() }) { record ->
+                        AttendanceRow(record)
+                    }
                 }
             }
         }

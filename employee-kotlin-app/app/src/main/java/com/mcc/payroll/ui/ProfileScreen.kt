@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.mcc.payroll.BuildConfig
 import com.mcc.payroll.ui.components.ErrorState
 import com.mcc.payroll.ui.components.LoadingState
+import com.mcc.payroll.ui.components.Refreshable
 import com.mcc.payroll.ui.components.MccCard
 import com.mcc.payroll.ui.components.SectionLabel
 import com.mcc.payroll.ui.theme.mutedColor
@@ -77,102 +78,107 @@ fun ProfileScreen(
     when {
         state.loading -> LoadingState()
         state.error != null -> ErrorState(state.error!!, onRetry = { viewModel.loadProfile() })
-        else -> LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+        else -> Refreshable(
+            refreshing = state.refreshing,
+            onRefresh = { viewModel.loadProfile(refresh = true) },
         ) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary,
-                                RoundedCornerShape(24.dp),
-                            ),
-                        contentAlignment = Alignment.Center,
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(76.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(24.dp),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = Format.initials(data.user?.name),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
                         Text(
-                            text = Format.initials(data.user?.name),
+                            text = data.user?.name.orEmpty(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.padding(top = 14.dp),
                         )
+                        Text(
+                            text = data.employee?.position ?: data.user?.role.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = mutedColor,
+                        )
+                        Spacer(Modifier.height(22.dp))
                     }
+                }
+
+                item { SectionLabel("Account") }
+
+                item {
+                    MccCard {
+                        Column {
+                            DetailRow(Icons.Outlined.AlternateEmail, "Email", data.user?.email)
+                            DetailRow(Icons.Outlined.Badge, "Role", data.user?.role)
+                            DetailRow(
+                                Icons.Outlined.WorkOutline,
+                                "Position",
+                                data.employee?.position,
+                                last = true,
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    SectionLabel("Attendance summary")
+                }
+
+                item {
+                    MccCard {
+                        Column {
+                            DetailRow(Icons.Outlined.Badge, "Days present", data.stats.presentDays.toString())
+                            DetailRow(Icons.Outlined.Badge, "Days late", data.stats.lateDays.toString())
+                            DetailRow(Icons.Outlined.Badge, "Days absent", data.stats.absentDays.toString())
+                            DetailRow(Icons.Outlined.Badge, "Total hours", data.stats.totalHours, last = true)
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { confirmSignOut = true },
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                    ) {
+                        Icon(Icons.Outlined.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("Sign out", modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+
+                item {
                     Text(
-                        text = data.user?.name.orEmpty(),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(top = 14.dp),
-                    )
-                    Text(
-                        text = data.employee?.position ?: data.user?.role.orEmpty(),
+                        text = "MCC Payroll v${BuildConfig.VERSION_NAME}",
                         style = MaterialTheme.typography.bodySmall,
                         color = mutedColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
                     )
-                    Spacer(Modifier.height(22.dp))
                 }
-            }
-
-            item { SectionLabel("Account") }
-
-            item {
-                MccCard {
-                    Column {
-                        DetailRow(Icons.Outlined.AlternateEmail, "Email", data.user?.email)
-                        DetailRow(Icons.Outlined.Badge, "Role", data.user?.role)
-                        DetailRow(
-                            Icons.Outlined.WorkOutline,
-                            "Position",
-                            data.employee?.position,
-                            last = true,
-                        )
-                    }
-                }
-            }
-
-            item {
-                Spacer(Modifier.height(4.dp))
-                SectionLabel("Attendance summary")
-            }
-
-            item {
-                MccCard {
-                    Column {
-                        DetailRow(Icons.Outlined.Badge, "Days present", data.stats.presentDays.toString())
-                        DetailRow(Icons.Outlined.Badge, "Days late", data.stats.lateDays.toString())
-                        DetailRow(Icons.Outlined.Badge, "Days absent", data.stats.absentDays.toString())
-                        DetailRow(Icons.Outlined.Badge, "Total hours", data.stats.totalHours, last = true)
-                    }
-                }
-            }
-
-            item {
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = { confirmSignOut = true },
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                ) {
-                    Icon(Icons.Outlined.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Sign out", modifier = Modifier.padding(start = 8.dp))
-                }
-            }
-
-            item {
-                Text(
-                    text = "MCC Payroll v${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = mutedColor,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                )
             }
         }
     }

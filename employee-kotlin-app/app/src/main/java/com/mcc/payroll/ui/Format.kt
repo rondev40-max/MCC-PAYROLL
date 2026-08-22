@@ -1,5 +1,6 @@
 package com.mcc.payroll.ui
 
+import java.math.RoundingMode
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -15,6 +16,11 @@ object Format {
     private val peso: NumberFormat = NumberFormat.getNumberInstance(Locale.US).apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
+        // Java's NumberFormat rounds HALF_EVEN by default, PHP's
+        // number_format rounds HALF_UP. Left alone, the app and the web
+        // portal could print a centavo apart for the same payslip — and on
+        // a payroll figure the employee is right to treat that as an error.
+        roundingMode = RoundingMode.HALF_UP
     }
 
     /** ₱18,450.00 — grouped and always two decimals, so columns line up. */

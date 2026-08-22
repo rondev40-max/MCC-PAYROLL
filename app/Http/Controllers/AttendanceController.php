@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use App\Support\PasswordHash;
+use App\Support\Departments;
 use App\Support\Dtr;
 use App\Mail\AttendanceOtpMail;
 
@@ -77,9 +78,10 @@ class AttendanceController extends Controller
             return false;
         }
 
-        // Normalise both sides. The requested value arrives from a URL segment
-        // and the stored one from the database, so neither is guaranteed clean.
-        return strtoupper(trim($requestedCourse)) === $userCourse;
+        // Compare departments rather than spellings: a checker whose course is
+        // 'bsed' is the same department as 'EDUCATION', and a strict string
+        // match would refuse them access to their own roster.
+        return Departments::same($requestedCourse, $userCourse);
     }
 
     private function unauthenticatedResponse(): JsonResponse
@@ -1258,8 +1260,13 @@ class AttendanceController extends Controller
     private function safeQuery(string $table, string $course, string $prefix, $mapper)
     {
         try {
+            // Match every spelling of this department. Education is stored as
+            // EDUCATION on timesheets but referred to as BSED by the checker
+            // account, so a plain equality here returned nothing for them.
+            $codes = Departments::codesFor($course);
+
             $query = DB::table($table)
-                ->whereRaw('UPPER(TRIM(department)) = ?', [$course]);
+                ->whereIn(DB::raw('UPPER(TRIM(department))'), $codes);
 
             // Get available columns
             $columns = ['id', 'email', 'employee_name', 'designation', 'days'];

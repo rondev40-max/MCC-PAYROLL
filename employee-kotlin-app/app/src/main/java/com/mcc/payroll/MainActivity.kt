@@ -39,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.mcc.payroll.ui.AnnouncementsScreen
 import com.mcc.payroll.ui.AttendanceScreen
 import com.mcc.payroll.ui.DashboardScreen
 import com.mcc.payroll.ui.LoginScreen
@@ -76,6 +77,10 @@ private sealed class Destination(
 }
 
 private const val LOGIN_ROUTE = "login"
+
+// Not a bottom-tab destination: it is reached from the dashboard, so the
+// tab bar stays at four and the notice board still has somewhere to live.
+private const val ANNOUNCEMENTS_ROUTE = "announcements"
 
 private val bottomTabs = listOf(
     Destination.Home,
@@ -141,7 +146,18 @@ fun MccPayrollApp() {
                     },
                 )
             }
-            composable(Destination.Home.route) { DashboardScreen(viewModel) }
+            composable(Destination.Home.route) {
+                DashboardScreen(
+                    viewModel = viewModel,
+                    onSeeAllAnnouncements = { navController.navigate(ANNOUNCEMENTS_ROUTE) },
+                )
+            }
+            composable(ANNOUNCEMENTS_ROUTE) {
+                AnnouncementsScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable(Destination.Attendance.route) { AttendanceScreen(viewModel) }
             composable(Destination.Payslips.route) { PayslipsScreen(viewModel) }
             composable(Destination.Profile.route) {
