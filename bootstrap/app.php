@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 use App\Http\Middleware\HstsMiddleware;
 use App\Http\Middleware\XFrameOptionsMiddleware;
@@ -20,15 +21,39 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // NOTE: this app no longer runs behind Vercel/Railway's edge proxy,
-        // so there's nothing forwarding X-Forwarded-Proto that needs trusting.
-        // Hostinger terminates HTTPS directly, so $request->secure() already
-        // reflects the real connection without any proxy trust configured.
-        // Blindly trusting '*' here (any IP) is also a spoofing risk, and on
-        // this host it was the likely cause of ForceHttps below occasionally
-        // misjudging a request as insecure and injecting an extra redirect
-        // hop right after login — which silently ate the one-shot session
-        // flash data the OTP modal depends on.
+        // This host DOES sit behind a reverse proxy: LiteSpeed terminates TLS
+        // and forwards to PHP over plain HTTP from the loopback address, which
+        // is why responses carry x-lscache and requests carry
+        // X-Forwarded-Proto / X-Forwarded-For.
+        //
+        // With no proxy trusted, $request->secure() returned false on every
+        // HTTPS request, so ForceHttps below redirected all of them — and the
+        // redirected request looked identical, so it redirected again. Ordinary
+        // page loads survived on the LiteSpeed cache; the attendance register's
+        // fetch() looped until the browser gave up, which the dashboard could
+        // only report as "the register could not be loaded".
+        //
+        // $request->ip() was also 127.0.0.1 for everyone, which quietly pooled
+        // every visitor into one rate-limit bucket and recorded the proxy in
+        // logs instead of the actual client.
+        //
+        // Only loopback and private ranges are trusted, never '*'. LiteSpeed
+        // forwards from this machine, and a remote attacker cannot make their
+        // REMOTE_ADDR appear local, so forged X-Forwarded-* headers from the
+        // internet are still ignored.
+        $middleware->trustProxies(
+            at: [
+                '127.0.0.1',
+                '::1',
+                '10.0.0.0/8',
+                '172.16.0.0/12',
+                '192.168.0.0/16',
+            ],
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
 
         // ✅ Global middleware (replaces $middleware array)
         // ForceHttps runs first so nothing downstream processes a plaintext request.
