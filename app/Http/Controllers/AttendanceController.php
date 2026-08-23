@@ -184,7 +184,12 @@ class AttendanceController extends Controller
     ) {
         return DB::table('attendances')
             ->where('employee_id', $employeeId)
-            ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
+            // Aliases, not one spelling. This query decides whether a save
+            // updates the existing day or inserts a new one, so an Education
+            // checker on 'BSED' editing a day stored as 'EDUCATION' used to
+            // miss it and write a second row for the same date — and a delete
+            // left the original behind.
+            ->whereIn(DB::raw('UPPER(TRIM(course))'), Departments::codesFor($course))
             ->whereRaw($this->normalizedTypeSql('employee_type'), [
                 Dtr::employeeTypeKey($employeeType),
             ]);
@@ -197,7 +202,7 @@ class AttendanceController extends Controller
     ) {
         return DB::table('attendance_histories')
             ->where('employee_id', $employeeId)
-            ->whereRaw('UPPER(TRIM(department)) = ?', [$course])
+            ->whereIn(DB::raw('UPPER(TRIM(department))'), Departments::codesFor($course))
             ->whereRaw($this->normalizedTypeSql('employee_type'), [
                 Dtr::employeeTypeKey($employeeType),
             ]);
@@ -236,9 +241,12 @@ class AttendanceController extends Controller
             return;
         }
 
+        // Store the canonical spelling, not whichever alias this checker's
+        // account happens to use, so rows for one department stop splitting
+        // across EDUCATION/BSED/BEED as accounts are re-seeded.
         DB::table('attendances')->insert(array_merge([
             'employee_id'  => $employeeId,
-            'course'       => $course,
+            'course'       => Departments::canonical($course) ?? $course,
             'employee_type' => $employeeType,
             'date'         => $date,
             'created_at'   => now(),
@@ -284,7 +292,7 @@ class AttendanceController extends Controller
 
         DB::table('attendance_histories')->insert(array_merge([
             'employee_id'     => $employeeId,
-            'department'      => $course,
+            'department'      => Departments::canonical($course) ?? $course,
             'employee_type'   => $employeeType,
             'attendance_date' => $date,
             'created_at'      => now(),
@@ -460,13 +468,23 @@ class AttendanceController extends Controller
     // DASHBOARD
     // ──────────────────────────────────────────────────────────────────────────
 
+    /**
+     * The register, always for the signed-in checker's own department.
+     *
+     * The department is resolved here rather than in the view. The blade used
+     * to read it with session('user_course', 'BSIT'), which meant an account
+     * with no assigned department rendered — and requested — the BSIT
+     * register, then got a 403 from the API it had just been pointed at.
+     */
     public function dashboard()
     {
         if (!$this->isAuthenticated()) {
             return redirect()->route('attendance.attendlog.form');
         }
 
-        return view('attendance.dashboard');
+        return view('attendance.dashboard', [
+            'course' => $this->getUserCourse(),
+        ]);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -484,14 +502,17 @@ class AttendanceController extends Controller
             return redirect()->route('attendance.attendlog.form');
         }
 
-        $course = strtoupper(trim((string) ($request->query('course') ?: $this->getUserCourse())));
+        // The department comes from the account, never from the query string.
+        // ?course= used to win here, so a BSIT checker opening
+        // /attendance/dtr?course=bsba got a page headed "BSBA monthly register"
+        // with "Assigned department: BSBA" and an empty roster — their own
+        // personnel hidden, and the emptiness reading as "no records entered"
+        // rather than "that is not your department". The blade only ever echoed
+        // the value back into a readonly field, so nothing needs to supply it.
+        $course = $this->getUserCourse();
         $month  = $this->resolveMonth($request->query('month'));
 
-        $employees = collect();
-
-        if ($course && $this->authorizeCourseAccess($course)) {
-            $employees = $this->rosterFor($course, $month);
-        }
+        $employees = $course ? $this->rosterFor($course, $month) : collect();
 
         return view('attendance.dtr-index', [
             'course'      => $course,
@@ -740,7 +761,11 @@ class AttendanceController extends Controller
                         'total_hours',
                         'hours_rendered',
                     ])
-                    ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
+                    // Every spelling of this department, for the same reason
+                    // safeQuery() does it: rows saved by an Education checker
+                    // carry whichever of EDUCATION/BSED/BEED their account
+                    // uses, and a single equality here found only one of them.
+                    ->whereIn(DB::raw('UPPER(TRIM(course))'), Departments::codesFor($course))
                     ->whereBetween('date', [
                         $month->copy()->startOfMonth()->toDateString(),
                         $month->copy()->endOfMonth()->toDateString(),
@@ -1122,17 +1147,20 @@ class AttendanceController extends Controller
         }
 
         try {
-            $course = strtoupper(trim((string) $request->query(
-                'course',
-                $this->getUserCourse() ?? ''
-            )));
+            // The count is always of the checker's own roster; ?course= no
+            // longer selects the data. A caller may still name a department,
+            // but it has to be theirs — refusing an explicit mismatch is
+            // clearer than quietly answering with a different set of numbers.
+            $requested = trim((string) $request->query('course', ''));
+
+            if ($requested !== '' && !$this->authorizeCourseAccess($requested)) {
+                return $this->unauthorizedCourseResponse();
+            }
+
+            $course = $this->getUserCourse();
 
             if (!$course) {
                 return response()->json(['count' => 0]);
-            }
-
-            if (!$this->authorizeCourseAccess($course)) {
-                return $this->unauthorizedCourseResponse();
             }
 
             return response()->json(['count' => $this->attendanceRoster($course)->count()]);
@@ -1313,7 +1341,7 @@ class AttendanceController extends Controller
 
             // Fetch all saved attendance rows for this cutoff/course
             $savedRows = DB::table('attendances')
-                ->whereRaw('UPPER(TRIM(course)) = ?', [$course])
+                ->whereIn(DB::raw('UPPER(TRIM(course))'), Departments::codesFor($course))
                 ->whereIn('employee_id', $rawIds)
                 ->whereBetween('date', [
                     $cutoffStart->toDateString(),

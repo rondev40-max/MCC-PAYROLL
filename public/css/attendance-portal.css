@@ -26,6 +26,21 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+/*
+ * The `hidden` attribute has to win.
+ *
+ * The browser hides [hidden] from its own user-agent stylesheet, and ANY
+ * author rule that sets `display` beats it, however low its specificity. The
+ * register's three panels are laid out with `.loading-state, .empty-state,
+ * .error-state { display: grid }`, so toggling el.hidden from JS did nothing:
+ * the dashboard showed the loading spinner, "The register could not be
+ * loaded", and "No personnel found" stacked above the table of personnel that
+ * had in fact loaded perfectly. `.bulk-bar[hidden]` had already been patched
+ * one element at a time; this covers every element on the portal instead.
+ */
+[hidden] { display: none !important; }
+
 html { min-width: 320px; background: var(--canvas); }
 body {
     margin: 0;
@@ -386,7 +401,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     border-top: 1px solid #c8d8d4;
     background: #f1f8f6;
 }
-.bulk-bar[hidden] { display: none; }
 .bulk-count { color: var(--teal-dark); font-size: 12px; font-weight: 750; }
 
 /* Loading, empty, messages, and toasts */

@@ -146,7 +146,10 @@ final class Dtr
 
             $query = DB::table('attendances')
                 ->where('employee_id', $employeeId)
-                ->whereRaw('UPPER(TRIM(course)) = ?', [strtoupper(trim($course))])
+                // Match every spelling of the department — see Departments.
+                // A checker on 'BSED' opening a DTR whose rows were stored as
+                // 'EDUCATION' got a blank form for a month they had filled in.
+                ->whereIn(DB::raw('UPPER(TRIM(course))'), Departments::codesFor($course))
                 ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
 
             $typeKey = self::employeeTypeKey($employeeType);
@@ -208,7 +211,7 @@ final class Dtr
             $base = DB::table($table)->select(['id', 'employee_name']);
 
             if (Schema::hasColumn($table, 'department')) {
-                $base->whereRaw('UPPER(TRIM(department)) = ?', [strtoupper(trim($course))]);
+                $base->whereIn(DB::raw('UPPER(TRIM(department))'), Departments::codesFor($course));
             }
 
             if (Schema::hasColumn($table, 'employee_id')) {

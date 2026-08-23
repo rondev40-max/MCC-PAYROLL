@@ -3,7 +3,12 @@
 @section('title', 'Attendance Register')
 
 @php
-    $course = strtoupper(session('user_course', 'BSIT'));
+    // $course is resolved by AttendanceController::dashboard() from the
+    // signed-in checker's own account. It is deliberately not read from the
+    // session with a 'BSIT' fallback any more: an account with no assigned
+    // department used to render the BSIT register and point the API at BSIT,
+    // which then refused it.
+    $course = strtoupper(trim((string) $course));
     $departmentNames = [
         'BSIT' => 'Bachelor of Science in Information Technology',
         'BSBA' => 'Bachelor of Science in Business Administration',
@@ -12,18 +17,20 @@
         'BEED' => 'Bachelor of Elementary Education',
         'EDUCATION' => 'Education Department',
     ];
-    $departmentName = $departmentNames[$course] ?? $course . ' Department';
+    $departmentName = $course === ''
+        ? 'No department assigned'
+        : ($departmentNames[$course] ?? $course . ' Department');
 @endphp
 
 @section('content')
     <section class="page-header">
         <div class="page-header__copy">
-            <p class="page-kicker">{{ $course }} personnel office</p>
+            <p class="page-kicker">{{ $course !== '' ? $course . ' personnel office' : 'Personnel office' }}</p>
             <h1 class="page-title">Attendance register</h1>
             <p class="page-description">Review the assigned department's half-month register and maintain the four daily time entries used for Civil Service Form No. 48.</p>
         </div>
         <div class="page-actions">
-            <a class="btn btn--secondary" href="{{ route('attendance.dtr.index', ['course' => $course]) }}">
+            <a class="btn btn--secondary" href="{{ route('attendance.dtr.index') }}">
                 <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
                 Monthly DTR records
             </a>

@@ -46,8 +46,9 @@
     <form method="GET" action="{{ route('attendance.dtr.index') }}" class="form-toolbar no-print" id="period-filter">
         <div class="field">
             <label for="course-display">Assigned department</label>
-            <input id="course-display" type="text" value="{{ $course }}" readonly>
-            <input type="hidden" name="course" value="{{ $course }}">
+            {{-- Display only. The controller takes the department from the
+                 signed-in account, so this is never submitted back. --}}
+            <input id="course-display" type="text" value="{{ $course ?: 'None assigned' }}" readonly>
         </div>
         <div class="field">
             <label for="month">Record month</label>
