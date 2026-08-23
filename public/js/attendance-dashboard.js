@@ -800,7 +800,7 @@
         elements.selectAll.checked = visibleKeys.length > 0 && visibleSelected === visibleKeys.length;
         elements.selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visibleKeys.length;
         elements.selectedCount.textContent = String(state.selectedKeys.size);
-        elements.bulkActions.hidden = state.selectedKeys.size === 0;
+        setPanelVisible(elements.bulkActions, state.selectedKeys.size > 0);
     }
 
     function clearSelection() {
@@ -891,11 +891,30 @@
         showToast('CSV export prepared.', 'success');
     }
 
+    /**
+     * Show or hide one panel.
+     *
+     * Sets an inline display as well as the attribute. A class that sets
+     * `display` silently beats [hidden] — that is how this register came to
+     * show its spinner, "The register could not be loaded" and "No personnel
+     * found" all at once, stacked on top of a table full of personnel that had
+     * loaded perfectly. An inline style outranks any stylesheet rule, so the
+     * panel state no longer depends on the CSS fix reaching the browser.
+     *
+     * Clearing it back to '' rather than a literal keeps the stylesheet in
+     * charge of *how* a visible panel is laid out.
+     */
+    function setPanelVisible(element, visible) {
+        if (!element) return;
+        element.hidden = !visible;
+        element.style.display = visible ? '' : 'none';
+    }
+
     function setLoadState(value) {
-        elements.registerLoading.hidden = value !== 'loading';
-        elements.registerError.hidden = value !== 'error';
-        elements.registerEmpty.hidden = value !== 'empty';
-        elements.registerTableWrap.hidden = value !== 'ready';
+        setPanelVisible(elements.registerLoading, value === 'loading');
+        setPanelVisible(elements.registerError, value === 'error');
+        setPanelVisible(elements.registerEmpty, value === 'empty');
+        setPanelVisible(elements.registerTableWrap, value === 'ready');
     }
 
     function showLoadError(message) {

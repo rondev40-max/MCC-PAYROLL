@@ -13,7 +13,7 @@
     @if(config('services.recaptcha.site_key'))
         <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
     @endif
-    <script src="{{ asset('js/recaptcha-login.js') }}" defer></script>
+    <script src="{{ \App\Support\Asset::versioned('js/recaptcha-login.js') }}" defer></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

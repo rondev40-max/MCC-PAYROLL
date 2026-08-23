@@ -204,7 +204,7 @@
 @endsection
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/dtr-form.css') }}">
+    <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/dtr-form.css') }}">
     <style>
         .form-sheet--editor { width: 1050px; }
         .validation-list { margin: 4px 0 0; padding-left: 18px; }
@@ -212,5 +212,5 @@
 @endpush
 
 @push('scripts')
-    <script src="{{ asset('js/dtr-editor.js') }}" defer></script>
+    <script src="{{ \App\Support\Asset::versioned('js/dtr-editor.js') }}" defer></script>
 @endpush

@@ -8,7 +8,7 @@
     <title>@yield('title', 'Attendance Portal') - MCC Payroll</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/attendance-portal.css') }}">
+    <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/attendance-portal.css') }}">
     @stack('styles')
 </head>
 <body class="@yield('body-class')">

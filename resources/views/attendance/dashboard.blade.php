@@ -231,5 +231,5 @@
     <script>
         window.attendancePortal = @json($attendancePortalConfig);
     </script>
-    <script src="{{ asset('js/attendance-dashboard.js') }}" defer></script>
+    <script src="{{ \App\Support\Asset::versioned('js/attendance-dashboard.js') }}" defer></script>
 @endpush
