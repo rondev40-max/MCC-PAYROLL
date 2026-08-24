@@ -286,6 +286,92 @@ class DashboardController extends Controller
         return response()->json($this->getEmployeeStatistics());
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // DASHBOARD ANALYTICS
+    //
+    // Both routes below (/api/attendance-summary and /api/payroll-monthly) were
+    // registered in routes/web.php against methods that did not exist, so either
+    // one would have thrown. The attendance chart on the admin dashboard filled
+    // the gap client-side with Math.random(), refreshed it on a 60-second timer,
+    // and captioned it "Last 7 days check-ins" — an administrator could read
+    // invented attendance off a payroll dashboard and act on it.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Statuses that count as the employee having shown up. */
+    private const PRESENT_STATUSES = ['present', 'late', 'half_day', 'official_business'];
+
+    /**
+     * Daily present/absent counts for the trailing week.
+     *
+     * Days with no records still appear, at zero — dropping them would compress
+     * the axis and make a quiet week look like a busy one.
+     */
+    public function attendanceSummary(Request $request)
+    {
+        $days = collect(range(6, 0))->map(fn ($back) => now()->subDays($back)->startOfDay());
+
+        $rows = Schema::hasTable('attendances')
+            ? DB::table('attendances')
+                ->selectRaw('DATE(date) as day')
+                ->selectRaw(
+                    'SUM(CASE WHEN LOWER(TRIM(COALESCE(status, ""))) IN (?, ?, ?, ?) THEN 1 ELSE 0 END) as present',
+                    self::PRESENT_STATUSES
+                )
+                ->selectRaw('SUM(CASE WHEN LOWER(TRIM(COALESCE(status, ""))) = ? THEN 1 ELSE 0 END) as absent', ['absent'])
+                ->whereBetween('date', [$days->first()->toDateString(), $days->last()->endOfDay()->toDateString()])
+                ->groupBy('day')
+                ->get()
+                ->keyBy('day')
+            : collect();
+
+        return response()->json([
+            'labels'  => $days->map(fn ($d) => $d->format('D'))->all(),
+            'dates'   => $days->map(fn ($d) => $d->toDateString())->all(),
+            'present' => $days->map(fn ($d) => (int) ($rows[$d->toDateString()]->present ?? 0))->all(),
+            'absent'  => $days->map(fn ($d) => (int) ($rows[$d->toDateString()]->absent ?? 0))->all(),
+            // Lets the chart say "no attendance recorded yet" instead of drawing
+            // a flat line along zero and passing it off as data.
+            'has_data' => $rows->isNotEmpty(),
+        ]);
+    }
+
+    /**
+     * Payroll released per cut-off, most recent last.
+     *
+     * Gross and net share one axis because they share a unit; a second scale
+     * would invent a relationship between them. Deductions are the gap between
+     * the two lines, which is the point of plotting them together.
+     */
+    public function payrollMonthly(Request $request)
+    {
+        if (!Schema::hasTable('payslip_histories')) {
+            return response()->json(['labels' => [], 'gross' => [], 'net' => [], 'has_data' => false]);
+        }
+
+        $periods = DB::table('payslip_histories')
+            ->selectRaw('pay_period')
+            ->selectRaw('MIN(sent_at) as first_sent')
+            ->selectRaw('COUNT(*) as payslips')
+            ->selectRaw('COALESCE(SUM(total_honorarium), 0) as gross')
+            ->selectRaw('COALESCE(SUM(COALESCE(net_pay, total_honorarium)), 0) as net')
+            ->whereNull('deleted_at')
+            ->whereNotNull('pay_period')
+            ->groupBy('pay_period')
+            ->orderByDesc('first_sent')
+            ->limit(8)
+            ->get()
+            ->reverse()
+            ->values();
+
+        return response()->json([
+            'labels'   => $periods->pluck('pay_period')->all(),
+            'gross'    => $periods->map(fn ($p) => round((float) $p->gross, 2))->all(),
+            'net'      => $periods->map(fn ($p) => round((float) $p->net, 2))->all(),
+            'payslips' => $periods->map(fn ($p) => (int) $p->payslips)->all(),
+            'has_data' => $periods->isNotEmpty(),
+        ]);
+    }
+
     // --- Master List Add Employee ---
 
     public function masterListAddForm(Request $request)

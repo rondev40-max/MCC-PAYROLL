@@ -645,6 +645,23 @@
       flex-wrap: wrap;
       gap: 0.25rem 0.5rem;
     }
+    /* Bootstrap's d-none has to beat the flex above while a chart is still
+       deciding whether it has anything to show. */
+    .chart-legend.d-none { display: none !important; }
+
+    /* A chart with no rows behind it says so, rather than drawing a flat line
+       along zero that reads as "nothing happened". */
+    .chart-empty {
+      display: grid;
+      place-items: center;
+      height: 100%;
+      min-height: 140px;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: var(--text-3);
+    }
 
     .legend-item {
       display: flex;
@@ -1017,21 +1034,20 @@
       <!-- ═══ CHARTS (2x2 grid) ═══ -->
       <div class="charts-grid">
 
-        <!-- 1. Employee Distribution — Donut -->
+        <!-- 1. Payroll Released — Line -->
         <div class="chart-card fu d6">
           <div class="chart-card-header">
             <div>
-              <div class="chart-card-title">Employee Distribution</div>
-              <div class="chart-card-sub">Teaching vs Non-Teaching split</div>
+              <div class="chart-card-title">Payroll released</div>
+              <div class="chart-card-sub">Gross and net per cut-off</div>
             </div>
-            <span class="live-badge"><span class="dot"></span>Live</span>
           </div>
           <div class="chart-area">
-            <canvas id="donutChart" role="img" aria-label="Donut chart showing employee distribution between teaching and non-teaching staff."></canvas>
+            <canvas id="payrollChart" role="img" aria-label="Line chart of gross and net payroll released for each recent pay period."></canvas>
           </div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#2563eb;"></div>Teaching ({{ ($totalFulltimeInstructors ?? 0) + ($totalParttimeInstructors ?? 0) }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Non-Teaching ({{ ($totalStaff ?? 0) + ($totalUtility ?? 0) + ($totalWatchman ?? 0) }})</div>
+          <div class="chart-legend d-none" id="payrollLegend">
+            <div class="legend-item"><div class="legend-swatch" data-slot="0" style="background:#2a78d6;"></div>Gross</div>
+            <div class="legend-item"><div class="legend-swatch" data-slot="2" style="background:#1baf7a;"></div>Net released</div>
           </div>
         </div>
 
@@ -1039,31 +1055,27 @@
         <div class="chart-card fu d7">
           <div class="chart-card-header">
             <div>
-              <div class="chart-card-title">Employment Breakdown</div>
+              <div class="chart-card-title">Employment breakdown</div>
               <div class="chart-card-sub">Personnel count by type</div>
             </div>
-            <span class="live-badge"><span class="dot"></span>Live</span>
           </div>
           <div class="chart-area">
             <canvas id="employmentChart" role="img" aria-label="Horizontal bar chart showing count of Full-Time, Part-Time, Staff, Utility, and Watchman personnel."></canvas>
           </div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time ({{ $totalFulltimeInstructors ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time ({{ $totalParttimeInstructors ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6;"></div>Staff ({{ $totalStaff ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#93c5fd;"></div>Utility ({{ $totalUtility ?? 0 }})</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#8b5cf6;"></div>Watchman ({{ $totalWatchman ?? 0 }})</div>
-          </div>
+          {{-- No legend. One series, and each bar is already labelled on the
+               axis — the five-swatch legend that stood here existed only to
+               decode five colours that carried no information. It also
+               hard-coded the counts in Blade, a second copy of the numbers that
+               could drift from the ones the chart was drawing. --}}
         </div>
  
         <!-- 3. Department Analytics -->
         <div class="chart-card fu d8">
           <div class="chart-card-header">
             <div>
-              <div class="chart-card-title">Department Analytics</div>
+              <div class="chart-card-title">Department analytics</div>
               <div class="chart-card-sub">Instructor headcount by department</div>
             </div>
-            <span class="live-badge"><span class="dot"></span>Live</span>
           </div>
           <div class="chart-area">
             @if(isset($departmentAnalysis) && $departmentAnalysis->isNotEmpty())
@@ -1074,8 +1086,8 @@
           </div>
           @if(isset($departmentAnalysis) && $departmentAnalysis->isNotEmpty())
           <div class="chart-legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#10b981;"></div>Full-Time</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b;"></div>Part-Time</div>
+            <div class="legend-item"><div class="legend-swatch" data-slot="0" style="background:#2a78d6;"></div>Full-Time</div>
+            <div class="legend-item"><div class="legend-swatch" data-slot="1" style="background:#eb6834;"></div>Part-Time</div>
           </div>
           @endif
         </div>
@@ -1084,8 +1096,8 @@
         <div class="chart-card fu d9">
           <div class="chart-card-header">
             <div>
-              <div class="chart-card-title">Attendance Summary</div>
-              <div class="chart-card-sub">Last 7 days check-ins</div>
+              <div class="chart-card-title">Attendance</div>
+              <div class="chart-card-sub">Last 7 days, from recorded time entries</div>
             </div>
             <button class="btn-refresh" onclick="refreshAttendance()" style="padding:.2rem .55rem; font-size:.72rem;">
               <i class="bi bi-arrow-clockwise" id="attIcon"></i>
@@ -1094,9 +1106,9 @@
           <div class="chart-area">
             <canvas id="attendanceChart" role="img" aria-label="Line chart showing present and absent counts for the last 7 days.">Attendance trends for last 7 days.</canvas>
           </div>
-          <div class="chart-legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#2563eb; border-radius:50%;"></div>Present</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#ef4444; border-radius:50%;"></div>Absent</div>
+          <div class="chart-legend d-none" id="attendanceLegend">
+            <div class="legend-item"><div class="legend-swatch" data-slot="0" style="background:#2a78d6; border-radius:50%;"></div>Present</div>
+            <div class="legend-item"><div class="legend-swatch" data-slot="1" style="background:#eb6834; border-radius:50%;"></div>Absent</div>
           </div>
         </div>
 
@@ -1204,42 +1216,145 @@ function animateCounters() {
 const isDark = () => document.body.classList.contains('night-mode');
 const gc  = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.055)';
 const tc  = () => isDark() ? '#64748b' : '#94a3b8';
-Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-Chart.defaults.font.size   = 10;
+const surface = () => isDark() ? '#161b27' : '#ffffff';
 
-/* ── 1. Donut ────────────────────────────────────── */
-let donut;
-function initDonut() {
-  const ctx = document.getElementById('donutChart').getContext('2d');
-  donut = new Chart(ctx, {
-    type: 'doughnut',
+/* Categorical series colours, in fixed slot order.
+ *
+ * The old set (#10b981, #f59e0b, #3b82f6, #93c5fd, #8b5cf6) failed validation:
+ * #93c5fd sits outside the lightness band at L 0.809 and below the chroma floor
+ * at 0.096, so it reads as grey rather than as a colour, and three of the five
+ * fell under 3:1 against the card. Dark mode reused the identical hex values,
+ * where three of five fail the band — a dark palette has to be its own steps.
+ *
+ * These two columns are the same five hues stepped for each surface. Verified
+ * with the dataviz validator: all checks pass in both modes, worst adjacent
+ * CVD deltaE 9.1 light / 8.4 dark, worst normal-vision deltaE 19.6 / 19.3.
+ *
+ * Slots are assigned by identity and never cycled or reordered by rank. */
+const SERIES = {
+  light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'],
+  dark:  ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181'],
+};
+const hue = i => (isDark() ? SERIES.dark : SERIES.light)[i % 5];
+
+const peso = v => '₱' + Number(v || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* Empty states. A chart with no rows behind it draws a flat line along zero,
+ * which reads as "nothing happened" rather than "nothing recorded". */
+function chartEmpty(canvasId, message) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const host = canvas.parentElement;
+  host.innerHTML = '<div class="chart-empty">' + message + '</div>';
+}
+
+Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = '#94a3b8';
+
+/* ── 1. Payroll Released — Line ──────────────────────
+ *
+ * Replaces a two-slice donut of teaching vs non-teaching. Two segments is a
+ * number with a ring around it, and that split now sits in the stat row where
+ * it reads faster. This card answers the question a payroll dashboard exists
+ * for and nothing on the page answered: what did each cut-off cost.
+ *
+ * Gross and net share one axis because they share a unit. The gap between the
+ * two lines is the deductions, which is the reason to plot them together. */
+let payrollChart;
+async function initPayroll() {
+  const canvas = document.getElementById('payrollChart');
+  if (!canvas) return;
+
+  let d;
+  try {
+    const res = await fetch(`${window.location.origin}/api/payroll-monthly`, {
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+    });
+    if (!res.ok) throw new Error(res.status);
+    d = await res.json();
+  } catch (e) {
+    chartEmpty('payrollChart', 'Payroll figures could not be loaded.');
+    return;
+  }
+
+  if (!d.has_data) {
+    chartEmpty('payrollChart', 'No payslips released yet. Send a payroll run to see costs here.');
+    return;
+  }
+
+  document.getElementById('payrollLegend')?.classList.remove('d-none');
+
+  payrollChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
     data: {
-      labels: ['Teaching', 'Non-Teaching'],
-      datasets: [{
-        data: [STATS.teaching, STATS.nonTeach],
-        backgroundColor: ['#2563eb', '#93c5fd'],
-        borderColor: isDark() ? '#161b27' : '#ffffff',
-        borderWidth: 4,
-        hoverOffset: 10,
-      }]
+      labels: d.labels,
+      datasets: [
+        {
+          label: 'Gross',
+          data: d.gross,
+          borderColor: hue(0),
+          backgroundColor: 'rgba(42,120,214,0.07)',
+          fill: true,
+          tension: 0.15,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: hue(0),
+          pointBorderColor: surface(),
+          pointBorderWidth: 2,
+        },
+        {
+          label: 'Net released',
+          data: d.net,
+          borderColor: hue(2),
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.15,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: hue(2),
+          pointBorderColor: surface(),
+          pointBorderWidth: 2,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '72%',
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: c => ` ${c.label}: ${c.raw} (${STATS.total > 0 ? Math.round(c.raw / STATS.total * 100) : 0}%)`
-          }
-        }
+            label: c => ` ${c.dataset.label}: ${peso(c.raw)}`,
+            afterBody: items => {
+              const i = items[0].dataIndex;
+              const withheld = (d.gross[i] || 0) - (d.net[i] || 0);
+              return `Deductions: ${peso(withheld)}\n${d.payslips[i]} payslip${d.payslips[i] === 1 ? '' : 's'}`;
+            },
+          },
+        },
       },
-      animation: { animateRotate: true, duration: 900 }
-    }
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tc() }, border: { display: false } },
+        y: {
+          beginAtZero: true,
+          grid: { color: gc() },
+          border: { display: false },
+          ticks: {
+            color: tc(),
+            maxTicksLimit: 5,
+            callback: v => '₱' + (v >= 1000 ? (v / 1000) + 'k' : v),
+          },
+        },
+      },
+      animation: { duration: 700 },
+    },
   });
 }
-
 /* ── 2. Employment Breakdown — Horizontal Bar ────── */
 let empChart;
 function initEmployment() {
@@ -1248,18 +1363,19 @@ function initEmployment() {
     type: 'bar',
     data: {
       labels: ['Full-Time', 'Part-Time', 'Staff', 'Utility', 'Watchman'],
+      /* One measure, one colour.
+       *
+       * These five bars carried five different hues for a single series —
+       * headcount. The row's position already says which type it is, so the
+       * colour repeated information the chart had, spent the only free channel
+       * saying nothing, and needed a five-item legend to explain itself. */
       datasets: [{
         data: [STATS.fulltime, STATS.parttime, STATS.staff, STATS.utility, STATS.watchman],
-        backgroundColor: [
-          'rgba(16,185,129,0.85)',
-          'rgba(245,158,11,0.85)',
-          'rgba(59,130,246,0.85)',
-          'rgba(147,197,253,0.85)',
-          'rgba(139,92,246,0.85)'
-        ],
-        borderRadius: { topRight: 6, bottomRight: 6 },
+        backgroundColor: hue(0),
+        borderRadius: 4,
         borderSkipped: false,
         barThickness: 14,
+        _slot: 0,
       }]
     },
     options: {
@@ -1287,91 +1403,126 @@ function initEmployment() {
   });
 }
 
-/* ── 3. Attendance Line ──────────────────────────── */
+/* ── 3. Attendance — Line ────────────────────────────
+ *
+ * Reads /api/attendance-summary. This chart used to call getAttData(), which
+ * returned Math.random() numbers, and a 60-second timer regenerated them — so
+ * it looked more live than the charts backed by real data while showing an
+ * administrator invented attendance under the caption "Last 7 days check-ins".
+ * The route it should have used was registered against a controller method
+ * that did not exist. */
 let attChart;
-const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-function getAttData() {
-  const base = Math.max(STATS.total, 5);
-  return {
-    present: DAYS.map(() => Math.floor(Math.random() * (base * 0.75) + base * 0.2)),
-    absent:  DAYS.map(() => Math.floor(Math.random() * (base * 0.25))),
-  };
+let ATT = null;
+
+async function loadAttendance() {
+  const res = await fetch(`${window.location.origin}/api/attendance-summary`, {
+    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    credentials: 'same-origin',
+  });
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
 }
 
-function initAttendance() {
-  const ctx = document.getElementById('attendanceChart').getContext('2d');
-  const d = getAttData();
+async function initAttendance() {
+  const canvas = document.getElementById('attendanceChart');
+  if (!canvas) return;
 
-  attChart = new Chart(ctx, {
+  try {
+    ATT = await loadAttendance();
+  } catch (e) {
+    chartEmpty('attendanceChart', 'Attendance could not be loaded.');
+    return;
+  }
+
+  if (!ATT.has_data) {
+    chartEmpty('attendanceChart', 'No attendance recorded in the last 7 days.');
+    return;
+  }
+
+  document.getElementById('attendanceLegend')?.classList.remove('d-none');
+
+  attChart = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: {
-      labels: DAYS,
+      labels: ATT.labels,
       datasets: [
         {
           label: 'Present',
-          data: d.present,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37,99,235,0.08)',
+          data: ATT.present,
+          borderColor: hue(0),
+          backgroundColor: 'rgba(42,120,214,0.07)',
           fill: true,
-          tension: 0.42,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          pointBackgroundColor: '#2563eb',
-          pointBorderColor: isDark() ? '#161b27' : '#fff',
-          pointBorderWidth: 2,
+          // Was 0.42. Heavy smoothing bends the line through values that were
+          // never recorded on days between the points.
+          tension: 0.15,
           borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: hue(0),
+          pointBorderColor: surface(),
+          pointBorderWidth: 2,
         },
         {
           label: 'Absent',
-          data: d.absent,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239,68,68,0.07)',
-          fill: true,
-          tension: 0.42,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          pointBackgroundColor: '#ef4444',
-          pointBorderColor: isDark() ? '#161b27' : '#fff',
-          pointBorderWidth: 2,
+          data: ATT.absent,
+          borderColor: hue(1),
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.15,
           borderWidth: 2,
-          borderDash: [5, 3],
-        }
-      ]
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: hue(1),
+          pointBorderColor: surface(),
+          pointBorderWidth: 2,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: { color: tc() },
-          border: { display: false }
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => ATT.dates[items[0].dataIndex],
+            label: c => ` ${c.dataset.label}: ${c.raw}`,
+          },
         },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tc() }, border: { display: false } },
         y: {
           beginAtZero: true,
           grid: { color: gc() },
-          ticks: { color: tc(), maxTicksLimit: 6 },
-          border: { display: false }
-        }
+          ticks: { color: tc(), precision: 0, maxTicksLimit: 5 },
+          border: { display: false },
+        },
       },
-      animation: { duration: 850 }
-    }
+      animation: { duration: 700 },
+    },
   });
 }
 
-function refreshAttendance() {
+async function refreshAttendance() {
   const icon = document.getElementById('attIcon');
-  icon.classList.add('spin');
-  setTimeout(() => {
-    const d = getAttData();
-    attChart.data.datasets[0].data = d.present;
-    attChart.data.datasets[1].data = d.absent;
-    attChart.update('active');
-    icon.classList.remove('spin');
-  }, 500);
+  icon?.classList.add('spin');
+  try {
+    const d = await loadAttendance();
+    if (attChart && d.has_data) {
+      ATT = d;
+      attChart.data.labels = d.labels;
+      attChart.data.datasets[0].data = d.present;
+      attChart.data.datasets[1].data = d.absent;
+      attChart.update('active');
+    }
+  } catch (e) {
+    /* Leave the last good reading on screen rather than blanking the card. */
+  } finally {
+    icon?.classList.remove('spin');
+  }
 }
-
 /* ── 4. Department Analytics — Grouped Bar ───────── */
 let deptChart;
 function initDepartment() {
@@ -1394,16 +1545,18 @@ function initDepartment() {
        {
          label: 'Full-Time',
          data: ftData,
-         backgroundColor: 'rgba(16,185,129,0.85)',
-         borderRadius: { topLeft: 6, topRight: 6 },
+         backgroundColor: hue(0),
+         borderRadius: 4,
          borderSkipped: false,
+         _slot: 0,
        },
        {
          label: 'Part-Time',
          data: ptData,
-         backgroundColor: 'rgba(245,158,11,0.85)',
-         borderRadius: { topLeft: 6, topRight: 6 },
+         backgroundColor: hue(1),
+         borderRadius: 4,
          borderSkipped: false,
+         _slot: 1,
        }
      ]
    },
@@ -1450,7 +1603,7 @@ function initDepartment() {
 
 /* ── Update chart colors on theme change ─────────── */
 function updateChartTheme() {
-  [donut, empChart, deptChart, attChart].forEach(c => {
+  [payrollChart, empChart, deptChart, attChart].forEach(c => {
     if (!c) return;
     if (c.options.scales) {
       Object.values(c.options.scales).forEach(ax => {
@@ -1458,7 +1611,20 @@ function updateChartTheme() {
         if (ax.ticks) ax.ticks.color = tc();
       });
     }
+    /* Re-step the series for the new surface. Dark mode used to keep the light
+       hex values, which fail the lightness band against a dark card. */
+    c.data.datasets.forEach((ds, i) => {
+      if (ds.borderColor)          ds.borderColor = hue(ds._slot ?? i);
+      if (ds.pointBackgroundColor) ds.pointBackgroundColor = hue(ds._slot ?? i);
+      if (ds.pointBorderColor)     ds.pointBorderColor = surface();
+      if (Array.isArray(ds.backgroundColor)) {
+        ds.backgroundColor = ds.backgroundColor.map((_, j) => hue(j));
+      }
+    });
     c.update('none');
+  });
+  document.querySelectorAll('[data-slot]').forEach(el => {
+    el.style.background = hue(Number(el.dataset.slot));
   });
 }
 
@@ -1608,7 +1774,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* Init charts */
-  initDonut();
+  initPayroll();
   initEmployment();
   initDepartment();
   initAttendance();

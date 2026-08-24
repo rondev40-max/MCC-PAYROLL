@@ -269,10 +269,24 @@ class AdminController extends Controller
             }
         }
 
+        // Totals over everything the filter matches, before pagination.
+        // The view summed $record->total_honorarium as it rendered rows and
+        // labelled the result "GRAND TOTAL HONORARIUM" — but only 15 records
+        // are on a page, so the figure was a page subtotal presented as the
+        // payroll total, and it changed every time you clicked to page 2.
+        $totals = (clone $recordsQuery)
+            ->selectRaw('COUNT(*) as record_count')
+            ->selectRaw('COALESCE(SUM(total_honorarium), 0) as gross')
+            ->selectRaw('COALESCE(SUM(total_deductions), 0) as deductions')
+            ->selectRaw('COALESCE(SUM(COALESCE(net_pay, total_honorarium)), 0) as net')
+            ->selectRaw('SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END) as failed')
+            ->reorder()
+            ->first();
+
         $records = $recordsQuery
             ->orderBy('sent_at', 'desc')
             ->paginate(15);
-        
+
         $holidays = \App\Models\Holiday::pluck('date')->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))->toArray();
 
         foreach ($records as $record) {
@@ -289,6 +303,7 @@ class AdminController extends Controller
 
         return view('admin.payroll-history', [
             'records' => $records,
+            'totals' => $totals,
             'months' => $months,
             'years' => $years,
             'selectedMonth' => (int)$selectedMonth,
@@ -911,28 +926,87 @@ class AdminController extends Controller
     /**
      * Finds the associated Timesheet record for a PayslipHistory entry.
      */
+    /**
+     * Which model holds a given employee type's timesheets.
+     *
+     * Keyed by the lowercased `employee_type` / `source_type` that
+     * sendPayslips() writes onto the payslip.
+     */
+    private const TIMESHEET_MODELS = [
+        'fulltime'        => FulltimeTimesheet::class,
+        'part-time'       => ParttimeTimesheet::class,
+        'parttime'        => ParttimeTimesheet::class,
+        'staff'           => StaffTimesheet::class,
+        'utility'         => UtilityTimesheet::class,
+        'watchman'        => WatchmanTimesheet::class,
+        'admin personnel' => AdminPersonnelTimesheet::class,
+    ];
+
+    /**
+     * Parse the pay period a payslip actually stores.
+     *
+     * sendPayslips() writes one format for every employee type:
+     * "August 1-15, 2026" or "August 16-end, 2026". Both this and
+     * getDaysForPeriod() used to expect "date - date" for fulltime and
+     * part-time, split on ' - ', get a single element back and give up — so the
+     * daily-hours grid, which is 45% of the payroll history table, showed "No
+     * Timesheet" for every fulltime and part-time employee on the payroll.
+     *
+     * @return array{0: Carbon, 1: Carbon}|null
+     */
+    private function parsePayPeriod(?string $payPeriod): ?array
+    {
+        if (!preg_match('/([A-Za-z]+)\s+(\d{1,2})\s*-\s*(\d{1,2}|end),\s*(\d{4})/i', (string) $payPeriod, $m)) {
+            return null;
+        }
+
+        try {
+            $start = Carbon::createFromFormat('F j Y', "{$m[1]} {$m[2]} {$m[4]}")->startOfDay();
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $end = strcasecmp($m[3], 'end') === 0
+            ? $start->copy()->endOfMonth()->startOfDay()
+            : $start->copy()->day((int) $m[3]);
+
+        return $end->lt($start) ? null : [$start, $end];
+    }
+
     private function findAssociatedTimesheet($history)
     {
-        $type = strtolower($history->employee_type);
+        $type = strtolower((string) $history->employee_type);
         $payPeriod = $history->pay_period;
         $email = $history->email;
         $name = $history->name;
 
+        // Payslips issued since the breakdown migration record exactly which
+        // row produced them, so there is nothing to infer. Everything below is
+        // the fallback for records written before that.
+        if ($history->source_type && $history->source_id) {
+            $model = self::TIMESHEET_MODELS[strtolower($history->source_type)] ?? null;
+
+            if ($model && ($found = $model::find($history->source_id))) {
+                return $found;
+            }
+        }
+
         try {
-            if ($type === 'fulltime' || $type === 'part-time') {
-                $dates = explode(' - ', $payPeriod);
-                if (count($dates) !== 2) return null;
+            if ($type === 'fulltime' || $type === 'part-time' || $type === 'parttime') {
+                $range = $this->parsePayPeriod($payPeriod);
+                if (!$range) return null;
 
-                $startDate = Carbon::parse(trim($dates[0]));
-                $endDate = Carbon::parse(trim($dates[1]));
-                
-                $model = ($type === 'fulltime') ? FulltimeTimesheet::class : ParttimeTimesheet::class;
+                [$startDate, $endDate] = $range;
 
-                return $model::where(function($query) use ($email, $name, $type) {
-                        if ($type === 'fulltime') {
-                             $query->where('email', $email);
-                        } else {
-                            $query->where('employee_name', $name)->orWhere('email', $email);
+                $model = self::TIMESHEET_MODELS[$type];
+
+                return $model::where(function($query) use ($email, $name) {
+                        // Match on either identifier. Keying fulltime off email
+                        // alone lost every row whose email was left blank on the
+                        // timesheet, which the master list permits.
+                        $query->where('employee_name', $name);
+                        if (!empty($email)) {
+                            $query->orWhere('email', $email);
                         }
                     })
                     ->whereDate('date', '>=', $startDate)
@@ -974,73 +1048,33 @@ class AdminController extends Controller
     }
 
     /**
-     * Generates the list of days (date, number, abbr) for the given pay period.
+     * The calendar days a pay period covers, for the daily-hours grid.
+     *
+     * One parser for every employee type. This used to branch: staff and
+     * utility got a regex matching the format payslips actually store, while
+     * fulltime and part-time were split on " - " and returned an empty array
+     * every time — so their grid never rendered.
      */
     private function getDaysForPeriod($payPeriod, $employeeType)
     {
-        $days = [];
-        $type = strtolower($employeeType);
+        $range = $this->parsePayPeriod($payPeriod);
 
-        try {
-            if ($type === 'fulltime' || $type === 'part-time') {
-                $dates = explode(' - ', $payPeriod);
-                if (count($dates) !== 2) return [];
-
-                $startDate = Carbon::parse(trim($dates[0]));
-                $endDate = Carbon::parse(trim($dates[1]));
-
-                $period = new \Carbon\CarbonPeriod($startDate, $endDate);
-                $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
-
-                foreach ($period as $date) {
-                    $days[] = [
-                        'number' => $date->day,
-                        'abbr' => $abbrMap[$date->format('D')] ?? '',
-                        'date' => $date->format('Y-m-d'),
-                        'is_sunday' => $date->isSunday(),
-                    ];
-                }
-
-            } elseif ($type === 'staff' || $type === 'utility') {
-                // Example: "October 1-15, 2025" or "October 16-end, 2025"
-                preg_match('/(\w+)\s+([\d\-end]+),\s+(\d{4})/', $payPeriod, $matches);
-                if (count($matches) !== 4) return [];
-
-                $monthName = $matches[1];
-                $periodStr = $matches[2]; // "1-15" or "16-end"
-                $year = (int)$matches[3];
-                $month = Carbon::parse($monthName)->month;
-
-                $periodParts = explode('-', $periodStr);
-                $startDay = (int)$periodParts[0];
-                
-                $endDate = null;
-                $startDate = Carbon::createFromDate($year, $month, $startDay);
-
-                if ($periodParts[1] === 'end') {
-                    $endDate = $startDate->copy()->endOfMonth();
-                } else {
-                    $endDay = (int)$periodParts[1];
-                    $endDate = Carbon::createFromDate($year, $month, $endDay);
-                }
-
-                $period = new \Carbon\CarbonPeriod($startDate, $endDate);
-                $abbrMap = ['Mon'=>'Mon','Tue'=>'Tue','Wed'=>'Wed','Thu'=>'Thu','Fri'=>'Fri','Sat'=>'Sat','Sun'=>'Sun'];
-
-                foreach ($period as $date) {
-                    $days[] = [
-                        'number' => $date->day,
-                        'abbr' => $abbrMap[$date->format('D')] ?? '',
-                        'date' => $date->format('Y-m-d'),
-                        'is_sunday' => $date->isSunday(),
-                    ];
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error("Error getting days for pay period '{$payPeriod}': " . $e->getMessage());
+        if (!$range) {
             return [];
         }
-        
+
+        [$startDate, $endDate] = $range;
+        $days = [];
+
+        foreach (new \Carbon\CarbonPeriod($startDate, $endDate) as $date) {
+            $days[] = [
+                'number'    => $date->day,
+                'abbr'      => $date->format('D'),
+                'date'      => $date->format('Y-m-d'),
+                'is_sunday' => $date->isSunday(),
+            ];
+        }
+
         return $days;
     }
 }

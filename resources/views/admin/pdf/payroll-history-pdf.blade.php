@@ -213,15 +213,18 @@
     <table>
         <thead>
             <tr>
+                {{-- Same swap as the on-screen table: the DESIGNATION column
+                     printed employee_type and DEPARTMENT printed designation,
+                     and payslip_histories has no department column at all. --}}
                 <th rowspan="2" class="col-name">NAMES</th>
                 <th rowspan="2" class="col-designation">DESIGNATION</th>
-                <th rowspan="2" class="col-prev-abs">PREV.<br>ABS.</th>
-                <th rowspan="2" class="col-dept">DEPARTMENT</th>
+                <th rowspan="2" class="col-dept">EMPLOYMENT</th>
                 <th colspan="1" class="col-timesheet">DAILY HOURS/ATTENDANCE FOR CUT-OFF</th>
                 <th rowspan="2" class="col-total">TOTAL Hour/Days</th>
                 <th rowspan="2" class="col-rate">Rate per Hour/Day</th>
-                <th rowspan="2" class="col-deduction">Deduc. Prev. Cut Off</th>
-                <th rowspan="2" class="col-honorarium">TOTAL HONORARIUM</th>
+                <th rowspan="2" class="col-honorarium">GROSS</th>
+                <th rowspan="2" class="col-deduction">DEDUCTIONS</th>
+                <th rowspan="2" class="col-honorarium">NET PAY</th>
             </tr>
             <tr>
                 <th class="col-timesheet">
@@ -234,19 +237,20 @@
         </thead>
         <tbody>
             @php
-                $grandTotal = 0;
+                $grossTotal = 0; $deductionTotal = 0; $netTotal = 0;
             @endphp
-            
+
             @forelse ($records as $record)
                 @php
-                    $grandTotal += $record->total_honorarium ?? 0;
+                    $grossTotal     += $record->gross_pay ?? $record->total_honorarium ?? 0;
+                    $deductionTotal += $record->total_deductions ?? 0;
+                    $netTotal       += $record->takeHome();
                     $isStaffUtility = in_array(strtolower($record->employee_type), ['staff', 'utility']);
                 @endphp
                 <tr>
                     <td class="col-name">{{ $record->name }}</td>
-                    <td class="col-designation">{{ $record->employee_type }}</td>
-                    <td class="col-prev-abs">0.00</td>
-                    <td class="col-dept">{{ $record->designation ?? 'N/A' }}</td>
+                    <td class="col-designation">{{ $record->designation ?: '—' }}</td>
+                    <td class="col-dept">{{ $record->employee_type ?: '—' }}</td>
                     
                     {{-- Timesheet Column --}}
                     <td class="col-timesheet" style="padding: 0.5px !important;">
@@ -333,8 +337,13 @@
                         {{ $isStaffUtility ? 'days' : 'hrs' }}
                     </td>
                     <td class="col-rate">PHP {{ number_format($record->rate ?? 0, 2) }}</td>
-                    <td class="col-deduction">PHP 0.00</td>
-                    <td class="col-honorarium">PHP {{ number_format($record->total_honorarium ?? 0, 2) }}</td>
+                    <td class="col-honorarium">PHP {{ number_format($record->gross_pay ?? $record->total_honorarium ?? 0, 2) }}</td>
+                    {{-- Was the constant "PHP 0.00" on every line of an exported
+                         payroll document. --}}
+                    <td class="col-deduction">
+                        {{ $record->total_deductions !== null ? 'PHP ' . number_format($record->total_deductions, 2) : '—' }}
+                    </td>
+                    <td class="col-honorarium">PHP {{ number_format($record->takeHome(), 2) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -352,12 +361,12 @@
         @if(count($records) > 0)
             <tfoot>
                 <tr>
-                    <td colspan="8" style="text-align: right; background-color: #e6e6e6;">
-                        **GRAND TOTAL HONORARIUM:**
+                    <td colspan="6" style="text-align: right; background-color: #e6e6e6;">
+                        GRAND TOTAL &mdash; {{ count($records) }} payslip{{ count($records) == 1 ? '' : 's' }}
                     </td>
-                    <td class="grand-total-honorarium">
-                        PHP {{ number_format($grandTotal, 2) }}
-                    </td>
+                    <td class="grand-total-honorarium">PHP {{ number_format($grossTotal, 2) }}</td>
+                    <td class="grand-total-honorarium">PHP {{ number_format($deductionTotal, 2) }}</td>
+                    <td class="grand-total-honorarium">PHP {{ number_format($netTotal, 2) }}</td>
                 </tr>
             </tfoot>
         @endif
