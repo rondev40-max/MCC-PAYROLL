@@ -1,5 +1,14 @@
 * text=auto eol=lf
 
+# The released APK is served straight from public/downloads/ to phones, so a
+# single mangled byte makes it unparseable and Android reports the package as
+# invalid. `text=auto` above would auto-detect it as binary, but this repo is
+# worked on with core.autocrlf=true and that detection is a heuristic — say it
+# outright rather than rely on it.
+*.apk binary
+*.jks binary
+*.keystore binary
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html

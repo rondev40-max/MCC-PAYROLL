@@ -18,10 +18,27 @@ Built with Kotlin + Jetpack Compose (Material 3), talking to the Laravel API in
 
 ```bash
 ./gradlew :app:assembleDebug     # -> app/build/outputs/apk/debug/app-debug.apk
-./gradlew :app:assembleRelease   # -> app/build/outputs/apk/release/app-release-unsigned.apk
-./gradlew :app:lintDebug
-./gradlew :app:testDebugUnitTest   # 11 JVM unit tests
+./gradlew :app:assembleRelease   # -> app/build/outputs/apk/release/app-release.apk  (signed)
+./gradlew :app:publishApk        # assembleRelease + copy to ../public/downloads/
+./gradlew :app:lintRelease
+./gradlew :app:testReleaseUnitTest   # 11 JVM unit tests
 ```
+
+`publishApk` is the one to run when shipping: it drops the signed APK at
+`public/downloads/mcc-employee-app.apk`, which is what the landing page's
+"Download APK Directly" button and QR code serve. Bump `versionCode` and
+`versionName` in `app/build.gradle.kts` first — Android refuses to install an
+update whose `versionCode` is not higher than the installed one.
+
+Verify what you are about to distribute:
+
+```bash
+apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+```
+
+"Verified using v2/v3 scheme: true" means devices will accept it. Anything
+reporting the APK as unsigned will fail to install with a bare "app not
+installed".
 
 ## Pointing it at your server
 
@@ -31,7 +48,21 @@ buried in source:
 | Variant | URL | Why |
 |---|---|---|
 | debug | `http://10.0.2.2:8000/api/` | `10.0.2.2` is the host machine's loopback **as seen from the Android emulator**. |
-| release | `https://mcc-payroll-abfm-pi.vercel.app/api/` | Production. |
+| release | `https://mcc-payroll-abfm-pi.vercel.app/api/api/` | Production. The doubled `api` is not a typo — see below. |
+
+**Why the release URL has `/api/api/`.** Laravel registers `routes/api.php`
+under an `api/` prefix. On Vercel the PHP function lives at `api/index.php`, and
+Vercel strips that `/api` path segment before Laravel sees the request — so
+`/api/mobile/login` arrives as `mobile/login` and 404s. The routes really are
+published one level deeper on this deployment:
+
+```bash
+curl https://mcc-payroll-abfm-pi.vercel.app/api/api/health          # {"status":"ok"}
+curl https://mcc-payroll-abfm-pi.vercel.app/api/mobile/login        # 404
+```
+
+If the Vercel routing is ever changed to serve them at `/api/`, this URL has to
+change with it, in a new `versionCode`.
 
 Testing on a **physical device** on your Wi-Fi? `10.0.2.2` will not resolve —
 change the debug URL to your PC's LAN address, e.g. `http://192.168.100.43:8000/api/`,
@@ -62,14 +93,25 @@ A 401 anywhere clears the session and returns the user to sign-in.
 
 ## Notes for whoever ships this
 
-- **Signing is wired but needs your key.** Copy `keystore.properties.example`
-  to `keystore.properties` and fill it in; the release build picks it up
-  automatically. Without that file the build still succeeds and produces an
-  *unsigned* APK, which Android will refuse to install. The properties file
-  and any `.jks` are gitignored — never commit key material.
-- `applicationId` is `com.mcc.payroll`, the same id as the Capacitor wrapper in
-  `/android`. Two APKs cannot share an id on one device — retire one, or change
-  this to something like `com.mcc.payroll.native`.
+- **Back up the signing key.** `mcc-release.jks` and `keystore.properties` sit
+  in this directory and are gitignored, so they exist on one machine only. If
+  they are lost you can never ship an update to an installed app — Android
+  refuses an APK signed by a different key, and every user would have to
+  uninstall and reinstall, losing their session. Copy both somewhere safe now.
+  The certificate currently in use:
+
+  ```
+  CN=MCC Payroll, OU=MIS, O=Madridejos Community College, L=Madridejos, ST=Cebu, C=PH
+  SHA-256  b2:37:59:9c:35:23:37:e2:8e:ad:fc:bb:5f:07:2c:b5:1c:d6:28:95:36:41:d6:a5:7e:db:8e:21:85:e8:46:e7
+  ```
+
+  A release build now *fails* if the key is missing, rather than quietly
+  emitting an unsigned APK that no device will install — see
+  `checkReleaseSigning` in `app/build.gradle.kts`.
+- `applicationId` is `com.mcc.payroll`. The Capacitor wrapper in `/android` uses
+  `com.example.payroll`, so the two no longer collide — but that wrapper is
+  unfinished (its manifest names a launcher activity, `.ui.login.LoginActivity`,
+  that has no source file) and should be retired rather than built.
 - The API returns Eloquent models serialised whole, so the wire models mirror the
   database columns exactly. Two are easy to get wrong: payslips use `pay_period`
   and `total_honorarium` (not `period` / `net_pay`), and announcements use
