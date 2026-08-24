@@ -81,16 +81,43 @@
     --sb-label:     rgba(255,255,255,.26);
     --sb-border:    rgba(255,255,255,.07);
 
-    /* Shadows are a hint of depth, not a drop-shadow showcase. */
+    /* Elevation is for things that genuinely float — menus, modals, the mobile
+       drawer. A card that just sits on the page gets a hairline border and no
+       shadow: stacking a shadow under every surface flattens the hierarchy it
+       was supposed to create. */
     --sh-xs: 0 1px 2px rgba(15,23,41,.04);
-    --sh-sm: 0 1px 2px rgba(15,23,41,.04), 0 2px 6px rgba(15,23,41,.05);
-    --sh-md: 0 2px 4px rgba(15,23,41,.04), 0 8px 20px -6px rgba(15,23,41,.10);
-    --sh-lg: 0 12px 40px -10px rgba(15,23,41,.18);
+    --sh-sm: 0 1px 2px rgba(15,23,41,.05);
+    --sh-md: 0 4px 12px -2px rgba(15,23,41,.08), 0 2px 4px -2px rgba(15,23,41,.04);
+    --sh-lg: 0 16px 40px -12px rgba(15,23,41,.20);
 
-    --r-sm: 9px;
-    --r-md: 13px;
-    --r-lg: 17px;
-    --r-xl: 22px;
+    /* Type scale. These were ad-hoc rem values scattered through the markup —
+       .52, .54, .56, .57, .58, .6, .63, .68, .72, .79, .82, .85, .86 — thirteen
+       sizes with no relationship, and the small end (.52rem is 8.3px) below
+       what anyone can comfortably read. Seven steps, nothing under 11px. */
+    --fs-2xs:  .6875rem;  /* 11px — micro labels, uppercase only */
+    --fs-xs:   .75rem;    /* 12px — captions, meta */
+    --fs-sm:   .8125rem;  /* 13px — secondary text, table cells */
+    --fs-md:   .875rem;   /* 14px — body */
+    --fs-lg:   1rem;      /* 16px — card titles */
+    --fs-xl:   1.25rem;   /* 20px — page titles */
+    --fs-2xl:  1.75rem;   /* 28px — KPI figures */
+
+    /* Spacing, on a 4px grid. */
+    --sp-1:  .25rem;
+    --sp-2:  .5rem;
+    --sp-3:  .75rem;
+    --sp-4:  1rem;
+    --sp-5:  1.25rem;
+    --sp-6:  1.5rem;
+    --sp-8:  2rem;
+    --sp-10: 2.5rem;
+
+    /* Tighter than the old 9/13/17/22. Large radii on small elements are the
+       loudest single tell of a dated interface. */
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --r-xl: 18px;
 
     --ease: cubic-bezier(.4,0,.2,1);
     --t:    all .16s var(--ease);
@@ -189,9 +216,12 @@
   /* ══════════════════════════════════════════════
      SIDEBAR
   ══════════════════════════════════════════════ */
+  /* Flat, not a gradient, and no decorative glow orbs behind the nav. Two
+     blurred radial blobs used to sit in the corners; they added atmosphere to
+     a surface whose whole job is to let you find the section you want. */
   .sidebar {
     width: var(--sb-w);
-    background: linear-gradient(180deg, var(--sb-bg-1) 0%, var(--sb-bg-2) 100%);
+    background: var(--sb-bg-1);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -199,22 +229,7 @@
     overflow: hidden;
     position: relative;
     z-index: 100;
-    border-right: 1px solid rgba(255,255,255,.04);
-  }
-
-  .sidebar::before {
-    content: '';
-    position: absolute; top: -50px; right: -50px;
-    width: 220px; height: 220px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(59,130,246,.2) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .sidebar::after {
-    content: '';
-    position: absolute; bottom: 60px; left: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(14,165,233,.12) 0%, transparent 70%);
-    pointer-events: none;
+    border-right: 1px solid rgba(255,255,255,.06);
   }
 
   /* Brand */
@@ -225,15 +240,14 @@
     flex-shrink: 0; position: relative; z-index: 1;
   }
   .sb-brand-icon {
-    width: 34px; height: 34px; border-radius: 9px;
-    background: rgba(255,255,255,.13);
+    width: 32px; height: 32px; border-radius: var(--r-sm);
+    background: rgba(255,255,255,.1);
     display: grid; place-items: center; flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,.2);
-    box-shadow: 0 2px 10px rgba(0,0,0,.25);
+    border: 1px solid rgba(255,255,255,.14);
   }
-  .sb-brand-icon img { max-width: 20px; filter: brightness(0) invert(1); }
-  .sb-brand-text  { font-family: 'Sora', sans-serif; font-size: .82rem; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -.01em; }
-  .sb-brand-sub   { font-size: .58rem; color: rgba(255,255,255,.28); margin-top: 2px; letter-spacing: .05em; text-transform: uppercase; }
+  .sb-brand-icon img { max-width: 19px; filter: brightness(0) invert(1); }
+  .sb-brand-text  { font-family: 'Sora', sans-serif; font-size: var(--fs-md); font-weight: 700; color: #fff; line-height: 1.15; letter-spacing: -.01em; }
+  .sb-brand-sub   { font-size: var(--fs-2xs); color: rgba(255,255,255,.34); margin-top: 1px; letter-spacing: .06em; text-transform: uppercase; }
 
   /* Profile pill */
   .sb-profile {
@@ -241,21 +255,19 @@
     border-bottom: 1px solid var(--sb-border);
     position: relative; z-index: 1;
   }
+  /* No card around the identity. It is not a control and nothing happens when
+     you click it, so the raised panel and its hover state were both promises
+     the interface does not keep. */
   .sb-profile-inner {
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 11px;
-    padding: .55rem .8rem;
-    display: flex; align-items: center; gap: 9px;
-    transition: background .15s;
+    padding: .2rem .1rem;
+    display: flex; align-items: center; gap: 10px;
     cursor: default;
   }
-  .sb-profile-inner:hover { background: rgba(255,255,255,.11); }
   .sb-avatar {
-    width: 36px; height: 36px; border-radius: 10px;
+    width: 34px; height: 34px; border-radius: var(--r-sm);
     background: var(--brand);
     display: grid; place-items: center;
-    font-family: 'Sora', sans-serif; font-size: .74rem; font-weight: 800;
+    font-family: 'Sora', sans-serif; font-size: var(--fs-xs); font-weight: 700;
     color: #fff; flex-shrink: 0; position: relative;
   }
   .sb-avatar-dot {
@@ -263,35 +275,38 @@
     width: 9px; height: 9px; border-radius: 50%;
     background: var(--accent); border: 2px solid var(--sb-bg-1);
   }
-  .sb-name { font-family: 'Sora', sans-serif; font-size: .75rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
-  .sb-role { font-size: .6rem; color: rgba(255,255,255,.36); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+  .sb-name { font-family: 'Sora', sans-serif; font-size: var(--fs-sm); font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 142px; }
+  .sb-role { font-size: var(--fs-xs); color: rgba(255,255,255,.4); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 142px; }
 
   /* Nav */
   .sb-nav { flex: 1; padding: .5rem .72rem; overflow-y: auto; position: relative; z-index: 1; }
   .sb-nav::-webkit-scrollbar { display: none; }
 
   .nav-label {
-    font-size: .52rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
-    color: var(--sb-label); padding: .72rem .4rem .22rem;
-    font-family: 'Sora', sans-serif;
+    font-size: var(--fs-2xs); font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--sb-label); padding: var(--sp-4) .45rem var(--sp-2);
+    font-family: 'DM Sans', sans-serif;
   }
 
   .sb-link {
-    display: flex; align-items: center; gap: 9px;
-    padding: .52rem .72rem;
-    border-radius: 10px;
+    display: flex; align-items: center; gap: 10px;
+    padding: .5rem .7rem;
+    border-radius: var(--r-sm);
     color: var(--sb-text);
-    font-size: .78rem; font-weight: 500;
-    cursor: pointer; transition: var(--t);
+    font-size: var(--fs-md); font-weight: 500;
+    cursor: pointer; transition: background .16s var(--ease), color .16s var(--ease);
     border: none; background: transparent; width: 100%;
     text-decoration: none; text-align: left;
     font-family: 'DM Sans', sans-serif;
-    position: relative; letter-spacing: .01em;
+    position: relative;
     margin-bottom: 1px;
   }
-  .sb-link i { font-size: .82rem; width: 16px; flex-shrink: 0; transition: transform .15s; }
+  .sb-link i { font-size: var(--fs-lg); width: 18px; flex-shrink: 0; opacity: .75; }
+  /* The icon used to slide 1px right on hover. A nav row is not a thing that
+     needs to acknowledge the pointer twice. */
   .sb-link:hover { background: var(--sb-link-hover); color: var(--sb-text-hi); }
-  .sb-link:hover i { transform: translateX(1px); }
+  .sb-link:hover i { opacity: 1; }
+  .sb-link:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
   /* The active row is the brand block itself — no extra accent rail needed
      once the sidebar behind it is flat. */
   .sb-link.active {
@@ -301,20 +316,17 @@
   .sb-link.active i { opacity: 1; }
 
   .sb-badge {
-    margin-left: auto; font-size: .54rem; font-weight: 800;
+    margin-left: auto; font-size: var(--fs-2xs); font-weight: 700;
     background: var(--warn); color: #fff;
-    border-radius: 20px; padding: 1px 7px; min-width: 16px; text-align: center;
-    box-shadow: 0 1px 4px rgba(245,158,11,.4);
+    border-radius: 20px; padding: 0 6px; min-width: 18px; text-align: center;
+    line-height: 1.5;
   }
+  /* Static. It pulsed on a 2s loop and glowed — an unread marker only has to
+     be noticed once, and a looping animation in the corner of the eye is
+     harder to ignore than to read. */
   .sb-dot {
     margin-left: auto; width: 7px; height: 7px; border-radius: 50%;
     background: var(--warn); flex-shrink: 0;
-    box-shadow: 0 0 6px rgba(245,158,11,.6);
-    animation: pulse-dot 2s infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: .7; }
   }
 
   /* Sidebar footer */
@@ -347,45 +359,44 @@
     height: var(--tb-h);
     background: var(--card);
     border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: .7rem;
-    padding: 0 1.5rem;
-    box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(13,21,38,.04);
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: 0 var(--sp-6);
     flex-shrink: 0; z-index: 50;
     transition: background .3s, border-color .3s;
   }
 
   .tb-page-info .tb-title {
-    font-family: 'Sora', sans-serif; font-size: .88rem; font-weight: 800;
-    color: var(--text); line-height: 1; letter-spacing: -.01em;
+    font-family: 'Sora', sans-serif; font-size: var(--fs-md); font-weight: 600;
+    color: var(--text); line-height: 1.2; letter-spacing: -.015em;
   }
   .tb-page-info .tb-breadcrumb {
-    font-size: .62rem; color: var(--text-3); margin-top: 2px;
+    font-size: var(--fs-xs); color: var(--text-3); margin-top: 1px;
     display: flex; align-items: center; gap: 3px;
   }
 
   .tb-divider { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
 
+  /* No chip around the time — it is a readout, not a control. */
   .tb-clock {
-    font-family: 'DM Sans', sans-serif; font-size: .72rem; font-weight: 600;
-    color: var(--text-2); background: var(--bg);
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: .28rem .7rem; white-space: nowrap;
-    transition: background .3s, color .3s;
+    font-family: 'DM Sans', sans-serif; font-size: var(--fs-sm); font-weight: 500;
+    color: var(--text-2); white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    transition: color .3s;
   }
 
   .icon-btn {
-    width: 34px; height: 34px; border-radius: 9px;
-    background: var(--bg); border: 1px solid var(--border);
+    width: 34px; height: 34px; border-radius: var(--r-sm);
+    background: transparent; border: 1px solid transparent;
     display: grid; place-items: center;
     color: var(--text-2); cursor: pointer; transition: var(--t);
     position: relative; flex-shrink: 0;
   }
-  .icon-btn:hover { background: var(--brand-light); color: var(--brand); border-color: var(--brand-mid); }
+  .icon-btn:hover { background: var(--bg-2); color: var(--text); }
+  .icon-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
   .icon-btn .n-dot {
     position: absolute; top: 6px; right: 6px;
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--warn); border: 1.5px solid var(--card);
-    box-shadow: 0 0 5px rgba(245,158,11,.6);
   }
 
   #themeToggle { font-size: .8rem; }
@@ -404,12 +415,12 @@
     width: 30px; height: 30px; border-radius: 8px;
     background: linear-gradient(135deg, var(--brand), var(--cyan));
     display: grid; place-items: center;
-    font-family: 'Sora', sans-serif; font-size: .68rem; font-weight: 800;
+    font-family: 'Sora', sans-serif; font-size:var(--fs-xs); font-weight: 800;
     color: #fff; flex-shrink: 0;
     box-shadow: 0 2px 6px rgba(37,99,235,.3);
   }
   .tb-uname { font-size: .74rem; font-weight: 700; color: var(--text); line-height: 1.1; }
-  .tb-urole { font-size: .6rem; color: var(--text-3); }
+  .tb-urole { font-size:var(--fs-2xs); color: var(--text-3); }
 
   /* ── Page Body ── */
   .page-body {
@@ -432,73 +443,72 @@
   /* ══════════════════════════════════════════════
      SECTION HEADER
   ══════════════════════════════════════════════ */
-  .ph { margin-bottom: 1.1rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: .7rem; }
-  .ph-title { font-family: 'Sora', sans-serif; font-weight: 800; font-size: .95rem; color: var(--text); margin: 0; letter-spacing: -.01em; }
-  .ph-sub   { font-size: .72rem; color: var(--text-3); margin: .2rem 0 0; }
+  .ph { margin-bottom: var(--sp-5); display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-3); }
+  .ph-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: var(--fs-xl); color: var(--text); margin: 0; letter-spacing: -.025em; text-wrap: balance; }
+  .ph-sub   { font-size: var(--fs-md); color: var(--text-2); margin: var(--sp-1) 0 0; max-width: 62ch; }
 
   /* ══════════════════════════════════════════════
      CARDS
   ══════════════════════════════════════════════ */
+  /* Border only — no resting shadow. Every card having one meant nothing on the
+     page could rise above anything else. */
   .card {
     background: var(--card);
     border-radius: var(--r-md);
     border: 1px solid var(--border);
-    box-shadow: var(--sh-sm);
     overflow: hidden;
-    transition: background .3s, border-color .3s, box-shadow .2s;
+    transition: background .3s, border-color .3s;
   }
   .card-hd {
-    padding: .95rem 1.25rem;
+    padding: var(--sp-4) var(--sp-5);
     border-bottom: 1px solid var(--border-2);
-    display: flex; align-items: center; justify-content: space-between; gap: .7rem;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
     transition: border-color .3s;
   }
   .card-title {
-    font-family: 'Sora', sans-serif; font-size: .82rem; font-weight: 700;
-    color: var(--text); display: flex; align-items: center; gap: 9px; letter-spacing: -.01em;
+    font-family: 'Sora', sans-serif; font-size: var(--fs-lg); font-weight: 600;
+    color: var(--text); display: flex; align-items: center; gap: var(--sp-2); letter-spacing: -.015em;
   }
   .ct-icon {
-    width: 28px; height: 28px; border-radius: 8px;
-    display: grid; place-items: center; font-size: .78rem; flex-shrink: 0;
+    width: 26px; height: 26px; border-radius: var(--r-sm);
+    display: grid; place-items: center; font-size: var(--fs-sm); flex-shrink: 0;
   }
-  .card-body { padding: 1.1rem 1.25rem; }
+  .card-body { padding: var(--sp-5); }
 
   /* ══════════════════════════════════════════════
      KPI CARDS
   ══════════════════════════════════════════════ */
+  /* A statistic is a number and its name. This card previously carried a
+     gradient accent bar across its top edge, a blurred radial blob bleeding out
+     of the bottom-right corner, a drop shadow, and a 2px lift on hover — four
+     decorations around one figure, and the lift implied it could be clicked,
+     which it cannot. What is left is the number, its label, and one quiet icon
+     carrying the only colour. */
   .kpi {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
-    padding: 1rem 1.1rem;
-    box-shadow: var(--sh-sm);
-    position: relative; overflow: hidden;
-    transition: var(--t-slow);
+    padding: var(--sp-4);
+    position: relative;
+    transition: border-color .16s var(--ease);
+    height: 100%;
   }
-  .kpi:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
-
-  .kpi-accent {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--kpi-c, var(--brand)) 0%, transparent 130%);
-  }
-  .kpi::before {
-    content: '';
-    position: absolute; bottom: -20px; right: -14px;
-    width: 80px; height: 80px; border-radius: 50%;
-    background: radial-gradient(circle, var(--kpi-c, var(--brand)) 0%, transparent 70%);
-    opacity: .07; pointer-events: none;
-  }
+  .kpi:hover { border-color: var(--brand-mid); }
 
   .kpi-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    display: grid; place-items: center; font-size: .88rem;
+    width: 32px; height: 32px; border-radius: var(--r-sm);
+    display: grid; place-items: center; font-size: var(--fs-md);
     background: var(--kpi-bg, rgba(37,99,235,.1));
     color: var(--kpi-c, var(--brand)); flex-shrink: 0;
   }
-  .kpi-header  { display: flex; align-items: center; justify-content: space-between; }
-  .kpi-period  { font-size: .57rem; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
-  .kpi-val     { font-family: 'Sora', sans-serif; font-size: 1.7rem; font-weight: 800; line-height: 1; color: var(--text); margin-top: .42rem; letter-spacing: -.025em; }
-  .kpi-label   { font-size: .63rem; font-weight: 700; color: var(--text-2); margin-top: 4px; text-transform: uppercase; letter-spacing: .3px; }
+  .kpi-header  { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+  .kpi-period  { font-size: var(--fs-2xs); color: var(--text-3); font-weight: 500; }
+  .kpi-val     {
+    font-family: 'Sora', sans-serif; font-size: var(--fs-2xl); font-weight: 700;
+    line-height: 1.1; color: var(--text); margin-top: var(--sp-3);
+    letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  }
+  .kpi-label   { font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); margin-top: var(--sp-1); }
 
   /* ══════════════════════════════════════════════
      ATTENDANCE CALENDAR
@@ -511,7 +521,7 @@
   }
   .cal-dow {
     text-align: center; font-family: 'Sora', sans-serif;
-    font-size: .57rem; font-weight: 800; text-transform: uppercase;
+    font-size:var(--fs-2xs); font-weight: 800; text-transform: uppercase;
     letter-spacing: .8px; color: var(--text-3); padding: .2rem 0;
   }
   .cal-dow:first-child, .cal-dow:last-child { color: rgba(239,68,68,.6); }
@@ -546,7 +556,7 @@
     line-height: 1; color: var(--text-2);
   }
   .cal-time-in {
-    font-size: .52rem; margin-top: 3px; font-weight: 600;
+    font-size:var(--fs-2xs); margin-top: 3px; font-weight: 600;
     white-space: nowrap; opacity: .8;
   }
   .cal-status-dot {
@@ -612,7 +622,7 @@
     transform: translateX(-50%);
     background: var(--text);
     color: var(--card);
-    font-size: .64rem;
+    font-size:var(--fs-2xs);
     font-weight: 600;
     padding: .35rem .6rem;
     border-radius: 7px;
@@ -642,7 +652,7 @@
   }
   .cal-legend-item {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: .62rem; font-weight: 600; color: var(--text-2);
+    font-size:var(--fs-2xs); font-weight: 600; color: var(--text-2);
   }
   .cal-legend-swatch {
     width: 10px; height: 10px; border-radius: 3px;
@@ -678,60 +688,66 @@
     margin-bottom: .6rem;
   }
   .today-label {
-    font-size: .57rem; font-weight: 800; text-transform: uppercase; letter-spacing: .6px;
+    font-size:var(--fs-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: .6px;
     color: var(--text-3); margin-bottom: .45rem; display: block;
   }
 
   /* ══════════════════════════════════════════════
      DATA TABLE
   ══════════════════════════════════════════════ */
-  .data-table { width: 100%; border-collapse: collapse; font-size: .79rem; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: var(--fs-md); }
   .data-table thead th {
     background: var(--th-bg);
     color: var(--text-2);
-    font-family: 'Sora', sans-serif; font-weight: 800; font-size: .62rem;
-    text-transform: uppercase; letter-spacing: .6px;
-    border-bottom: 2px solid var(--border);
-    padding: .65rem 1.05rem; white-space: nowrap;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: var(--fs-2xs);
+    text-transform: uppercase; letter-spacing: .08em;
+    border-bottom: 1px solid var(--border);
+    padding: var(--sp-2) var(--sp-4); white-space: nowrap;
     position: sticky; top: 0; z-index: 2;
     transition: background .3s;
   }
   .data-table tbody td {
     border-bottom: 1px solid var(--border-2);
     vertical-align: middle;
-    padding: .62rem 1.05rem; color: var(--text);
+    padding: var(--sp-3) var(--sp-4); color: var(--text);
     transition: background .1s;
   }
   .data-table tbody tr:last-child td { border-bottom: none; }
-  .data-table tbody tr:nth-child(even) td { background: var(--tr-stripe); }
-  .data-table tbody tr:hover td { background: var(--tr-hover) !important; }
+  /* Zebra striping removed. With a hairline under every row the stripes were a
+     second, competing way of saying the same thing. */
+  .data-table tbody tr:hover td { background: var(--tr-hover); }
+  /* Figures line up in their columns. */
+  .data-table td.num, .data-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
   /* ══════════════════════════════════════════════
      PAYSLIP LIST ITEMS
   ══════════════════════════════════════════════ */
   .ps-item {
-    display: flex; align-items: center; gap: .9rem;
+    display: flex; align-items: center; gap: var(--sp-4);
     background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--r-md); padding: .9rem 1.15rem;
-    transition: var(--t); margin-bottom: .5rem;
+    border-radius: var(--r-md); padding: var(--sp-4) var(--sp-5);
+    transition: border-color .16s var(--ease); margin-bottom: var(--sp-2);
   }
-  .ps-item:hover { border-color: var(--brand-mid); box-shadow: var(--sh-md); transform: translateX(2px); }
+  /* The row used to slide 2px sideways and gain a shadow on hover. It is a list
+     item with buttons in it, not a draggable card. */
+  .ps-item:hover { border-color: var(--brand-mid); }
   .ps-icon {
-    width: 42px; height: 42px; border-radius: 11px;
+    width: 38px; height: 38px; border-radius: var(--r-sm);
     background: var(--brand-light); color: var(--brand);
-    display: grid; place-items: center; font-size: 1rem; flex-shrink: 0;
-    border: 1px solid var(--brand-mid);
+    display: grid; place-items: center; font-size: var(--fs-lg); flex-shrink: 0;
   }
 
   /* ══════════════════════════════════════════════
      BADGES
   ══════════════════════════════════════════════ */
+  /* Sentence case, not uppercase. A status is a word you read, and shouting
+     "PRESENT" at someone about their own attendance is not more informative. */
   .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    border-radius: 20px; padding: .2rem .65rem;
-    font-size: .63rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .3px; white-space: nowrap;
-    font-family: 'DM Sans', sans-serif;
+    display: inline-flex; align-items: center; gap: var(--sp-1);
+    border-radius: var(--r-sm); padding: .15rem .5rem;
+    font-size: var(--fs-xs); font-weight: 600;
+    text-transform: capitalize; white-space: nowrap;
+    font-family: 'DM Sans', sans-serif; line-height: 1.5;
   }
   .badge-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
   .badge-present  { background: rgba(16,185,129,.12);  color: #059669; border: 1px solid rgba(16,185,129,.2); }
@@ -756,7 +772,7 @@
      FORMS
   ══════════════════════════════════════════════ */
   .f-label { font-size: .72rem; font-weight: 700; color: var(--text-2); margin-bottom: .3rem; display: block; letter-spacing: .02em; }
-  .f-error { font-size: .68rem; font-weight: 600; color: var(--danger); margin-top: .3rem; }
+  .f-error { font-size:var(--fs-xs); font-weight: 600; color: var(--danger); margin-top: .3rem; }
   .f-input.is-invalid { border-color: var(--danger) !important; }
   .pw-field { position: relative; }
   .pw-field .f-input { padding-right: 2.3rem; }
@@ -786,27 +802,32 @@
   ══════════════════════════════════════════════ */
   /* Flat fill, not a gradient with a glow. A solid button reads as a control;
      a glowing one reads as an advert. */
+  /* Buttons set in the body face, not the display face. Sora is a display
+     family — at 12px, bold and letter-spaced, it made every control shout. */
   .btn-primary {
     background: var(--brand);
-    color: #fff; border: none; border-radius: var(--r-sm); padding: .55rem 1.15rem;
-    font-family: 'Sora', sans-serif; font-size: .78rem; font-weight: 700;
-    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: 7px;
-    box-shadow: var(--sh-xs); text-decoration: none;
-    letter-spacing: .01em;
+    color: #fff; border: none; border-radius: var(--r-sm); padding: .5rem 1rem;
+    font-family: 'DM Sans', sans-serif; font-size: var(--fs-md); font-weight: 600;
+    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: var(--sp-2);
+    text-decoration: none; line-height: 1.4;
   }
-  .btn-primary:hover { background: var(--brand-dark); box-shadow: var(--sh-sm); color: #fff; }
+  .btn-primary:hover { background: var(--brand-dark); color: #fff; }
   .btn-primary:active { transform: translateY(.5px); }
-  .btn-primary.btn-sm { padding: .4rem .9rem; font-size: .74rem; }
+  .btn-primary.btn-sm { padding: .35rem .75rem; font-size: var(--fs-sm); }
 
   .btn-outline {
-    background: var(--card); color: var(--brand); border: 1.5px solid var(--border);
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
     border-radius: var(--r-sm); padding: .5rem 1rem;
-    font-family: 'Sora', sans-serif; font-size: .77rem; font-weight: 700;
-    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: 6px;
-    text-decoration: none; letter-spacing: .01em;
+    font-family: 'DM Sans', sans-serif; font-size: var(--fs-md); font-weight: 500;
+    cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: var(--sp-2);
+    text-decoration: none; line-height: 1.4;
   }
-  .btn-outline:hover { background: var(--brand-light); color: var(--brand-dark); border-color: var(--brand-mid); }
-  .btn-outline.btn-sm { padding: .38rem .8rem; font-size: .73rem; }
+  .btn-outline:hover { background: var(--bg-2); color: var(--text); border-color: var(--brand-mid); }
+  .btn-outline.btn-sm { padding: .35rem .75rem; font-size: var(--fs-sm); }
+
+  .btn-primary:focus-visible,
+  .btn-outline:focus-visible,
+  .btn-ghost:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
   [data-theme="dark"] .btn-outline { border-color: rgba(37,99,235,.35); }
   [data-theme="dark"] .btn-outline:hover { background: rgba(37,99,235,.18); color: #93c5fd; }
@@ -847,7 +868,7 @@
   }
   .info-row:last-child { border-bottom: none; }
   .info-icon  { color: var(--brand); width: 15px; flex-shrink: 0; }
-  .info-label { font-size: .63rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; width: 84px; flex-shrink: 0; }
+  .info-label { font-size:var(--fs-2xs); font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; width: 84px; flex-shrink: 0; }
   .info-val   { color: var(--text); font-weight: 500; flex: 1; }
 
   .profile-hero {
@@ -880,73 +901,77 @@
      Deep slate, matching the sidebar and the payslip document header, so the
      three dark surfaces in this app read as one family instead of three.
   ══════════════════════════════════════════════ */
+  /* Page heading, not a hero panel.
+     This was a dark slab with a 135° two-stop gradient sitting above the
+     content — the heaviest element on a page whose job is to show four numbers
+     and a calendar. A greeting does not need a background; it needs to be the
+     first thing you read and then get out of the way. The two facts on the
+     right sit on the page too, separated by a rule rather than a container. */
   .welcome-card {
     display: flex;
-    align-items: center;
-    gap: 1.5rem;
+    align-items: flex-end;
+    gap: var(--sp-6);
     flex-wrap: wrap;
-    background: linear-gradient(135deg, #101725 0%, #1c2b4a 100%);
-    border: 1px solid rgba(255,255,255,.07);
-    border-radius: var(--r-lg);
-    padding: 1.5rem 1.7rem;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    padding: 0 0 var(--sp-5);
+    margin-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--border);
   }
 
   .welcome-main { flex: 1 1 320px; min-width: 0; }
 
   .welcome-eyebrow {
-    font-size: .6rem;
-    font-weight: 800;
-    letter-spacing: .16em;
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    color: rgba(226,232,240,.42);
-    margin-bottom: .5rem;
+    color: var(--text-3);
+    margin-bottom: var(--sp-2);
   }
 
   .welcome-title {
     font-family: 'Sora', sans-serif;
     font-weight: 700;
-    font-size: 1.35rem;
+    font-size: var(--fs-xl);
     letter-spacing: -.025em;
-    color: #fff;
-    margin: 0 0 .3rem;
+    color: var(--text);
+    margin: 0 0 var(--sp-1);
+    text-wrap: balance;
   }
 
   .welcome-sub {
-    font-size: .82rem;
-    color: rgba(226,232,240,.6);
+    font-size: var(--fs-md);
+    color: var(--text-2);
     margin: 0;
-    max-width: 52ch;
+    max-width: 58ch;
   }
 
-  /* Two quiet facts, not a glass card. */
   .welcome-meta {
     display: flex;
-    gap: 2rem;
+    gap: var(--sp-8);
     flex-shrink: 0;
   }
 
-  .welcome-meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .welcome-meta-item { display: flex; flex-direction: column; gap: 2px; }
 
   .welcome-meta-label {
-    font-size: .58rem;
-    font-weight: 800;
+    font-size: var(--fs-2xs);
+    font-weight: 600;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: rgba(226,232,240,.38);
+    color: var(--text-3);
   }
 
   .welcome-meta-value {
     font-family: 'Sora', sans-serif;
     font-weight: 600;
-    font-size: .85rem;
-    color: #fff;
+    font-size: var(--fs-md);
+    color: var(--text);
   }
 
   @media (max-width: 640px) {
-    .welcome-card { padding: 1.25rem 1.25rem; gap: 1.1rem; }
-    .welcome-title { font-size: 1.15rem; }
-    .welcome-meta { gap: 1.5rem; }
+    .welcome-card { gap: var(--sp-4); padding-bottom: var(--sp-4); }
+    .welcome-meta { gap: var(--sp-6); }
   }
 
   /* ══════════════════════════════════════════════
@@ -1228,7 +1253,7 @@
   @media (max-width: 767px) {
     .cal-cell { min-height: 38px; padding: .28rem .1rem .2rem; }
     .cal-time-in { display: none; }
-    .cal-num { font-size: .68rem; }
+    .cal-num { font-size:var(--fs-xs); }
   }
   @media (max-width: 576px) {
     .topbar { padding: 0 .9rem; }
@@ -1379,9 +1404,9 @@
       <div class="tb-page-info">
         <div class="tb-title" id="tbTitle">Overview</div>
         <div class="tb-breadcrumb">
-          <i class="bi bi-house-fill" style="font-size:.58rem;"></i>
+          <i class="bi bi-house-fill" style="font-size:var(--fs-2xs);"></i>
           <span>MCC Portal</span>
-          <i class="bi bi-chevron-right" style="font-size:.52rem;"></i>
+          <i class="bi bi-chevron-right" style="font-size:var(--fs-2xs);"></i>
           <span id="tbBreadcrumb">Dashboard</span>
         </div>
       </div>
@@ -1412,7 +1437,7 @@
             </div>
             <div class="tb-urole">{{ $employee->position ?? 'Employee' }}</div>
           </div>
-          <i class="bi bi-chevron-down d-none d-sm-block" style="font-size:.6rem;color:var(--text-3);margin-left:2px;"></i>
+          <i class="bi bi-chevron-down d-none d-sm-block" style="font-size:var(--fs-2xs);color:var(--text-3);margin-left:2px;"></i>
         </div>
       </div>
     </header>
@@ -1503,12 +1528,14 @@
           @foreach($kpis as $idx => $k)
           <div class="col-12 col-sm-6 col-lg-3 s{{ $idx }}">
             <div class="kpi" style="--kpi-c:{{ $k['c'] }};--kpi-bg:{{ $k['bg'] }};">
-              <div class="kpi-accent"></div>
               <div class="kpi-header">
                 <div class="kpi-icon"><i class="bi bi-{{ $k['icon'] }}"></i></div>
                 <span class="kpi-period">{{ $k['sub'] }}</span>
               </div>
-              <div class="kpi-val" style="color:{{ $k['c'] }}; font-size: 1.4rem;">{{ $k['val'] }}</div>
+              {{-- The figure reads in the page's text colour. Four cards each
+                   shouting a different hue made none of them the important one;
+                   the icon still carries the category colour. --}}
+              <div class="kpi-val">{{ $k['val'] }}</div>
               <div class="kpi-label">{{ $k['label'] }}</div>
             </div>
           </div>
@@ -1659,7 +1686,7 @@
                       </div>
                       <div>
                         <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.84rem;color:{{ $tc['c'] }};">{{ ucfirst($todaySt) }}</div>
-                        <div style="font-size:.63rem;color:var(--text-3);margin-top:2px;">
+                        <div style="font-size:var(--fs-2xs);color:var(--text-3);margin-top:2px;">
                           @if($todayAtt->time_in) In: {{ \Carbon\Carbon::parse($todayAtt->time_in)->format('h:i A') }} @endif
                           @if($todayAtt->time_out) · Out: {{ \Carbon\Carbon::parse($todayAtt->time_out)->format('h:i A') }} @endif
                         </div>
@@ -1672,7 +1699,7 @@
                       </div>
                       <div>
                         <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.82rem;color:var(--text-2);">No Record Yet</div>
-                        <div style="font-size:.62rem;color:var(--text-3);margin-top:2px;">{{ now()->format('l, F j') }}</div>
+                        <div style="font-size:var(--fs-2xs);color:var(--text-3);margin-top:2px;">{{ now()->format('l, F j') }}</div>
                       </div>
                     </div>
                   @endif
@@ -1693,11 +1720,11 @@
                   @if(isset($payslips) && $payslips->count() > 0)
                     @php $lp = $payslips->first(); @endphp
                     <div class="payslip-card">
-                      <div style="font-size:.56rem;opacity:.5;text-transform:uppercase;letter-spacing:.6px;font-weight:700;position:relative;z-index:1;">Pay Period</div>
+                      <div style="font-size:var(--fs-2xs);opacity:.5;text-transform:uppercase;letter-spacing:.6px;font-weight:700;position:relative;z-index:1;">Pay Period</div>
                       <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.82rem;margin:.12rem 0 .55rem;position:relative;z-index:1;">
                         {{ $lp->pay_period ?? ($lp->sent_at?->format('F Y') ?? '—') }}
                       </div>
-                      <div style="font-size:.56rem;opacity:.5;text-transform:uppercase;letter-spacing:.6px;font-weight:700;position:relative;z-index:1;">Net Pay</div>
+                      <div style="font-size:var(--fs-2xs);opacity:.5;text-transform:uppercase;letter-spacing:.6px;font-weight:700;position:relative;z-index:1;">Net Pay</div>
                       <div style="font-family:'Sora',sans-serif;font-weight:900;font-size:1.55rem;line-height:1;margin-top:.1rem;position:relative;z-index:1;letter-spacing:-.025em;">
                         ₱{{ number_format($lp->total_honorarium ?? 0, 2) }}
                       </div>
@@ -1757,7 +1784,7 @@
                 </div>
                 <div>
                   <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;color:{{ $s['c'] }};">{{ $s['val'] }}</div>
-                  <div style="font-size:.6rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.3px;">{{ $s['label'] }}</div>
+                  <div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.3px;">{{ $s['label'] }}</div>
                 </div>
               </div>
             </div>
@@ -1786,7 +1813,7 @@
               <tbody>
                 @forelse($attendances ?? [] as $i => $att)
                 <tr>
-                  <td style="color:var(--text-3);font-size:.68rem;">{{ $i + 1 }}</td>
+                  <td style="color:var(--text-3);font-size:var(--fs-xs);">{{ $i + 1 }}</td>
                   <td style="font-weight:700;">{{ \Carbon\Carbon::parse($att->date)->format('M d, Y') }}</td>
                   <td style="color:var(--text-3);">{{ \Carbon\Carbon::parse($att->date)->format('D') }}</td>
                   <td>{{ $att->time_in  ? \Carbon\Carbon::parse($att->time_in)->format('h:i A')  : '—' }}</td>
@@ -1938,7 +1965,7 @@
             <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.86rem;color:var(--text);">
               {{ $ps->pay_period ?? ($ps->sent_at?->format('F Y') ?? '—') }}
             </div>
-            <div style="font-size:.68rem;color:var(--text-3);margin-top:3px;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <div style="font-size:var(--fs-xs);color:var(--text-3);margin-top:3px;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
               {{-- Was `total_honorarium` labelled "Net Pay". That column is the
                    GROSS figure — the payslip email subtracts deductions from it
                    to reach net — so this row overstated take-home pay by the
@@ -1951,7 +1978,7 @@
               <span style="width:3px;height:3px;border-radius:50%;background:var(--text-3);display:inline-block;"></span>
               <span>Issued: {{ $ps->sent_at?->format('M d, Y') ?? '—' }}</span>
               @if(!($ps->viewed ?? true))
-                <span style="background:rgba(245,158,11,.18);color:#b45309;font-size:.56rem;font-weight:800;border-radius:4px;padding:1px 7px;letter-spacing:.3px;text-transform:uppercase;">New</span>
+                <span style="background:rgba(245,158,11,.18);color:#b45309;font-size:var(--fs-2xs);font-weight:800;border-radius:4px;padding:1px 7px;letter-spacing:.3px;text-transform:uppercase;">New</span>
               @endif
             </div>
           </div>
@@ -2025,12 +2052,12 @@
                 <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
                   <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:.87rem;color:var(--text);">{{ $ann->title }}</span>
                   @if($annIsUnread)
-                    <span class="ann-unread-tag" style="background:var(--warn);color:#fff;font-size:.54rem;font-weight:800;border-radius:4px;padding:2px 7px;letter-spacing:.3px;">UNREAD</span>
+                    <span class="ann-unread-tag" style="background:var(--warn);color:#fff;font-size:var(--fs-2xs);font-weight:800;border-radius:4px;padding:2px 7px;letter-spacing:.3px;">UNREAD</span>
                   @endif
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                  <span style="background:{{ $ac }}15;color:{{ $ac }};font-size:.6rem;font-weight:800;border-radius:4px;padding:2px 8px;text-transform:uppercase;letter-spacing:.4px;">{{ ucfirst($at) }}</span>
-                  <span style="font-size:.64rem;color:var(--text-3);">{{ $ann->created_at?->format('M d, Y · H:i') ?? '—' }}</span>
+                  <span style="background:{{ $ac }}15;color:{{ $ac }};font-size:var(--fs-2xs);font-weight:800;border-radius:4px;padding:2px 8px;text-transform:uppercase;letter-spacing:.4px;">{{ ucfirst($at) }}</span>
+                  <span style="font-size:var(--fs-2xs);color:var(--text-3);">{{ $ann->created_at?->format('M d, Y · H:i') ?? '—' }}</span>
                 </div>
               </div>
             </div>
@@ -2065,13 +2092,13 @@
                 <div style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:#fff;position:relative;z-index:1;">{{ $displayName }}</div>
                 <div style="font-size:.7rem;opacity:.65;color:#fff;margin-top:3px;position:relative;z-index:1;">{{ $employee->position ?? 'Employee' }}</div>
                 <div style="margin-top:.5rem;position:relative;z-index:1;">
-                  <span style="background:rgba(255,255,255,.14);border-radius:20px;padding:.18rem .9rem;font-size:.64rem;color:rgba(255,255,255,.8);font-weight:700;">
+                  <span style="background:rgba(255,255,255,.14);border-radius:20px;padding:.18rem .9rem;font-size:var(--fs-2xs);color:rgba(255,255,255,.8);font-weight:700;">
                     ID: {{ $employee->employee_id ?? $employee?->id ?? 'N/A' }}
                   </span>
                 </div>
               </div>
               <div class="card-body">
-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.55rem;">Contact</div>
+                <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.55rem;">Contact</div>
                 @foreach([
                   ['icon'=>'envelope-fill',  'val'=> $employee->email   ?? '—'],
                   ['icon'=>'telephone-fill', 'val'=> $employee->phone   ?? '—'],
@@ -2083,7 +2110,7 @@
                 </div>
                 @endforeach
 
-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin:.9rem 0 .55rem;">Employment</div>
+                <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin:.9rem 0 .55rem;">Employment</div>
                 @foreach([
                   ['icon'=>'building-fill',  'label'=>'Department', 'val'=> $employee->department?->name ?? '—'],
                   ['icon'=>'briefcase-fill', 'label'=>'Position',   'val'=> $employee->position         ?? '—'],
@@ -2113,12 +2140,12 @@
                   </div>
                   Employee Details
                 </div>
-                <span style="font-size:.67rem;color:var(--text-3);">Name &amp; email editable · rest managed by HR</span>
+                <span style="font-size:var(--fs-xs);color:var(--text-3);">Name &amp; email editable · rest managed by HR</span>
               </div>
               <div class="card-body">
                 <form action="{{ route('employee.profile.update') }}" method="POST">
                   @csrf
-                  <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Personal Information</div>
+                  <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.7rem;">Personal Information</div>
                   <div class="row g-3 mb-3">
                     <div class="col-md-6">
                       <label class="f-label">Full Name</label>
@@ -2152,7 +2179,7 @@
                   </div>
                 </form>
 
-                <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin:1.2rem 0 .7rem;padding-top:1rem;border-top:1px solid var(--border-2);">Employment Details</div>
+                <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin:1.2rem 0 .7rem;padding-top:1rem;border-top:1px solid var(--border-2);">Employment Details</div>
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="f-label">Position</label>
@@ -2219,7 +2246,7 @@
                       </div>
                     </div>
                   </div>
-                  <div style="font-size:.68rem;color:var(--text-3);margin-bottom:1rem;">
+                  <div style="font-size:var(--fs-xs);color:var(--text-3);margin-bottom:1rem;">
                     <i class="bi bi-info-circle"></i> Minimum 8 characters. Leave blank if you don't want to change your password.
                   </div>
                   <div class="d-flex justify-content-end">
@@ -2965,16 +2992,16 @@ function renderPayslipDoc(raw, container, downloadUrl) {
   <div class="ps-doc-header">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.7rem;">
       <div>
-        <div style="font-size:.56rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.4);margin-bottom:.15rem;">Official Document</div>
+        <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.4);margin-bottom:.15rem;">Official Document</div>
         <div style="font-family:'Sora',sans-serif;font-weight:900;font-size:1.2rem;color:#fff;letter-spacing:-.02em;line-height:1;">Payslip</div>
-        <div style="font-size:.68rem;color:rgba(255,255,255,.5);margin-top:4px;">MCC Employee Portal · Digital Payroll System</div>
+        <div style="font-size:var(--fs-xs);color:rgba(255,255,255,.5);margin-top:4px;">MCC Employee Portal · Digital Payroll System</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:.56rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;font-weight:700;">Pay Period</div>
+        <div style="font-size:var(--fs-2xs);color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;font-weight:700;">Pay Period</div>
         <div style="font-family:'Sora',sans-serif;font-weight:700;color:#fff;font-size:.88rem;margin-top:2px;">${ps.pay_period || '—'}</div>
-        <div style="font-size:.63rem;color:rgba(255,255,255,.4);margin-top:3px;">Issued: ${fmtDate(ps.sent_at)}</div>
+        <div style="font-size:var(--fs-2xs);color:rgba(255,255,255,.4);margin-top:3px;">Issued: ${fmtDate(ps.sent_at)}</div>
         <div style="margin-top:6px;">
-          <span style="background:${sbg};color:${sc};font-size:.58rem;font-weight:800;border-radius:5px;padding:3px 10px;text-transform:uppercase;letter-spacing:.4px;">${status}</span>
+          <span style="background:${sbg};color:${sc};font-size:var(--fs-2xs);font-weight:800;border-radius:5px;padding:3px 10px;text-transform:uppercase;letter-spacing:.4px;">${status}</span>
         </div>
       </div>
     </div>
@@ -2988,32 +3015,32 @@ function renderPayslipDoc(raw, container, downloadUrl) {
 
   <!-- Employee info -->
   <div style="padding:1.2rem 1.8rem .6rem;border-bottom:1px solid var(--border);">
-    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.6rem;">Employee Information</div>
+    <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.6rem;">Employee Information</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;">
       <div>
-        <div style="font-size:.6rem;color:var(--text-3);font-weight:600;">Full Name</div>
+        <div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:600;">Full Name</div>
         <div style="font-weight:700;font-size:.84rem;color:var(--text);margin-top:1px;">${emp.name || '—'}</div>
       </div>
       <div>
-        <div style="font-size:.6rem;color:var(--text-3);font-weight:600;">Employee ID</div>
+        <div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:600;">Employee ID</div>
         <div style="font-weight:700;font-size:.84rem;color:var(--text);margin-top:1px;">${emp.employee_id || ps.employee_id || '—'}</div>
       </div>
       <div>
-        <div style="font-size:.6rem;color:var(--text-3);font-weight:600;">Department</div>
+        <div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:600;">Department</div>
         <div style="font-weight:600;font-size:.8rem;color:var(--text-2);margin-top:1px;">${emp.department?.name || '—'}</div>
       </div>
       <div>
-        <div style="font-size:.6rem;color:var(--text-3);font-weight:600;">Position</div>
+        <div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:600;">Position</div>
         <div style="font-weight:600;font-size:.8rem;color:var(--text-2);margin-top:1px;">${emp.position || '—'}</div>
       </div>
-      ${daysWorked > 0 ? `<div><div style="font-size:.6rem;color:var(--text-3);font-weight:600;">Days Worked</div><div style="font-weight:600;font-size:.8rem;color:var(--text-2);margin-top:1px;">${daysWorked} day(s)</div></div>` : ''}
-      ${hoursWork  > 0 ? `<div><div style="font-size:.6rem;color:var(--text-3);font-weight:600;">Hours Worked</div><div style="font-weight:600;font-size:.8rem;color:var(--text-2);margin-top:1px;">${hoursWork}h</div></div>` : ''}
+      ${daysWorked > 0 ? `<div><div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:600;">Days Worked</div><div style="font-weight:600;font-size:.8rem;color:var(--text-2);margin-top:1px;">${daysWorked} day(s)</div></div>` : ''}
+      ${hoursWork  > 0 ? `<div><div style="font-size:var(--fs-2xs);color:var(--text-3);font-weight:600;">Hours Worked</div><div style="font-weight:600;font-size:.8rem;color:var(--text-2);margin-top:1px;">${hoursWork}h</div></div>` : ''}
     </div>
   </div>
 
   <!-- Earnings -->
   <div style="padding:.9rem 1.8rem .4rem;">
-    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.5rem;">Earnings</div>
+    <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.5rem;">Earnings</div>
     <div class="ps-table-bg">
       ${basicPay > 0 ? `
       <div class="ps-row">
@@ -3040,7 +3067,7 @@ function renderPayslipDoc(raw, container, downloadUrl) {
   <!-- Deductions -->
   ${totalDed > 0 ? `
   <div style="padding:.6rem 1.8rem .4rem;">
-    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.5rem;">Mandatory Deductions</div>
+    <div style="font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:.5rem;">Mandatory Deductions</div>
     <div class="ps-table-bg">
       ${sss > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-shield-check" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>SSS</span><span class="ps-row-val deduct">– ${fmt(sss)}</span></div>` : ''}
       ${philhealth > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-heart-pulse" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>PhilHealth</span><span class="ps-row-val deduct">– ${fmt(philhealth)}</span></div>` : ''}
@@ -3058,9 +3085,9 @@ function renderPayslipDoc(raw, container, downloadUrl) {
   <!-- Net Pay -->
   <div class="ps-net-pay" style="margin-top:.8rem;">
     <div>
-      <div style="font-size:.58rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:.2rem;">Net Pay</div>
+      <div style="font-size:var(--fs-2xs);color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:.2rem;">Net Pay</div>
       <div style="font-family:'Sora',sans-serif;font-weight:900;font-size:2rem;color:#fff;letter-spacing:-.04em;line-height:1;">${fmt(netPay)}</div>
-      <div style="font-size:.63rem;color:rgba(255,255,255,.35);margin-top:4px;">
+      <div style="font-size:var(--fs-2xs);color:rgba(255,255,255,.35);margin-top:4px;">
         ${ps.pay_period || ''} · ${fmtDate(ps.sent_at)}
       </div>
     </div>
