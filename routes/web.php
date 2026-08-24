@@ -280,6 +280,12 @@ Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('emp
         Route::get('/payslips/{payslip}', [EmployeeController::class, 'portalPayslipJson'])->name('payslip.json');
         Route::get('/payslips/{payslip}/download', [EmployeeController::class, 'portalPayslipDownload'])->name('payslip.download');
         Route::get('/payslips/{payslip}/view', [EmployeeController::class, 'portalPayslipView'])->name('payslip.view');
+
+        // The itemised wage — gross, every deduction, net. Sealed with the rest
+        // of the payslip contents: it reveals more about someone's pay than the
+        // payslip listing does, not less.
+        Route::get('/payslips/{payslip}/liquidation', [EmployeeController::class, 'portalPayslipLiquidation'])
+            ->name('payslip.liquidation');
     });
 
     // Attendance

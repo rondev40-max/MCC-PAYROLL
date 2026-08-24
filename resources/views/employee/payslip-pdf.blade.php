@@ -245,10 +245,21 @@
         </table>
     </div>
 
+    @php
+        // Read the breakdown recorded on the payslip. This template used to ask
+        // the model for withholding_tax / gsis / philhealth / pag_ibig /
+        // deduction, none of which are columns on payslip_histories — so every
+        // deduction row printed ₱0.00, "Total Deductions" was always ₱0.00, and
+        // "Gross Pay" and "Total Net Pay" showed the same number.
+        $liquidation = \App\Support\WageLiquidation::fromPayslip($payslip);
+    @endphp
+
     {{-- ── Net Pay Highlight ── --}}
     <div class="net-pay-box">
-        <div class="net-label">Total Net Pay</div>
-        <div class="net-amount">&#8369;{{ number_format($payslip->total_honorarium ?? 0, 2) }}</div>
+        <div class="net-label">{{ $liquidation ? 'Total Net Pay' : 'Total Honorarium' }}</div>
+        <div class="net-amount">
+            &#8369;{{ number_format($liquidation ? $liquidation['net'] : ($payslip->total_honorarium ?? 0), 2) }}
+        </div>
     </div>
 
     {{-- ── Earnings ── --}}
@@ -263,7 +274,11 @@
         <tbody>
             <tr>
                 <td>Total Hours / Days</td>
-                <td class="text-right">{{ $payslip->total_hours_or_days ?? $payslip->days ?? 0 }}</td>
+                <td class="text-right">
+                    {{ $liquidation
+                        ? \App\Support\WageLiquidation::unitLabel($liquidation['rate_unit'], $liquidation['units'])
+                        : ($payslip->total_hours_or_days ?? $payslip->days ?? 0) }}
+                </td>
             </tr>
             <tr>
                 <td>Rate</td>
@@ -271,13 +286,16 @@
             </tr>
             <tr>
                 <td>Gross Pay</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->total_honorarium ?? 0, 2) }}</td>
+                <td class="text-right">
+                    &#8369;{{ number_format($liquidation ? $liquidation['gross'] : ($payslip->total_honorarium ?? 0), 2) }}
+                </td>
             </tr>
         </tbody>
     </table>
 
-    {{-- ── Government Deductions ── --}}
-    <div class="section-title">Government Deductions</div>
+    {{-- ── Deductions ── --}}
+    @if($liquidation)
+    <div class="section-title">Deductions Withheld</div>
     <table class="data-table">
         <thead>
             <tr>
@@ -286,43 +304,35 @@
             </tr>
         </thead>
         <tbody>
+            @foreach($liquidation['lines'] as $line)
             <tr>
-                <td>Withholding Tax</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->withholding_tax ?? 0, 2) }}</td>
+                <td>{{ $line['label'] }}</td>
+                <td class="text-right">&#8369;{{ number_format($line['amount'], 2) }}</td>
             </tr>
-            <tr>
-                <td>GSIS</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->gsis ?? 0, 2) }}</td>
-            </tr>
-            <tr>
-                <td>PhilHealth</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->philhealth ?? 0, 2) }}</td>
-            </tr>
-            <tr>
-                <td>Pag-IBIG (HDMF)</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->pag_ibig ?? 0, 2) }}</td>
-            </tr>
-            @if(($payslip->sss ?? 0) > 0)
-            <tr>
-                <td>SSS</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->sss ?? 0, 2) }}</td>
-            </tr>
-            @endif
+            @endforeach
             <tr>
                 <td>Other Deductions</td>
-                <td class="text-right">&#8369;{{ number_format($payslip->other_deduction ?? ($payslip->deduction ?? 0), 2) }}</td>
+                <td class="text-right">&#8369;{{ number_format($liquidation['other_deductions'], 2) }}</td>
             </tr>
             <tr class="total-row">
                 <td>Total Deductions</td>
-                <td class="text-right">
-                    @php
-                        $totalDedPdf = (float)($payslip->withholding_tax ?? 0) + (float)($payslip->gsis ?? 0) + (float)($payslip->philhealth ?? 0) + (float)($payslip->pag_ibig ?? 0) + (float)($payslip->sss ?? 0) + (float)($payslip->deduction ?? 0);
-                    @endphp
-                    &#8369;{{ number_format($totalDedPdf, 2) }}
-                </td>
+                <td class="text-right">&#8369;{{ number_format($liquidation['total_deductions'], 2) }}</td>
             </tr>
         </tbody>
     </table>
+    @else
+    {{-- Nothing was recorded, so nothing is claimed. A table of zeroes here
+         would state that no tax and no contributions were withheld. --}}
+    <div class="notes-box">
+        <div class="notes-label">Deductions</div>
+        <div class="notes-text">
+            This payslip was issued before the payroll system began recording a
+            line-by-line breakdown, so its deductions were not itemised. The
+            figure above is the total honorarium for the period. Contact the
+            payroll office for a breakdown.
+        </div>
+    </div>
+    @endif
 
     {{-- ── Notes ── --}}
     @if(!empty($payslip->error) && $payslip->error !== 'No additional notes.')

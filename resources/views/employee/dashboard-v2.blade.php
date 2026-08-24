@@ -1440,11 +1440,14 @@
 
         @php
           $latestPayslip = isset($payslips) && $payslips->count() > 0 ? $payslips->first() : null;
-          // PayslipHistory stores the net figure in `total_honorarium`. The old
-          // code read `net_pay` / `total_net_pay`, neither of which exists on
-          // that table, so this KPI silently displayed ₱0.00 for everyone.
+          // `total_honorarium` is the GROSS figure, not the net one — the
+          // payslip email subtracts deductions from it to reach take-home. This
+          // KPI showed it under a "Latest Net Pay" label, overstating pay by the
+          // whole of the employee's deductions. takeHome() prefers the recorded
+          // net and falls back to the honorarium only for payslips issued before
+          // the breakdown was kept.
           $netPayVal = $latestPayslip
-            ? '₱' . number_format($latestPayslip->total_honorarium ?? 0, 2)
+            ? '₱' . number_format($latestPayslip->takeHome(), 2)
             : '—';
         @endphp
 
@@ -1924,7 +1927,15 @@
               {{ $ps->pay_period ?? ($ps->sent_at?->format('F Y') ?? '—') }}
             </div>
             <div style="font-size:.68rem;color:var(--text-3);margin-top:3px;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
-              <span>Net Pay: <strong style="color:var(--brand);font-family:'Sora',sans-serif;">₱{{ number_format($ps->total_honorarium ?? 0, 2) }}</strong></span>
+              {{-- Was `total_honorarium` labelled "Net Pay". That column is the
+                   GROSS figure — the payslip email subtracts deductions from it
+                   to reach net — so this row overstated take-home pay by the
+                   whole of everyone's deductions. --}}
+              <span>Net Pay: <strong style="color:var(--brand);font-family:'Sora',sans-serif;">₱{{ number_format($ps->takeHome(), 2) }}</strong></span>
+              @if($ps->gross_pay !== null && (float) $ps->total_deductions > 0)
+                <span style="width:3px;height:3px;border-radius:50%;background:var(--text-3);display:inline-block;"></span>
+                <span>Gross ₱{{ number_format($ps->gross_pay, 2) }} · less ₱{{ number_format($ps->total_deductions, 2) }}</span>
+              @endif
               <span style="width:3px;height:3px;border-radius:50%;background:var(--text-3);display:inline-block;"></span>
               <span>Issued: {{ $ps->sent_at?->format('M d, Y') ?? '—' }}</span>
               @if(!($ps->viewed ?? true))
@@ -1937,6 +1948,14 @@
               onclick="viewPayslip('{{ route('employee.payslip.json', $ps->id) }}', '{{ route('employee.payslip.download', $ps->id) }}')"
               class="btn-primary btn-sm">
               <i class="bi bi-eye"></i> View
+            </button>
+            {{-- The itemised wage. Gated by the same unlock as the rest of the
+                 payslip contents, so it goes through openLiquidation() rather
+                 than being a bare link. --}}
+            <button
+              onclick="openLiquidation('{{ route('employee.payslip.liquidation', $ps->id) }}')"
+              class="btn-outline btn-sm" title="See how this pay was computed">
+              <i class="bi bi-list-columns-reverse"></i> Breakdown
             </button>
             <a href="{{ route('employee.payslip.download', $ps->id) }}" class="btn-outline btn-sm" title="Download PDF" onclick="return downloadPayslip(event, this.href);">
               <i class="bi bi-download"></i>
@@ -2809,6 +2828,13 @@ function downloadPayslip(event, url) {
   return false;
 }
 
+/* The wage liquidation is a full page rather than a modal — it is a document
+   people print and bring to the payroll office. Same unlock gate as every other
+   route that reveals payslip contents. */
+function openLiquidation(url) {
+  ensurePayslipUnlocked().then(ok => { if (ok) window.location.href = url; });
+}
+
 /* ═══════════════════════════════════════════
    PAYSLIP VIEW — FETCH & RENDER
 ═══════════════════════════════════════════ */
@@ -2884,16 +2910,26 @@ function renderPayslipDoc(raw, container, downloadUrl) {
   const allowances = parseFloat(ps.allowances   ?? ps.total_allowance ?? ps.cola             ?? 0);
   const grossPay   = parseFloat(ps.gross_pay    ?? ps.gross           ?? (basicPay + overtime + allowances));
 
-  /* Deductions */
-  const sss        = parseFloat(ps.sss_deduction        ?? ps.sss         ?? 0);
-  const philhealth = parseFloat(ps.philhealth_deduction ?? ps.philhealth  ?? ps.phic ?? 0);
-  const pagibig    = parseFloat(ps.pagibig_deduction    ?? ps.pagibig     ?? ps.hdmf ?? 0);
-  const tax        = parseFloat(ps.tax_deduction        ?? ps.withholding_tax ?? ps.tax ?? 0);
-  const loans      = parseFloat(ps.loan_deductions      ?? ps.loans       ?? ps.other_deductions ?? 0);
-  const totalDed   = sss + philhealth + pagibig + tax + loans;
+  /* Deductions.
 
-  /* Net */
-  const netPay     = parseFloat(ps.total_honorarium ?? ps.net_pay ?? (grossPay - totalDed));
+     These read the breakdown the payroll run records on the payslip. The old
+     fallback chains guessed at column names the API never returns — `pagibig`
+     rather than `pag_ibig`, `sss_deduction`, `tax_deduction` — so most resolved
+     to 0 and the deductions block was hidden entirely. GSIS had no row at all. */
+  const sss        = parseFloat(ps.sss             ?? ps.sss_deduction        ?? 0);
+  const philhealth = parseFloat(ps.philhealth      ?? ps.philhealth_deduction ?? ps.phic ?? 0);
+  const pagibig    = parseFloat(ps.pag_ibig        ?? ps.pagibig_deduction    ?? ps.hdmf ?? 0);
+  const tax        = parseFloat(ps.withholding_tax ?? ps.tax_deduction        ?? ps.tax  ?? 0);
+  const gsis       = parseFloat(ps.gsis            ?? 0);
+  const loans      = parseFloat(ps.other_deductions ?? ps.loan_deductions ?? ps.loans ?? 0);
+  const totalDed   = parseFloat(ps.total_deductions ?? (sss + philhealth + pagibig + tax + gsis + loans));
+
+  /* Net.
+
+     `total_honorarium` is the GROSS figure — the payslip email subtracts
+     deductions from it to reach net — so preferring it here labelled gross pay
+     as take-home. The recorded net wins; the subtraction is the fallback. */
+  const netPay     = parseFloat(ps.net_pay ?? (grossPay - totalDed));
 
   /* Status badge */
   const status     = (ps.status ?? 'released').toLowerCase();
@@ -2987,6 +3023,7 @@ function renderPayslipDoc(raw, container, downloadUrl) {
       ${philhealth > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-heart-pulse" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>PhilHealth</span><span class="ps-row-val deduct">– ${fmt(philhealth)}</span></div>` : ''}
       ${pagibig > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-house-heart" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>Pag-IBIG (HDMF)</span><span class="ps-row-val deduct">– ${fmt(pagibig)}</span></div>` : ''}
       ${tax > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-percent" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>Withholding Tax</span><span class="ps-row-val deduct">– ${fmt(tax)}</span></div>` : ''}
+      ${gsis > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-bank" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>GSIS</span><span class="ps-row-val deduct">– ${fmt(gsis)}</span></div>` : ''}
       ${loans > 0 ? `<div class="ps-row"><span class="ps-row-key"><i class="bi bi-credit-card" style="font-size:.7rem;margin-right:4px;color:var(--text-3);"></i>Loans / Other</span><span class="ps-row-val deduct">– ${fmt(loans)}</span></div>` : ''}
       <div class="ps-subtotal" style="background:rgba(239,68,68,.05);border-top:2px solid rgba(239,68,68,.1);">
         <span style="color:var(--text);font-family:'Sora',sans-serif;">Total Deductions</span>

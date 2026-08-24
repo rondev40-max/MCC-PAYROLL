@@ -19,6 +19,7 @@ use App\Models\AdminPersonnelTimesheet;
 use App\Models\PayslipHistory;
 use App\Models\Department;
 use App\Support\DepartmentAnalytics;
+use App\Support\WageLiquidation;
 
 use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon; 
@@ -714,6 +715,33 @@ class AdminController extends Controller
 
         $sent = 0; $failed = 0; $recorded = 0; $errors = [];
 
+        /**
+         * The columns every payslip record shares, itemised wage included.
+         *
+         * The breakdown is copied off the timesheet here, as the payslip is
+         * written, and never recomputed afterwards. Timesheets stay editable
+         * once a payroll run is done, so rebuilding a payslip later would show
+         * the employee different figures from the ones they were emailed.
+         */
+        $payslipAttributes = function (array $payload, float $rate, float $units, float $gross): array {
+            $timesheet = $payload['timesheet'] ?? null;
+
+            return array_merge([
+                'name'                => $payload['employeeName'],
+                'employee_type'       => $payload['type'],
+                'total_honorarium'    => $gross,
+                'designation'         => $payload['designation'] ?? 'N/A',
+                'rate'                => $rate,
+                'rate_unit'           => in_array($payload['type'], ['Staff', 'Utility'], true) ? 'day' : 'hour',
+                'pay_period'          => $payload['payPeriod'],
+                'total_hours_or_days' => $units,
+                'days'                => $units,
+                'source_type'         => $payload['type'],
+                'source_id'           => $timesheet->id ?? null,
+                'sent_at'             => now(),
+            ], WageLiquidation::fromTimesheet($timesheet, $gross));
+        };
+
         // --- Process recipients with email (Send Email + Record) ---
         foreach ($recipients as $email => $payload) {
             $rateValue = (float) $payload['rate'];
@@ -740,19 +768,10 @@ class AdminController extends Controller
                 $sent++;
 
                 // Log success
-                PayslipHistory::create([
-                    'name' => $payload['employeeName'],
-                    'email' => $email,
-                    'employee_type' => $payload['type'],
-                    'total_honorarium' => $totalHonorariumClean,
-                    'designation' => $payload['designation'] ?? 'N/A', 
-                    'rate' => $rateValue,
-                    'pay_period' => $payload['payPeriod'],
-                    'total_hours_or_days' => $daysHoursValue,
-                    'days' => $daysHoursValue, 
-                    'error' => null,
-                    'sent_at' => now(),
-                ]);
+                PayslipHistory::create(array_merge(
+                    $payslipAttributes($payload, $rateValue, $daysHoursValue, $totalHonorariumClean),
+                    ['email' => $email, 'error' => null]
+                ));
 
             } catch (\Throwable $e) {
                 Log::error("Failed to send payslip to {$email}: " . $e->getMessage());
@@ -760,19 +779,10 @@ class AdminController extends Controller
                 $errors[] = $email . ': ' . $e->getMessage();
 
                 // Log failure
-                PayslipHistory::create([
-                    'name' => $payload['employeeName'],
-                    'email' => $email,
-                    'employee_type' => $payload['type'],
-                    'total_honorarium' => $totalHonorariumClean,
-                    'designation' => $payload['designation'] ?? 'N/A', 
-                    'rate' => $rateValue,
-                    'pay_period' => $payload['payPeriod'],
-                    'total_hours_or_days' => $daysHoursValue,
-                    'days' => $daysHoursValue, 
-                    'error' => $e->getMessage(),
-                    'sent_at' => now(),
-                ]);
+                PayslipHistory::create(array_merge(
+                    $payslipAttributes($payload, $rateValue, $daysHoursValue, $totalHonorariumClean),
+                    ['email' => $email, 'error' => $e->getMessage()]
+                ));
             }
         }
 
@@ -787,19 +797,10 @@ class AdminController extends Controller
             $emailToStore = $payload['email'] ?? 'No Email Available';
 
             try {
-                PayslipHistory::create([
-                    'name' => $payload['employeeName'],
-                    'email' => $emailToStore,
-                    'employee_type' => $payload['type'],
-                    'total_honorarium' => $totalHonorariumClean,
-                    'designation' => $payload['designation'] ?? 'N/A', 
-                    'rate' => $rateValue,
-                    'pay_period' => $payload['payPeriod'],
-                    'total_hours_or_days' => $daysHoursValue,
-                    'days' => $daysHoursValue, 
-                    'error' => null,
-                    'sent_at' => now(),
-                ]);
+                PayslipHistory::create(array_merge(
+                    $payslipAttributes($payload, $rateValue, $daysHoursValue, $totalHonorariumClean),
+                    ['email' => $emailToStore, 'error' => null]
+                ));
                 $recorded++;
             } catch (\Throwable $e) {
                 Log::error("Failed to record Utility without email: " . $e->getMessage());

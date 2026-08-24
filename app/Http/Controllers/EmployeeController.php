@@ -167,6 +167,28 @@ class EmployeeController extends Controller
         return view('employee.payslip-pdf', compact('payslip', 'user'));
     }
 
+    /**
+     * The full accounting of one pay period: gross, every deduction, net.
+     *
+     * Read straight off the payslip rather than recomputed from the timesheet.
+     * Timesheets stay editable after a payroll run, so recalculating here would
+     * show an employee figures that differ from the payslip they were emailed —
+     * which is exactly the disagreement this screen exists to settle.
+     */
+    public function portalPayslipLiquidation(Request $request, PayslipHistory $payslip)
+    {
+        $user = Auth::user();
+        if ($payslip->email !== $user->email) abort(403);
+
+        return view('employee.payslip-liquidation', [
+            'payslip'     => $payslip,
+            'user'        => $user,
+            // Null when this payslip predates the breakdown columns. The view
+            // states that outright instead of rendering zeroes.
+            'liquidation' => $payslip->liquidation(),
+        ]);
+    }
+
     /** @see portalPayslips() for why this redirects rather than renders. */
     public function portalAttendance(Request $request)
     {
