@@ -26,14 +26,52 @@ class EmployeeController extends Controller
     // HELPERS (shared by mobile + portal)
     // -----------------------------------------------------------------------
 
+    /**
+     * The master-list record for this account, or null.
+     *
+     * Email is matched case- and whitespace-insensitively. The master list is
+     * typed in by hand, so an instructor entered as "Emely@Gmail.com " and
+     * signing in as "emely@gmail.com" is one person — but a strict `where`
+     * found nothing, and the portal then addressed her as "Employee" for the
+     * whole session.
+     *
+     * It deliberately does NOT fall back to matching employees.id against the
+     * user's id. portalDashboard used to run
+     * `where('email', …)->orWhere('id', $employeeId)` with $employeeId falling
+     * back to users.id, so an account with no master-list row matched whichever
+     * unrelated employee happened to carry that number and the portal greeted
+     * the user with a stranger's name and position.
+     */
+    protected function resolveEmployeeRecord($user): ?Employee
+    {
+        return Employee::forAccount($user);
+    }
+
+    /**
+     * What to call the person who is signed in.
+     *
+     * The master-list record is preferred because it is the payroll office's
+     * own spelling, but `users.name` is always populated at registration, so it
+     * is a real name rather than a placeholder. "Employee" is now only reached
+     * by an account with no name at all.
+     */
+    protected function displayName($user, ?Employee $employee): string
+    {
+        foreach ([$employee?->name, $user->name ?? null] as $candidate) {
+            $name = trim((string) $candidate);
+
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'Employee';
+    }
+
     protected function resolveEmployeeId($user)
     {
-        $employee = Employee::where(function ($q) use ($user) {
-            $q->where('email', $user->email)
-              ->orWhere('id', $user->employee_id ?? 0);
-        })->first();
-
-        return $employee->id ?? ($user->employee_id ?? $user->id);
+        return $this->resolveEmployeeRecord($user)?->id
+            ?? ($user->employee_id ?? $user->id);
     }
 
     protected function getAttendances($employeeId)
@@ -103,9 +141,11 @@ class EmployeeController extends Controller
             ->pluck('announcement_id')->all();
         $payslips    = PayslipHistory::where('email', $user->email)
             ->orderByDesc('sent_at')->take(3)->get();
-        $employee    = Employee::where('email', $user->email)
-            ->orWhere('id', $employeeId)
-            ->first();
+        // Matched on email alone. The old `orWhere('id', $employeeId)` could
+        // match an unrelated employee whose id equalled this user's id, because
+        // $employeeId falls back to users.id — see resolveEmployeeRecord().
+        $employee    = $this->resolveEmployeeRecord($user);
+        $displayName = $this->displayName($user, $employee);
 
         // The Timesheets tab has always rendered `$timesheets ?? []`, but this
         // action never passed it — so the tab read "No timesheets submitted yet"
@@ -124,7 +164,7 @@ class EmployeeController extends Controller
         $maskedEmail        = PayslipGate::maskEmail($user->email);
 
         return view('employee.dashboard-v2', compact(
-            'user', 'employee', 'stats', 'announcements', 'readAnnouncementIds',
+            'user', 'employee', 'displayName', 'stats', 'announcements', 'readAnnouncementIds',
             'payslips', 'attendances', 'timesheets', 'activeTab',
             'payslipUnlocked', 'payslipUnlockedFor', 'maskedEmail'
         ));

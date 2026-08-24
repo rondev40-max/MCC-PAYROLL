@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\Auth;
 
 class MobilePortalController extends Controller
 {
+    /**
+     * Shared with the web portal via Employee::forAccount(), so the mobile app
+     * and the browser resolve the same person. Both used to compare emails
+     * strictly and fall back to matching employees.id against users.id.
+     */
     protected function resolveEmployeeId($user)
     {
-        $employee = Employee::where(function ($q) use ($user) {
-            $q->where('email', $user->email)
-              ->orWhere('id', $user->employee_id ?? 0);
-        })->first();
-
-        return $employee->id ?? ($user->employee_id ?? $user->id);
+        return Employee::forAccount($user)?->id ?? ($user->employee_id ?? $user->id);
     }
 
     protected function buildStats($attendances)
@@ -62,7 +62,7 @@ class MobilePortalController extends Controller
         $stats = $this->buildStats($attendances);
         $announcements = Announcement::orderByDesc('created_at')->take(5)->get();
         $payslips = PayslipHistory::where('email', $user->email)->orderByDesc('sent_at')->take(3)->get();
-        $employee = Employee::where('email', $user->email)->first();
+        $employee = Employee::forAccount($user);
 
         return response()->json([
             'user' => [
@@ -110,7 +110,7 @@ class MobilePortalController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user();
-        $employee = Employee::where('email', $user->email)->first();
+        $employee = Employee::forAccount($user);
         $employeeId = $this->resolveEmployeeId($user);
         $attendances = Attendance::where('employee_id', $employeeId)->orderByDesc('date')->get();
         $stats = $this->buildStats($attendances);

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>MCC Employee Portal — {{ $employee->name ?? 'Dashboard' }}</title>
+  <title>MCC Employee Portal — {{ $displayName ?? ($user->name ?? 'Dashboard') }}</title>
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -1258,7 +1258,17 @@
     </div>
 
     @php
-      $initials = collect(explode(' ', $employee->name ?? 'E'))->map(fn($w) => strtoupper($w[0]))->take(2)->implode('');
+      /* $displayName is resolved by the controller: the master-list name if the
+         account matches a row there, otherwise users.name, which is always set
+         at registration. The portal used to read $employee->name and print the
+         literal "Employee" whenever no master-list row matched — which included
+         every account whose master-list email differed in case or had a stray
+         space, so real people were addressed as "Employee". */
+      $displayName = $displayName ?? trim($employee->name ?? '') ?: ($user->name ?? 'Employee');
+
+      $initials = collect(preg_split('/\s+/', trim($displayName), -1, PREG_SPLIT_NO_EMPTY))
+        ->map(fn($w) => strtoupper(mb_substr($w, 0, 1)))
+        ->take(2)->implode('') ?: 'E';
 
       // Hoisted derived values — computed once, up top, so nothing below depends on
       // markup order. (Previously some of these were computed inline inside whichever
@@ -1306,7 +1316,7 @@
           <div class="sb-avatar-dot"></div>
         </div>
         <div style="min-width:0;">
-          <div class="sb-name">{{ $employee->name ?? 'Employee' }}</div>
+          <div class="sb-name" title="{{ $displayName }}">{{ $displayName }}</div>
           <div class="sb-role">{{ $employee->position ?? ($employee->type ?? 'Employee') }}</div>
         </div>
       </div>
@@ -1395,8 +1405,10 @@
             {{-- The email-verified tick used to sit here. Verification state is
                  only consequential for payslip delivery, so it is stated once in
                  the Payslips tab and nowhere else. --}}
-            <div class="tb-uname">
-              {{ Str::words($employee->name ?? 'Employee', 1, '') }}
+            {{-- First name only: the top bar is a narrow strip. The full name
+                 is on the title attribute and in the sidebar. --}}
+            <div class="tb-uname" title="{{ $displayName }}">
+              {{ Str::words($displayName, 1, '') }}
             </div>
             <div class="tb-urole">{{ $employee->position ?? 'Employee' }}</div>
           </div>
@@ -1459,7 +1471,7 @@
           <div class="welcome-main">
             <div class="welcome-eyebrow">Employee portal</div>
             <h2 class="welcome-title">
-              Welcome back, {{ Str::words($employee->name ?? 'Employee', 2, '') }}
+              Welcome back, {{ $displayName }}
             </h2>
             <p class="welcome-sub">
               Your attendance log, timesheets and e-payslips, all in one place.
@@ -2050,7 +2062,7 @@
             <div class="card overflow-hidden">
               <div class="profile-hero">
                 <div class="ph-avatar">{{ $initials }}</div>
-                <div style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:#fff;position:relative;z-index:1;">{{ $employee->name ?? '—' }}</div>
+                <div style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:#fff;position:relative;z-index:1;">{{ $displayName }}</div>
                 <div style="font-size:.7rem;opacity:.65;color:#fff;margin-top:3px;position:relative;z-index:1;">{{ $employee->position ?? 'Employee' }}</div>
                 <div style="margin-top:.5rem;position:relative;z-index:1;">
                   <span style="background:rgba(255,255,255,.14);border-radius:20px;padding:.18rem .9rem;font-size:.64rem;color:rgba(255,255,255,.8);font-weight:700;">
@@ -2110,12 +2122,18 @@
                   <div class="row g-3 mb-3">
                     <div class="col-md-6">
                       <label class="f-label">Full Name</label>
-                      <input type="text" name="name" class="f-input @error('name') is-invalid @enderror" value="{{ old('name', $employee->name ?? '') }}" required>
+                      {{-- Seeded from the account, not the master-list row.
+                           portalUpdateProfile() writes users.name / users.email,
+                           so those are the values being edited; reading them off
+                           $employee left both boxes empty for anyone without a
+                           master-list match, and would have written the master
+                           list's spelling of the address onto the account. --}}
+                      <input type="text" name="name" class="f-input @error('name') is-invalid @enderror" value="{{ old('name', $user->name ?? $displayName) }}" required>
                       @error('name') <div class="f-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">
                       <label class="f-label">Email Address</label>
-                      <input type="email" name="email" class="f-input @error('email') is-invalid @enderror" value="{{ old('email', $employee->email ?? '') }}" required>
+                      <input type="email" name="email" class="f-input @error('email') is-invalid @enderror" value="{{ old('email', $user->email ?? '') }}" required>
                       @error('email') <div class="f-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">
@@ -2169,8 +2187,13 @@
               <div class="card-body">
                 <form action="{{ route('employee.profile.update') }}" method="POST" id="pwForm">
                   @csrf
-                  <input type="hidden" name="name"  value="{{ $employee->name  ?? '' }}">
-                  <input type="hidden" name="email" value="{{ $employee->email ?? '' }}">
+                  {{-- portalUpdateProfile() validates name and email as
+                       required on every submit, including this password-only
+                       form. These carried $employee->name / $employee->email,
+                       which are empty for an account with no master-list row —
+                       so changing your password failed validation outright. --}}
+                  <input type="hidden" name="name"  value="{{ $user->name  ?? $displayName }}">
+                  <input type="hidden" name="email" value="{{ $user->email ?? '' }}">
                   <div class="row g-3 mb-1">
                     <div class="col-md-4">
                       <label class="f-label">Current Password</label>
