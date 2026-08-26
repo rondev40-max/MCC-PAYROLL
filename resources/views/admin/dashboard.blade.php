@@ -1034,20 +1034,24 @@
       <!-- ═══ CHARTS (2x2 grid) ═══ -->
       <div class="charts-grid">
 
-        <!-- 1. Payroll Released — Line -->
+        <!-- 1. Employee Distribution — Donut -->
         <div class="chart-card fu d6">
           <div class="chart-card-header">
             <div>
-              <div class="chart-card-title">Payroll released</div>
-              <div class="chart-card-sub">Gross and net per cut-off</div>
+              <div class="chart-card-title">Employee Distribution</div>
+              <div class="chart-card-sub">Teaching vs Non-Teaching split</div>
             </div>
           </div>
           <div class="chart-area">
-            <canvas id="payrollChart" role="img" aria-label="Line chart of gross and net payroll released for each recent pay period."></canvas>
+            <canvas id="donutChart" role="img" aria-label="Donut chart showing employee distribution between teaching and non-teaching staff."></canvas>
           </div>
-          <div class="chart-legend d-none" id="payrollLegend">
-            <div class="legend-item"><div class="legend-swatch" data-slot="0" style="background:#2a78d6;"></div>Gross</div>
-            <div class="legend-item"><div class="legend-swatch" data-slot="2" style="background:#1baf7a;"></div>Net released</div>
+          {{-- Counts come from the same STATS object the chart is drawn from,
+               via initDonut(), rather than being printed here from Blade. The
+               previous legend hard-coded them, so the swatch labels and the
+               segments they described could report different numbers. --}}
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-swatch" data-slot="0" style="background:#2a78d6;"></div><span id="legendTeaching">Teaching</span></div>
+            <div class="legend-item"><div class="legend-swatch" data-slot="1" style="background:#eb6834;"></div><span id="legendNonTeaching">Non-Teaching</span></div>
           </div>
         </div>
 
@@ -1252,107 +1256,63 @@ Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 Chart.defaults.font.size   = 11;
 Chart.defaults.color       = '#94a3b8';
 
-/* ── 1. Payroll Released — Line ──────────────────────
+/* ── 1. Employee Distribution — Donut ────────────────
  *
- * Replaces a two-slice donut of teaching vs non-teaching. Two segments is a
- * number with a ring around it, and that split now sits in the stat row where
- * it reads faster. This card answers the question a payroll dashboard exists
- * for and nothing on the page answered: what did each cut-off cost.
- *
- * Gross and net share one axis because they share a unit. The gap between the
- * two lines is the deductions, which is the reason to plot them together. */
-let payrollChart;
-async function initPayroll() {
-  const canvas = document.getElementById('payrollChart');
+ * Colours are slots 0 and 1 of the validated series. The original pair was
+ * #2563eb / #93c5fd, and #93c5fd sat outside the lightness band at L 0.809 and
+ * under the chroma floor at 0.096 — it read as grey rather than as a second
+ * category, at 1.76:1 against the card. */
+let donut;
+function initDonut() {
+  const canvas = document.getElementById('donutChart');
   if (!canvas) return;
 
-  let d;
-  try {
-    const res = await fetch(`${window.location.origin}/api/payroll-monthly`, {
-      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'same-origin',
-    });
-    if (!res.ok) throw new Error(res.status);
-    d = await res.json();
-  } catch (e) {
-    chartEmpty('payrollChart', 'Payroll figures could not be loaded.');
+  const teaching = Number(STATS.teaching) || 0;
+  const nonTeach = Number(STATS.nonTeach) || 0;
+  const total    = teaching + nonTeach;
+
+  const pct = v => total > 0 ? Math.round(v / total * 100) : 0;
+  const label = (el, name, value) => {
+    const node = document.getElementById(el);
+    if (node) node.textContent = `${name} (${value} · ${pct(value)}%)`;
+  };
+  label('legendTeaching', 'Teaching', teaching);
+  label('legendNonTeaching', 'Non-Teaching', nonTeach);
+
+  if (total === 0) {
+    chartEmpty('donutChart', 'No personnel recorded yet.');
     return;
   }
 
-  if (!d.has_data) {
-    chartEmpty('payrollChart', 'No payslips released yet. Send a payroll run to see costs here.');
-    return;
-  }
-
-  document.getElementById('payrollLegend')?.classList.remove('d-none');
-
-  payrollChart = new Chart(canvas.getContext('2d'), {
-    type: 'line',
+  donut = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
     data: {
-      labels: d.labels,
-      datasets: [
-        {
-          label: 'Gross',
-          data: d.gross,
-          borderColor: hue(0),
-          backgroundColor: 'rgba(42,120,214,0.07)',
-          fill: true,
-          tension: 0.15,
-          borderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: hue(0),
-          pointBorderColor: surface(),
-          pointBorderWidth: 2,
-        },
-        {
-          label: 'Net released',
-          data: d.net,
-          borderColor: hue(2),
-          backgroundColor: 'transparent',
-          fill: false,
-          tension: 0.15,
-          borderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: hue(2),
-          pointBorderColor: surface(),
-          pointBorderWidth: 2,
-        },
-      ],
+      labels: ['Teaching', 'Non-Teaching'],
+      datasets: [{
+        data: [teaching, nonTeach],
+        backgroundColor: [hue(0), hue(1)],
+        /* A surface-coloured ring separates the two arcs — a spacer, not a
+           border drawn around the marks. */
+        borderColor: surface(),
+        borderWidth: 2,
+        hoverOffset: 8,
+        _border: 'surface',
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      cutout: '72%',
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: c => ` ${c.dataset.label}: ${peso(c.raw)}`,
-            afterBody: items => {
-              const i = items[0].dataIndex;
-              const withheld = (d.gross[i] || 0) - (d.net[i] || 0);
-              return `Deductions: ${peso(withheld)}\n${d.payslips[i]} payslip${d.payslips[i] === 1 ? '' : 's'}`;
-            },
-          },
-        },
+            label: c => ` ${c.label}: ${c.raw} (${pct(c.raw)}%)`
+          }
+        }
       },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: tc() }, border: { display: false } },
-        y: {
-          beginAtZero: true,
-          grid: { color: gc() },
-          border: { display: false },
-          ticks: {
-            color: tc(),
-            maxTicksLimit: 5,
-            callback: v => '₱' + (v >= 1000 ? (v / 1000) + 'k' : v),
-          },
-        },
-      },
-      animation: { duration: 700 },
-    },
+      animation: { animateRotate: true, duration: 700 }
+    }
   });
 }
 /* ── 2. Employment Breakdown — Horizontal Bar ────── */
@@ -1603,7 +1563,7 @@ function initDepartment() {
 
 /* ── Update chart colors on theme change ─────────── */
 function updateChartTheme() {
-  [payrollChart, empChart, deptChart, attChart].forEach(c => {
+  [donut, empChart, deptChart, attChart].forEach(c => {
     if (!c) return;
     if (c.options.scales) {
       Object.values(c.options.scales).forEach(ax => {
@@ -1614,7 +1574,10 @@ function updateChartTheme() {
     /* Re-step the series for the new surface. Dark mode used to keep the light
        hex values, which fail the lightness band against a dark card. */
     c.data.datasets.forEach((ds, i) => {
-      if (ds.borderColor)          ds.borderColor = hue(ds._slot ?? i);
+      /* The donut's border is a surface-coloured spacer between arcs, not a
+         series colour — repainting it with a hue would draw a coloured ring
+         around every segment. */
+      if (ds.borderColor)          ds.borderColor = ds._border === 'surface' ? surface() : hue(ds._slot ?? i);
       if (ds.pointBackgroundColor) ds.pointBackgroundColor = hue(ds._slot ?? i);
       if (ds.pointBorderColor)     ds.pointBorderColor = surface();
       if (Array.isArray(ds.backgroundColor)) {
@@ -1774,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* Init charts */
-  initPayroll();
+  initDonut();
   initEmployment();
   initDepartment();
   initAttendance();
