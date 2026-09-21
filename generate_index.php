@@ -1,9 +1,9 @@
 <?php
 $content = file_get_contents('resources/views/admin/dashboard.blade.php');
 if (preg_match('/(.*?)<div class="page-header fu">/s', $content, $matches)) {
-    $header = $matches[1];
+  $header = $matches[1];
 } else {
-    die("Could not extract layout.");
+  die("Could not extract layout.");
 }
 
 $html = $header . '

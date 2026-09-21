@@ -36,6 +36,9 @@ class User extends Authenticatable
         'session_id',
         'status',
         'email_verified_at',
+        'employee_id',
+        'verification_token',
+        'verification_expires_at',
         // ----------------------------------------
     ];
 
@@ -59,6 +62,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'verification_expires_at' => 'datetime',
             'password' => 'hashed',
             'last_seen_at' => 'datetime',
             // --- IDAGDAG ANG BAGONG CASTS ---

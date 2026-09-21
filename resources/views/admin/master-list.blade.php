@@ -6,7 +6,6 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Master List - Madridejos Community College</title>
   <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-  <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +13,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/v/bs5/dt-2.3.6/datatables.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
@@ -246,7 +246,7 @@
 
     .filter-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr auto;
+      grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(150px, 1fr)) auto;
       gap: 0.75rem;
     }
 
@@ -329,6 +329,25 @@
     .table tbody tr:last-child td { border-bottom: none; }
     .table tbody tr:hover { background-color: var(--slate-50); }
 
+    /* DataTables controls are kept deliberately quiet so the employee records stay central. */
+    .dt-container { padding: 0.25rem 1.25rem 1rem; }
+    .dt-layout-row { margin: 0.75rem 0 0; }
+    .dt-info { color: var(--slate-500); font-size: 0.82rem; font-weight: 500; }
+    .dt-paging .pagination { margin: 0; }
+    .dt-paging .page-link {
+      border: 1px solid var(--slate-200);
+      color: var(--slate-600);
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: none;
+    }
+    .dt-paging .active > .page-link { background: var(--primary); border-color: var(--primary); color: white; }
+    .dt-paging .disabled > .page-link { color: var(--slate-300); }
+    .data-table-actions { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .results-summary { color: var(--slate-500); font-size: 0.84rem; font-weight: 500; }
+    .results-summary strong { color: var(--slate-900); }
+    .btn-compact { padding: 0.45rem 0.75rem; font-size: 0.82rem; }
+
     .employee-name {
       font-weight: 700;
       color: var(--slate-900);
@@ -410,6 +429,7 @@
       .header-content { flex-direction: column; align-items: flex-start; }
       .filter-row { grid-template-columns: 1fr; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .data-table-actions { align-items: stretch; }
     }
 
     @media print {
@@ -428,14 +448,14 @@
         <div class="icon-chip"><i class="bi bi-building"></i></div>
         <div>
           <h1>Master List</h1>
-          <p>All employees — Madridejos Community College</p>
+          <p>All employees &mdash; Madridejos Community College</p>
         </div>
       </div>
       <div class="header-actions">
         <a href="{{ route('dashboard') }}" class="btn btn-outline">
           <i class="bi bi-arrow-left"></i> Dashboard
         </a>
-        <button class="btn btn-outline" onclick="window.print()">
+        <button class="btn btn-outline" type="button" id="printTable">
           <i class="bi bi-printer"></i> Print
         </button>
         <a href="{{ route('master.list.add') }}" class="btn btn-primary">
@@ -490,31 +510,37 @@
     </div>
 
     <div class="filter-section">
-      <form method="GET" action="{{ route('master.list') }}" id="filterForm">
-        <div class="filter-row">
-          <input type="text" class="form-control" placeholder="Search by name or email..." id="searchInput" name="search" value="{{ request('search', '') }}">
-          <select class="form-select" id="designationFilter" name="employee_type" onchange="document.getElementById('filterForm').submit()">
+      <div class="filter-row">
+          <input type="search" class="form-control" placeholder="Search employees, email, or department..." id="searchInput" value="{{ request('search', '') }}" autocomplete="off">
+          <select class="form-select" id="designationFilter" aria-label="Filter by employee type">
             <option value="all">All Types</option>
             <option value="fulltime" {{ $selectedEmployeeType === 'fulltime' ? 'selected' : '' }}>Full-time</option>
             <option value="parttime" {{ $selectedEmployeeType === 'parttime' ? 'selected' : '' }}>Part-time</option>
             <option value="staff" {{ $selectedEmployeeType === 'staff' ? 'selected' : '' }}>Staff</option>
             <option value="utility" {{ $selectedEmployeeType === 'utility' ? 'selected' : '' }}>Utility</option>
           </select>
-          <select class="form-select" id="departmentFilter" name="department" onchange="document.getElementById('filterForm').submit()">
+          <select class="form-select" id="departmentFilter" aria-label="Filter by department">
             <option value="all">All Departments</option>
             @foreach($departments as $dept)
               <option value="{{ $dept }}" {{ $selectedDepartment === $dept ? 'selected' : '' }}>{{ $dept }}</option>
             @endforeach
           </select>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
-        </div>
-      </form>
+          <button type="button" class="btn btn-outline" id="clearFilters" title="Clear search and filters"><i class="bi bi-x-circle"></i> Clear</button>
+      </div>
     </div>
 
     <div class="table-section">
       <div class="table-header">
         <h2><i class="bi bi-list-check"></i> All Employees</h2>
-        <span class="badge-count">{{ $employees->count() }} total</span>
+        <div class="data-table-actions">
+          <span class="badge-count" id="employeeCount">{{ $employees->count() }} total</span>
+          <select class="form-select form-select-sm" id="pageLength" aria-label="Rows per page" style="width: auto;">
+            <option value="10">10 rows</option>
+            <option value="25">25 rows</option>
+            <option value="50">50 rows</option>
+          </select>
+          <button class="btn btn-outline btn-compact" type="button" id="downloadCsv"><i class="bi bi-download"></i> Export CSV</button>
+        </div>
       </div>
 
       @if($employees->isEmpty())
@@ -525,7 +551,7 @@
         </div>
       @else
         <div class="table-wrapper">
-          <table class="table">
+          <table class="table" id="employeesTable">
             <thead>
               <tr>
                 <th>#</th>
@@ -594,7 +620,7 @@
                     @endphp
                     <span class="badge {{ $badgeClass }}">{{ $type }}</span>
                   </td>
-                  <td>
+                  <td data-order="{{ $employee->rate ?? -1 }}">
                     @if($employee->rate)
                       <span class="amount">₱{{ number_format($employee->rate, 2) }}</span>
                     @else
@@ -621,23 +647,15 @@
   </div>
 
   <div class="page-footer">
-    <p>Madridejos Community College · Employee Master List · © 2025</p>
+    <p>Madridejos Community College &middot; Employee Master List &middot; &copy; {{ now()->year }}</p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.datatables.net/v/bs5/dt-2.3.6/datatables.min.js"></script>
 
   <script>
     // ── Mobile Sidebar Toggling ──────────────────────
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
-      document.getElementById('overlay').classList.toggle('show');
-    }
-    function closeSidebar() {
-      document.getElementById('sidebar').classList.remove('open');
-      document.getElementById('overlay').classList.remove('show');
-    }
-
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     function deleteEmployee(id, type) {
@@ -680,19 +698,119 @@
       });
     }
 
-    devtools.detect(function(status) {
-      if (status) {
-        document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
-      }
-    });
+    const tableElement = document.getElementById('employeesTable');
 
-    let searchTimer;
-    document.getElementById('searchInput').addEventListener('input', function () {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(function () {
-        document.getElementById('filterForm').submit();
-      }, 400);
-    });
+    if (tableElement) {
+      const searchInput = document.getElementById('searchInput');
+      const typeFilter = document.getElementById('designationFilter');
+      const departmentFilter = document.getElementById('departmentFilter');
+      const employeeCount = document.getElementById('employeeCount');
+      const pageLength = document.getElementById('pageLength');
+      const typeLabels = {
+        fulltime: 'Full-time Instructor',
+        parttime: 'Part-time Instructor',
+        staff: 'Staff',
+        utility: 'Utility'
+      };
+
+      const dataTable = new DataTable(tableElement, {
+        pageLength: Number(pageLength.value),
+        lengthChange: false,
+        pagingType: 'simple_numbers',
+        order: [[1, 'asc']],
+        layout: {
+          topStart: null,
+          topEnd: null,
+          bottomStart: 'info',
+          bottomEnd: 'paging'
+        },
+        columnDefs: [
+          {
+            targets: 0,
+            orderable: false,
+            searchable: false,
+            render: (data, type, row, meta) => type === 'display'
+              ? meta.row + meta.settings._iDisplayStart + 1
+              : data
+          },
+          { targets: 6, orderable: false, searchable: false }
+        ],
+        language: {
+          emptyTable: 'No employee records are available.',
+          zeroRecords: 'No employees match your current filters.',
+          info: 'Showing _START_–_END_ of _TOTAL_ employees',
+          infoEmpty: 'No employees to show',
+          paginate: { previous: 'Previous', next: 'Next' }
+        }
+      });
+
+      function updateFilters() {
+        dataTable.search(searchInput.value);
+        dataTable.column(3).search(
+          departmentFilter.value === 'all' ? '' : departmentFilter.value,
+          { exact: true }
+        );
+        dataTable.column(4).search(
+          typeFilter.value === 'all' ? '' : typeLabels[typeFilter.value],
+          { exact: true }
+        ).draw();
+      }
+
+      function updateEmployeeCount() {
+        const pageInfo = dataTable.page.info();
+        employeeCount.textContent = pageInfo.recordsDisplay === pageInfo.recordsTotal
+          ? `${pageInfo.recordsTotal} total`
+          : `${pageInfo.recordsDisplay} of ${pageInfo.recordsTotal}`;
+      }
+
+      dataTable.on('draw', updateEmployeeCount);
+      searchInput.addEventListener('input', updateFilters);
+      typeFilter.addEventListener('change', updateFilters);
+      departmentFilter.addEventListener('change', updateFilters);
+      pageLength.addEventListener('change', () => dataTable.page.len(Number(pageLength.value)).draw());
+
+      document.getElementById('clearFilters').addEventListener('click', () => {
+        searchInput.value = '';
+        typeFilter.value = 'all';
+        departmentFilter.value = 'all';
+        updateFilters();
+        searchInput.focus();
+      });
+
+      document.getElementById('downloadCsv').addEventListener('click', () => {
+        const csvRows = [['Employee Name', 'Email', 'Department', 'Type', 'Rate / Hour']];
+
+        dataTable.rows({ search: 'applied', order: 'applied' }).every(function () {
+          const cells = this.node().cells;
+          csvRows.push([
+            cells[1].querySelector('.employee-name span')?.textContent.trim() || '',
+            cells[2].textContent.trim(),
+            cells[3].textContent.trim(),
+            cells[4].textContent.trim(),
+            cells[5].textContent.trim()
+          ]);
+        });
+
+        const csv = csvRows.map(row => row.map(value => `"${value.replace(/"/g, '""')}"`).join(',')).join('\r\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `employee-master-list-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+
+      document.getElementById('printTable').addEventListener('click', () => {
+        const originalLength = dataTable.page.len();
+        dataTable.page.len(-1).draw();
+        window.setTimeout(() => {
+          window.print();
+          dataTable.page.len(originalLength).draw();
+        }, 0);
+      });
+
+      updateFilters();
+    }
   </script>
 </body>
 </html>

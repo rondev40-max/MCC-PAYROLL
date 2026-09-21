@@ -13,7 +13,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/gh/nicolauns/devtools.detect@1.2.0/devtools-detect.min.js"></script>
+    @if(config('services.recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    @endif
+    <script src="{{ \App\Support\Asset::versioned('js/recaptcha-login.js') }}" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
@@ -413,6 +416,8 @@
         }
         .register-footer a:hover { color: var(--accent-hover); text-decoration: underline; }
 
+        .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
         /* ===================== PAGE FOOTER ===================== */
         .page-footer {
             position: fixed;
@@ -469,7 +474,7 @@
                 Employee Portal
             </div>
             <h1>Create your account</h1>
-            <p>Register to access the employee portal</p>
+            <p>Available to employees listed in the MCC roster</p>
         </div>
 
         @if ($errors->any())
@@ -480,8 +485,17 @@
             </div>
         @endif
 
-        <form action="/register" method="POST" id="registerForm">
+        <form action="{{ route('register.store') }}" method="POST" id="registerForm"
+              data-recaptcha-login
+              data-recaptcha-site-key="{{ config('services.recaptcha.site_key') }}"
+              data-recaptcha-action="register"
+              data-busy-label="Creating account…">
             @csrf
+            <input type="hidden" name="g-recaptcha-response">
+            <div class="honeypot" aria-hidden="true">
+                <label for="company_url">Company website</label>
+                <input type="text" id="company_url" name="company_url" tabindex="-1" autocomplete="off">
+            </div>
 
             <div class="form-group">
                 <label for="name">Full name</label>
@@ -532,43 +546,8 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="role">Role</label>
-                <div class="input-wrapper @error('role') is-invalid @enderror">
-                    <select name="role" id="role" required onchange="toggleCourseField()">
-                        <option value="">Select role</option>
-                        <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option>
-                        <option value="attendance_checker" {{ old('role') == 'attendance_checker' ? 'selected' : '' }}>Attendance Checker</option>
-                    </select>
-                    <span class="select-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </span>
-                </div>
-                @error('role')<div class="field-error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="form-group" id="course-group" style="display: {{ old('role') == 'attendance_checker' ? 'block' : 'none' }}">
-                <label for="course">Department / course</label>
-                <div class="input-wrapper @error('course') is-invalid @enderror">
-                    <select name="course" id="course">
-                        <option value="">Select department</option>
-                        <option value="staff" {{ old('course') == 'staff' ? 'selected' : '' }}>Staff</option>
-                        <option value="utility" {{ old('course') == 'utility' ? 'selected' : '' }}>Utility</option>
-                        <option value="bsit" {{ old('course') == 'bsit' ? 'selected' : '' }}>BSIT</option>
-                        <option value="bsba" {{ old('course') == 'bsba' ? 'selected' : '' }}>BSBA</option>
-                        <option value="bshm" {{ old('course') == 'bshm' ? 'selected' : '' }}>BSHM</option>
-                        <option value="bsed" {{ old('course') == 'bsed' ? 'selected' : '' }}>BSED</option>
-                        <option value="beed" {{ old('course') == 'beed' ? 'selected' : '' }}>BEED</option>
-                    </select>
-                    <span class="select-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </span>
-                </div>
-                @error('course')<div class="field-error">{{ $message }}</div>@enderror
-            </div>
-
             <div class="terms-row">
-                <input type="checkbox" id="terms" name="terms">
+                <input type="checkbox" id="terms" name="terms" value="1" required>
                 <label for="terms">
                     I agree to the
                     <a href="javascript:void(0);" id="terms-link">Terms and Conditions</a>
@@ -577,7 +556,7 @@
 
             <button type="submit" class="btn-register" id="register-btn" disabled>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-                <span id="btnText">Create account</span>
+                <span id="btnText" data-btn-text>Create account</span>
             </button>
 
             <div class="register-footer">
@@ -607,22 +586,6 @@
             this.classList.toggle('visible', isHidden);
         });
         // --- END PASSWORD VISIBILITY TOGGLES ---
-
-        // --- TOGGLE COURSE FIELD FUNCTION ---
-        function toggleCourseField() {
-            const roleSelect = document.getElementById('role');
-            const courseGroup = document.getElementById('course-group');
-
-            if (roleSelect.value === 'attendance_checker') {
-                courseGroup.style.display = 'block';
-            } else {
-                courseGroup.style.display = 'none';
-                document.getElementById('course').value = '';
-            }
-        }
-        document.addEventListener('DOMContentLoaded', toggleCourseField);
-        document.getElementById('role').addEventListener('change', toggleCourseField);
-        // --- END TOGGLE COURSE FIELD FUNCTION ---
 
         // --- PASSWORD STRENGTH CHECK ---
         const passwordInput = document.getElementById('password');
@@ -718,22 +681,6 @@
         }
         // --- END REGISTER BUTTON STATE ---
 
-        // --- SUBMIT LOADING STATE ---
-        document.getElementById('registerForm').addEventListener('submit', function () {
-            const btn = document.getElementById('register-btn');
-            const text = document.getElementById('btnText');
-            btn.disabled = true;
-            text.textContent = 'Creating account…';
-        });
-        // --- END SUBMIT LOADING STATE ---
-
-        // --- DEVTOOLS DETECTION ---
-        devtools.detect(function (status) {
-            if (status) {
-                document.body.innerHTML = '<div style="background: white; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 9999;"></div>';
-            }
-        });
-        // --- END DEVTOOLS DETECTION ---
     </script>
 </body>
 </html>

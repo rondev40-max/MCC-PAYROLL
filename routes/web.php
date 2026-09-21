@@ -43,11 +43,11 @@ Route::get('/otp/resend', [OtpVerificationController::class, 'resendOtp'])->name
 Route::get('/register', function () {
     return view('auth.register');
 })->name('register.form');
-Route::post('/register', [RegisterController::class, 'store'])->middleware(app()->environment('production') ? 'throttle:5,1' : []);
+Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register')->name('register.store');
 
 // Email Verification Route
-Route::get('/email/verify/{token}', [App\Http\Controllers\VerificationController::class, 'verify'])->name('user.verify');
-Route::post('/email/resend', [App\Http\Controllers\VerificationController::class, 'resend'])->name('verification.resend');
+Route::get('/email/verify/{token}', [App\Http\Controllers\VerificationController::class, 'verify'])->middleware('throttle:20,1')->name('user.verify');
+Route::post('/email/resend', [RegisterController::class, 'resend'])->middleware('throttle:verification-resend')->name('verification.resend');
 
 // Admin Login Routes (Separate View) — Obscured path for security
 Route::get('/portal/management-login', function () {

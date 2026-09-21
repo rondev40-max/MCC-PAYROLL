@@ -71,7 +71,7 @@ class EmployeeController extends Controller
     protected function resolveEmployeeId($user)
     {
         return $this->resolveEmployeeRecord($user)?->id
-            ?? ($user->employee_id ?? $user->id);
+            ?? $user->employee_id;
     }
 
     protected function getAttendances($employeeId)

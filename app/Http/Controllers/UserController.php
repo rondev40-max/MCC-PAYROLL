@@ -37,7 +37,8 @@ class UserController extends Controller
                 'confirmed',
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
             ],
-            'role' => ['required', Rule::in([Role::ADMIN])],
+            'role' => ['required', Rule::in([Role::ADMIN, Role::ATTENDANCE_CHECKER])],
+            'course' => ['nullable', 'required_if:role,attendance_checker', Rule::in(['bsit', 'bsba', 'bshm', 'bsed', 'beed'])],
         ], [
             'name.regex' => 'Name can only contain letters and spaces.',
             'password.regex' => 'Password must contain at least one uppercase, lowercase, number, and special character.',
@@ -47,12 +48,13 @@ class UserController extends Controller
             'name'      => $request->name,
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
-            'role'      => Role::ADMIN,
+            'role'      => $request->role,
+            'course'    => $request->role === Role::ATTENDANCE_CHECKER->value ? $request->course : null,
             'status'    => 'active', // IDAGDAG: Set default status to 'active'
             'email_verified_at' => now(), // admin-vetted account, no self-verification needed
         ]);
 
-        return redirect()->route('admin.user-management')->with('success', 'New Administrator account created successfully!');
+        return redirect()->route('admin.user-management')->with('success', 'New user account created successfully!');
     }
     
     // --- START: New Status Management Functions ---

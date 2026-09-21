@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -93,6 +94,28 @@ class LoginController extends Controller
         if (!$allowed) {
             // Gumamit ng session('error') para gumana ang SweetAlert sa Blade
             return back()->with('error', "Access denied. Your account role is '{$user->role}'. Please use the correct portal for your account type or contact your system administrator.")->withInput();
+        }
+
+        // Self-service employee accounts begin in a pending state. Do not let
+        // a password alone activate an account; it must be tied to the roster
+        // and have completed the email-verification step first.
+        if ($userRole === 'employee') {
+            if (!$user->email_verified_at) {
+                return back()->with('error', 'Please verify your email address before signing in.')->withInput();
+            }
+
+            if (($user->status ?? 'active') !== 'active') {
+                return back()->with('error', 'This account is not active. Please contact the administrator.')->withInput();
+            }
+
+            if (!Employee::forAccount($user)) {
+                Log::warning('Employee sign-in rejected because the account is not linked to the employee roster', [
+                    'user_id' => $user->id,
+                    'ip' => $request->ip(),
+                ]);
+
+                return back()->with('error', 'This account is not linked to an employee record. Please contact the administrator.')->withInput();
+            }
         }
 
 

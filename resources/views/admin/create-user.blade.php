@@ -79,7 +79,6 @@
 
           <form action="{{ route('admin.users.store') }}" method="POST">
             @csrf
-            <input type="hidden" name="role" value="admin">
 
             <div class="mb-3">
               <label for="name" class="form-label">Full Name</label>
@@ -89,6 +88,24 @@
             <div class="mb-3">
               <label for="email" class="form-label">Email Address</label>
               <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="role" class="form-label">Account Role</label>
+              <select class="form-select" id="role" name="role" required>
+                <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Administrator</option>
+                <option value="attendance_checker" {{ old('role') === 'attendance_checker' ? 'selected' : '' }}>Attendance Checker</option>
+              </select>
+            </div>
+
+            <div class="mb-3" id="courseGroup" hidden>
+              <label for="course" class="form-label">Attendance Department</label>
+              <select class="form-select" id="course" name="course">
+                <option value="">Select department</option>
+                @foreach(['bsit' => 'BSIT', 'bsba' => 'BSBA', 'bshm' => 'BSHM', 'bsed' => 'BSED', 'beed' => 'BEED'] as $value => $label)
+                  <option value="{{ $value }}" {{ old('course') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+              </select>
             </div>
 
             <div class="row">
@@ -110,7 +127,7 @@
                     <i class="bi bi-x-circle"></i> Cancel
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-person-plus-fill"></i> Create Admin
+                    <i class="bi bi-person-plus-fill"></i> Create User
                 </button>
             </div>
           </form>
@@ -129,6 +146,18 @@
           sidebar.classList.toggle('show');
         });
       }
+
+      const role = document.getElementById('role');
+      const courseGroup = document.getElementById('courseGroup');
+      const course = document.getElementById('course');
+      const toggleCourse = function () {
+        const attendanceChecker = role.value === 'attendance_checker';
+        courseGroup.hidden = !attendanceChecker;
+        course.required = attendanceChecker;
+        if (!attendanceChecker) course.value = '';
+      };
+      role.addEventListener('change', toggleCourse);
+      toggleCourse();
 
       // Logout confirmation
       const logoutBtn = document.getElementById('logoutBtn');

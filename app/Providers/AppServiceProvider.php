@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +23,26 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Registration is protected by both a source limit and an email limit.
+        // Either one alone is cheap for an attacker to rotate.
+        RateLimiter::for('register', function (Request $request) {
+            $email = strtolower(trim((string) $request->input('email')));
+
+            return [
+                Limit::perHour(5)->by('register:ip:' . $request->ip()),
+                Limit::perHour(3)->by('register:email:' . $email),
+            ];
+        });
+
+        RateLimiter::for('verification-resend', function (Request $request) {
+            $email = strtolower(trim((string) $request->input('email')));
+
+            return [
+                Limit::perMinute(1)->by('verification-resend:ip:' . $request->ip()),
+                Limit::perHour(3)->by('verification-resend:email:' . $email),
+            ];
+        });
+
         // when the application is deployed to production we always want
         // generated URLs to use https and any plain http requests should
         // be redirected. this pairs with the ForceHttps middleware.

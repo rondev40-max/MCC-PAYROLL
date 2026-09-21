@@ -31,6 +31,7 @@ class ReCaptcha implements ValidationRule
     public function __construct(
         private readonly ?string $expectedAction = null,
         private readonly ?string $remoteIp = null,
+        private readonly ?bool $failOpen = null,
     ) {
     }
 
@@ -123,7 +124,7 @@ class ReCaptcha implements ValidationRule
     {
         Log::warning('reCAPTCHA verification unreachable', ['reason' => $reason]);
 
-        if (!config('services.recaptcha.fail_open', true)) {
+        if (!($this->failOpen ?? config('services.recaptcha.fail_open', true))) {
             $fail('Verification is unavailable right now. Please try again shortly.');
         }
     }
