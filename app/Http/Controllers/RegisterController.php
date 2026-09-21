@@ -20,6 +20,15 @@ class RegisterController extends Controller
     private const VERIFICATION_LIFETIME_MINUTES = 60;
 
     /**
+     * A password seen in known data leaks more than this many times is rejected.
+     * The default (0) rejects a password found even once, which turns away most
+     * passwords people actually pick ("Maria2024!" style) and makes registration
+     * feel broken. 100 still blocks the genuinely common ones (Password123!,
+     * Welcome@2024, ...) while accepting a password that is merely uncommon.
+     */
+    private const MAX_BREACH_COUNT = 100;
+
+    /**
      * Public registration is deliberately limited to a person already present
      * in the employee roster. Privileged and attendance-checker accounts are
      * provisioned by an administrator, never chosen by a public form.
@@ -35,7 +44,7 @@ class RegisterController extends Controller
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email:rfc', 'max:255'],
-            'password' => ['required', 'string', 'confirmed', Password::min(12)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'password' => ['required', 'string', 'confirmed', Password::min(12)->mixedCase()->numbers()->symbols()->uncompromised(self::MAX_BREACH_COUNT)],
             'terms' => ['accepted'],
         ];
 

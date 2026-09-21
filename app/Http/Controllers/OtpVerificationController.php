@@ -22,7 +22,7 @@ class OtpVerificationController extends Controller
         if (!Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until'])) {
             return redirect()->route('index')->with('warning', 'OTP verification is unavailable. Please log in again.');
         }
-
+ 
         // If there's no 2FA session, show a helpful waiting/paste-code page instead
         // of immediately redirecting. The form will allow entering email + code
         // as a fallback when the temporary 2FA session has been lost.
@@ -118,20 +118,20 @@ class OtpVerificationController extends Controller
             $user->save();
 
             // Clear the 2FA tracker session
-            session()->forget('2fa:user:id');
+            session()->forget('2fa:user:id'); 
 
             // Log in the user
-            Auth::login($user);
-
+            Auth::login($user); 
+            
             // Set session data needed by your custom middleware/routes
             $isAdmin = ($user->role === 'super_admin' || $user->role === 'admin');
-
+            
             session([
                 'user_role' => $user->role,
                 'is_admin' => $isAdmin,
                 // user_id and user_name can usually be accessed via Auth::user()
             ]);
-
+            
             // Role-based landing page. This used to be an if-chain that covered
             // super_admin, admin and attendance_checker and then fell through to
             // redirect('/') — which meant an employee with a CORRECT code was
@@ -162,7 +162,7 @@ class OtpVerificationController extends Controller
         $remaining = $maxAttempts - $user->otp_attempts;
         return back()->withErrors(['otp' => "The verification code is invalid or has expired. {$remaining} attempt(s) remaining before a temporary lock."]);
     }
-
+    
     /**
      * Handle the resend OTP request.
      */
@@ -171,9 +171,9 @@ class OtpVerificationController extends Controller
         if (!Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until'])) {
             return redirect()->route('index')->with('warning', 'OTP verification is unavailable. Please log in again.');
         }
-
+ 
         $userId = session('2fa:user:id');
-
+ 
         // Check if user is being tracked in session
         if (!$userId) {
             return redirect()->route('index')->with('error', 'Session expired. Please try to log in again.');
@@ -196,7 +196,7 @@ class OtpVerificationController extends Controller
         $user->otp_attempts = 0;
         $user->otp_locked_until = null;
         $user->save();
-
+        
         try {
             // 3. Send the NEW OTP via Email
             Mail::to($user->email)->send(new OtpMail($otp));

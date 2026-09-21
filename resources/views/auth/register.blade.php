@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Create Account — MCC Payroll</title>
-    <meta name="description"
-        content="Register for the MCC Employee Portal to access payslips, attendance, and timesheets.">
+    <meta name="description" content="Register for the MCC Employee Portal to access payslips, attendance, and timesheets.">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,16 +17,10 @@
         <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
     @endif
     <script src="{{ \App\Support\Asset::versioned('js/recaptcha-login.js') }}" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --bg-primary: #ffffff;
@@ -106,9 +98,11 @@
             content: "";
             position: fixed;
             inset: 0;
-            background: linear-gradient(180deg,
-                    rgba(12, 17, 28, 0.35) 0%,
-                    rgba(12, 17, 28, 0.55) 100%);
+            background: linear-gradient(
+                180deg,
+                rgba(12, 17, 28, 0.35) 0%,
+                rgba(12, 17, 28, 0.55) 100%
+            );
             z-index: -1;
         }
 
@@ -132,17 +126,12 @@
             backdrop-filter: blur(10px);
             transition: all 0.2s ease;
         }
-
         .back-link:hover {
             color: #fff;
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.2);
         }
-
-        .back-link svg {
-            width: 15px;
-            height: 15px;
-        }
+        .back-link svg { width: 15px; height: 15px; }
 
         /* ===================== REGISTER CARD ===================== */
         .register-card {
@@ -160,15 +149,8 @@
         }
 
         @keyframes cardIn {
-            from {
-                opacity: 0;
-                transform: translateY(12px) scale(0.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         /* ===================== HEADER ===================== */
@@ -202,11 +184,7 @@
             border-radius: var(--radius-pill);
             margin-bottom: 12px;
         }
-
-        .register-badge svg {
-            width: 12px;
-            height: 12px;
-        }
+        .register-badge svg { width: 12px; height: 12px; }
 
         .register-header h1 {
             font-size: 1.35rem;
@@ -234,9 +212,7 @@
         }
 
         /* ===================== FORM ===================== */
-        .form-group {
-            margin-bottom: 18px;
-        }
+        .form-group { margin-bottom: 18px; }
 
         .form-group label {
             display: block;
@@ -246,9 +222,7 @@
             margin-bottom: 6px;
         }
 
-        .input-wrapper {
-            position: relative;
-        }
+        .input-wrapper { position: relative; }
 
         .input-wrapper input,
         .input-wrapper select {
@@ -265,9 +239,7 @@
             appearance: none;
         }
 
-        .input-wrapper input::placeholder {
-            color: var(--text-tertiary);
-        }
+        .input-wrapper input::placeholder { color: var(--text-tertiary); }
 
         .input-wrapper input:focus,
         .input-wrapper select:focus {
@@ -277,9 +249,7 @@
         }
 
         .input-wrapper.is-invalid input,
-        .input-wrapper.is-invalid select {
-            border-color: var(--danger-text);
-        }
+        .input-wrapper.is-invalid select { border-color: var(--danger-text); }
 
         .field-error {
             font-size: 0.78rem;
@@ -298,11 +268,7 @@
             align-items: center;
             pointer-events: none;
         }
-
-        .input-icon svg {
-            width: 17px;
-            height: 17px;
-        }
+        .input-icon svg { width: 17px; height: 17px; }
 
         /* Select chevron */
         .select-chevron {
@@ -315,11 +281,7 @@
             align-items: center;
             pointer-events: none;
         }
-
-        .select-chevron svg {
-            width: 15px;
-            height: 15px;
-        }
+        .select-chevron svg { width: 15px; height: 15px; }
 
         /* Password toggle */
         .toggle-pw {
@@ -336,27 +298,11 @@
             background: none;
             transition: color 0.2s ease;
         }
-
-        .toggle-pw:hover {
-            color: var(--accent);
-        }
-
-        .toggle-pw svg {
-            width: 17px;
-            height: 17px;
-        }
-
-        .toggle-pw .icon-eye-off {
-            display: none;
-        }
-
-        .toggle-pw.visible .icon-eye {
-            display: none;
-        }
-
-        .toggle-pw.visible .icon-eye-off {
-            display: block;
-        }
+        .toggle-pw:hover { color: var(--accent); }
+        .toggle-pw svg { width: 17px; height: 17px; }
+        .toggle-pw .icon-eye-off { display: none; }
+        .toggle-pw.visible .icon-eye { display: none; }
+        .toggle-pw.visible .icon-eye-off { display: block; }
 
         /* ===================== PASSWORD STRENGTH ===================== */
         .password-strength-bar-container {
@@ -366,28 +312,15 @@
             overflow: hidden;
             margin-top: 9px;
         }
-
         .password-strength-bar {
             height: 100%;
             width: 0%;
             transition: width 0.3s ease, background-color 0.3s ease;
         }
-
-        .strength-weak {
-            background-color: var(--strength-weak);
-        }
-
-        .strength-fair {
-            background-color: var(--strength-fair);
-        }
-
-        .strength-good {
-            background-color: var(--strength-good);
-        }
-
-        .strength-strong {
-            background-color: var(--strength-strong);
-        }
+        .strength-weak { background-color: var(--strength-weak); }
+        .strength-fair { background-color: var(--strength-fair); }
+        .strength-good { background-color: var(--strength-good); }
+        .strength-strong { background-color: var(--strength-strong); }
 
         .strength-text {
             font-size: 0.76rem;
@@ -404,7 +337,6 @@
             margin-top: 20px;
             margin-bottom: 22px;
         }
-
         .terms-row input[type="checkbox"] {
             width: 16px;
             height: 16px;
@@ -413,7 +345,6 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-
         .terms-row label {
             font-size: 0.82rem;
             font-weight: 500;
@@ -421,16 +352,12 @@
             line-height: 1.5;
             cursor: pointer;
         }
-
         .terms-row a {
             color: var(--accent);
             font-weight: 600;
             text-decoration: underline;
         }
-
-        .terms-row a:hover {
-            color: var(--accent-hover);
-        }
+        .terms-row a:hover { color: var(--accent-hover); }
 
         /* ===================== SUBMIT BUTTON ===================== */
         .btn-register {
@@ -457,10 +384,7 @@
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
             transform: translateY(-1px);
         }
-
-        .btn-register:active:not(:disabled) {
-            transform: translateY(0);
-        }
+        .btn-register:active:not(:disabled) { transform: translateY(0); }
 
         .btn-register:disabled {
             background: #b0bec5;
@@ -474,10 +398,7 @@
             outline-offset: 2px;
         }
 
-        .btn-register svg {
-            width: 17px;
-            height: 17px;
-        }
+        .btn-register svg { width: 17px; height: 17px; }
 
         /* ===================== FOOTER ===================== */
         .register-footer {
@@ -486,31 +407,16 @@
             padding-top: 18px;
             border-top: 1px solid var(--border);
         }
-
-        .register-footer p {
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-        }
-
+        .register-footer p { font-size: 0.82rem; color: var(--text-secondary); }
         .register-footer a {
             color: var(--accent);
             text-decoration: none;
             font-weight: 600;
             transition: color 0.2s ease;
         }
+        .register-footer a:hover { color: var(--accent-hover); text-decoration: underline; }
 
-        .register-footer a:hover {
-            color: var(--accent-hover);
-            text-decoration: underline;
-        }
-
-        .honeypot {
-            position: absolute;
-            left: -10000px;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-        }
+        .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 
         /* ===================== PAGE FOOTER ===================== */
         .page-footer {
@@ -526,15 +432,8 @@
         }
 
         /* Custom SweetAlert */
-        .swal2-popup {
-            border-radius: 15px !important;
-            font-family: var(--font);
-        }
-
-        .swal2-title {
-            color: var(--text-primary) !important;
-        }
-
+        .swal2-popup { border-radius: 15px !important; font-family: var(--font); }
+        .swal2-title { color: var(--text-primary) !important; }
         .swal2-html-container {
             max-height: 60vh;
             overflow-y: auto;
@@ -551,7 +450,6 @@
             margin-top: 6px;
             line-height: 1.5;
         }
-
         .pw-rules {
             list-style: none;
             margin: 10px 0 0;
@@ -562,72 +460,31 @@
             font-size: 0.76rem;
             color: var(--text-tertiary);
         }
-
-        .pw-rules li::before {
-            content: "\25CB\00a0";
-        }
-
-        .pw-rules li.ok {
-            color: var(--strength-good);
-        }
-
-        .pw-rules li.ok::before {
-            content: "\2713\00a0";
-        }
-
-        .match-text {
-            font-size: 0.78rem;
-            margin-top: 6px;
-            min-height: 1em;
-        }
-
-        .match-text.ok {
-            color: var(--strength-good);
-        }
-
-        .match-text.bad {
-            color: var(--danger-text);
-        }
+        .pw-rules li::before { content: "\25CB\00a0"; }
+        .pw-rules li.ok { color: var(--strength-good); }
+        .pw-rules li.ok::before { content: "\2713\00a0"; }
+        .match-text { font-size: 0.78rem; margin-top: 6px; min-height: 1em; }
+        .match-text.ok { color: var(--strength-good); }
+        .match-text.bad { color: var(--danger-text); }
 
         /* ===================== RESPONSIVE ===================== */
         @media (max-width: 480px) {
-            .register-card {
-                margin: 16px;
-                padding: 28px 22px 24px;
-                border-radius: 16px;
-            }
-
-            .register-header h1 {
-                font-size: 1.2rem;
-            }
-
-            .register-logo {
-                width: 48px;
-                height: 48px;
-            }
-
-            .back-link {
-                top: 16px;
-                left: 16px;
-            }
+            .register-card { margin: 16px; padding: 28px 22px 24px; border-radius: 16px; }
+            .register-header h1 { font-size: 1.2rem; }
+            .register-logo { width: 48px; height: 48px; }
+            .back-link { top: 16px; left: 16px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .register-card {
-                animation: none;
-            }
+            .register-card { animation: none; }
         }
     </style>
 </head>
-
 <body>
 
     <!-- ===================== BACK LINK ===================== -->
     <a href="{{ url('/') }}" class="back-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         Home
     </a>
 
@@ -637,11 +494,7 @@
         <div class="register-header">
             <img src="{{ asset('images/logo.png') }}" alt="MCC Logo" class="register-logo">
             <div class="register-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
                 Employee Portal
             </div>
             <h1>Create your account</h1>
@@ -660,9 +513,11 @@
             <div class="validation-errors" role="alert">{{ session('error') }}</div>
         @endif
 
-        <form action="{{ route('register.store') }}" method="POST" id="registerForm" data-recaptcha-login
-            data-recaptcha-site-key="{{ config('services.recaptcha.site_key') }}" data-recaptcha-action="register"
-            data-busy-label="Creating account…">
+        <form action="{{ route('register.store') }}" method="POST" id="registerForm"
+              data-recaptcha-login
+              data-recaptcha-site-key="{{ config('services.recaptcha.site_key') }}"
+              data-recaptcha-action="register"
+              data-busy-label="Creating account…">
             @csrf
             <input type="hidden" name="g-recaptcha-response">
             <div class="honeypot" aria-hidden="true">
@@ -673,62 +528,36 @@
             <div class="form-group">
                 <label for="name">Full name</label>
                 <div class="input-wrapper @error('name') is-invalid @enderror">
-                    <input type="text" id="name" name="name" placeholder="Juan Dela Cruz" value="{{ old('name') }}"
-                        required autofocus>
+                    <input type="text" id="name" name="name" placeholder="Juan Dela Cruz" value="{{ old('name') }}" required autofocus>
                     <span class="input-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
                     </span>
                 </div>
-                @error('name')
-                <div class="field-error">{{ $message }}</div>@enderror
+                @error('name')<div class="field-error">{{ $message }}</div>@enderror
             </div>
 
             <div class="form-group">
                 <label for="email">Email address</label>
                 <div class="input-wrapper @error('email') is-invalid @enderror">
-                    <input type="email" id="email" name="email" placeholder="yourname@gmail.com"
-                        value="{{ old('email') }}" required autocomplete="email" autocapitalize="none"
-                        spellcheck="false" inputmode="email">
+                    <input type="email" id="email" name="email" placeholder="yourname@gmail.com" value="{{ old('email') }}" required autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email">
                     <span class="input-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="4" width="20" height="16" rx="2" />
-                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                     </span>
                 </div>
-                @error('email')
-                <div class="field-error">{{ $message }}</div>@enderror
-                <div class="field-hint">Use the exact email address the HR office has on file for you (for example your
-                    Gmail). We will email you a 6-digit code when you sign in.</div>
+                @error('email')<div class="field-error">{{ $message }}</div>@enderror
+                <div class="field-hint">Use the exact email address the HR office has on file for you (for example your Gmail). We will email you a 6-digit code when you sign in.</div>
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
                 <div class="input-wrapper @error('password') is-invalid @enderror">
-                    <input type="password" id="password" name="password" placeholder="Create a password" required
-                        autocomplete="new-password">
-                    <button type="button" class="toggle-pw" id="togglePw" title="Show or hide password"
-                        aria-label="Toggle password visibility">
-                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
+                    <input type="password" id="password" name="password" placeholder="Create a password" required autocomplete="new-password">
+                    <button type="button" class="toggle-pw" id="togglePw" title="Show or hide password" aria-label="Toggle password visibility">
+                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                     </button>
                 </div>
-                @error('password')
-                <div class="field-error">{{ $message }}</div>@enderror
+                @error('password')<div class="field-error">{{ $message }}</div>@enderror
                 <div class="password-strength-bar-container">
                     <div id="password-strength-bar" class="password-strength-bar"></div>
                 </div>
@@ -740,26 +569,16 @@
                     <li data-rule="number">A number</li>
                     <li data-rule="symbol">A symbol (e.g. ! @ # $)</li>
                 </ul>
+                <div class="field-hint">Avoid common passwords (like names plus 123). Three or four unrelated words with a number and a symbol works well, e.g. <em>Blue-Mango-Tricycle-42!</em></div>
             </div>
 
             <div class="form-group">
                 <label for="password_confirmation">Confirm password</label>
                 <div class="input-wrapper">
-                    <input type="password" id="password_confirmation" name="password_confirmation"
-                        placeholder="Re-enter your password" required autocomplete="new-password">
-                    <button type="button" class="toggle-pw" id="toggleConfirmPw" title="Show or hide password"
-                        aria-label="Toggle password visibility">
-                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
+                    <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Re-enter your password" required autocomplete="new-password">
+                    <button type="button" class="toggle-pw" id="toggleConfirmPw" title="Show or hide password" aria-label="Toggle password visibility">
+                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                     </button>
                 </div>
                 <div id="match-text" class="match-text" aria-live="polite"></div>
@@ -774,12 +593,7 @@
             </div>
 
             <button type="submit" class="btn-register" id="register-btn" disabled>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M19 8v6M22 11h-6" />
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
                 <span id="btnText" data-btn-text>Create account</span>
             </button>
 
@@ -823,8 +637,8 @@
 
         const passwordRules = {
             length: (v) => v.length >= 12,
-            lower: (v) => /\p{Ll}/u.test(v),
-            upper: (v) => /\p{Lu}/u.test(v),
+            lower:  (v) => /\p{Ll}/u.test(v),
+            upper:  (v) => /\p{Lu}/u.test(v),
             number: (v) => /\p{N}/u.test(v),
             symbol: (v) => /[\p{P}\p{S}\p{Z}]/u.test(v)
         };
@@ -947,5 +761,4 @@
 
     </script>
 </body>
-
 </html>

@@ -25,12 +25,28 @@ class AppServiceProvider extends ServiceProvider
     {
         // Registration is protected by both a source limit and an email limit.
         // Either one alone is cheap for an attacker to rotate.
+        //
+        // The limits used to be 5 per hour per IP and 3 per hour per email. Every
+        // POST counted, including ones rejected for a typo or a weak password, so a
+        // person fixing their form (or several employees registering from the same
+        // school network) hit "429 Too Many Requests" almost immediately. They are
+        // roomier now, and hitting them shows a message on the form, not a bare 429.
         RateLimiter::for('register', function (Request $request) {
             $email = strtolower(trim((string) $request->input('email')));
 
+            $tooMany = function (Request $request, array $headers) {
+                $wait = (int) ($headers['Retry-After'] ?? 60);
+                $minutes = max(1, (int) ceil($wait / 60));
+
+                return redirect()->route('register.form')
+                    ->withInput($request->only('name', 'email'))
+                    ->with('error', "Too many registration attempts. Please wait about {$minutes} minute(s) and try again.");
+            };
+
             return [
-                Limit::perHour(5)->by('register:ip:' . $request->ip()),
-                Limit::perHour(3)->by('register:email:' . $email),
+                Limit::perMinute(10)->by('register:ip-min:' . $request->ip())->response($tooMany),
+                Limit::perHour(30)->by('register:ip:' . $request->ip())->response($tooMany),
+                Limit::perHour(10)->by('register:email:' . $email)->response($tooMany),
             ];
         });
 
