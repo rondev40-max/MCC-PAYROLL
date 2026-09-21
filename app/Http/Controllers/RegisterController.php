@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -53,22 +54,23 @@ class RegisterController extends Controller
         $email = strtolower(trim($data['email']));
         $employee = Employee::whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
 
-        // Use one response for an existing, ineligible, or newly created account
-        // so the public endpoint does not reveal whether a given email is on the
-        // employee roster or already has an account.
+        // An email outside the roster and an email that already has an account
+        // get the same message, so the form does not say which of the two it was.
         if (!$employee) {
             Log::notice('Registration attempted with an email outside the employee roster', ['ip' => $request->ip()]);
 
-            return $this->registrationResponse();
+            return $this->notCreatedResponse();
         }
 
         $existingUser = User::whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
         if ($existingUser) {
-            if ($existingUser->role === 'employee' && !$existingUser->email_verified_at) {
+            // Only the legacy link flow needs a new link. In the normal flow the
+            // person simply signs in and confirms the emailed one-time code.
+            if (!$this->otpReady() && $existingUser->role === 'employee' && !$existingUser->email_verified_at) {
                 $this->sendVerificationLink($existingUser);
             }
 
-            return $this->registrationResponse();
+            return $this->notCreatedResponse();
         }
 
         try {
@@ -79,19 +81,29 @@ class RegisterController extends Controller
                 'password' => Hash::make($data['password']),
                 'role' => 'employee',
                 'employee_id' => $employee->id,
+                // Stays 'pending' until the first successful sign-in. That sign-in
+                // requires the one-time code emailed to this address, which is what
+                // proves the person owns the inbox (see OtpVerificationController).
                 'status' => 'pending',
             ]);
         } catch (QueryException $e) {
-            // A concurrent request can win the database unique constraint. Give
-            // the same response rather than leaking account existence.
+            // A concurrent request can win the database unique constraint.
             Log::notice('Concurrent registration request rejected', ['ip' => $request->ip()]);
+
+            return $this->notCreatedResponse();
+        }
+
+        // Without the OTP columns the sign-in has no second factor, so fall back to
+        // the emailed verification link rather than activating on a password alone.
+        if (!$this->otpReady()) {
+            $this->sendVerificationLink($user);
 
             return $this->registrationResponse();
         }
 
-        $this->sendVerificationLink($user);
-
-        return $this->registrationResponse();
+        return redirect()->route('employee.login.form')
+            ->withInput(['email' => $email])
+            ->with('success', 'Account created! Sign in with your email and password. We will email you a 6-digit code to finish signing in, and then you will be taken to your employee portal.');
     }
 
     /** Send a fresh, single-use verification secret and retain only its hash. */
@@ -99,10 +111,15 @@ class RegisterController extends Controller
     {
         $token = Str::random(64);
 
-        $user->forceFill([
-            'verification_token' => hash('sha256', $token),
-            'verification_expires_at' => now()->addMinutes(self::VERIFICATION_LIFETIME_MINUTES),
-        ])->save();
+        $fields = ['verification_token' => hash('sha256', $token)];
+
+        // Tolerate a database that has not run the expiry migration yet, instead of
+        // failing registration with a 500 after the account row was already created.
+        if (Schema::hasColumn('users', 'verification_expires_at')) {
+            $fields['verification_expires_at'] = now()->addMinutes(self::VERIFICATION_LIFETIME_MINUTES);
+        }
+
+        $user->forceFill($fields)->save();
 
         try {
             Mail::to($user->email)->send(new UserVerificationEmail($user, $token));
@@ -128,6 +145,27 @@ class RegisterController extends Controller
         }
 
         return $this->registrationResponse();
+    }
+
+    private function otpReady(): bool
+    {
+        return Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until']);
+    }
+
+    /**
+     * Shown when no new account was made (email not on the roster, or already
+     * registered). Both cases share one message so it does not say which it was.
+     */
+    private function notCreatedResponse()
+    {
+        // Send the person back to the form they just filled in (minus passwords) so
+        // they can correct the email straight away instead of landing on the login page.
+        return redirect()->route('register.form')
+            ->withInput(request()->only('name', 'email'))
+            ->with(
+                'error',
+                'We could not create a new account with that email. Use the exact email address the HR office has on file for you. If you already registered, sign in instead, or contact HR.'
+            );
     }
 
     private function registrationResponse()

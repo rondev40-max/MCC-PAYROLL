@@ -22,7 +22,7 @@ class OtpVerificationController extends Controller
         if (!Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until'])) {
             return redirect()->route('index')->with('warning', 'OTP verification is unavailable. Please log in again.');
         }
- 
+
         // If there's no 2FA session, show a helpful waiting/paste-code page instead
         // of immediately redirecting. The form will allow entering email + code
         // as a fallback when the temporary 2FA session has been lost.
@@ -42,7 +42,8 @@ class OtpVerificationController extends Controller
 
         $userId = session('2fa:user:id');
         $sessionMissing = !$userId;
-        if ($sessionMissing) {
+
+        if ($sessionMissing) {
             // When the temporary 2FA session is gone, allow the user to provide their
             // email along with the OTP so they can paste a code received earlier.
             $rules['email'] = ['required', 'email'];
@@ -56,7 +57,8 @@ class OtpVerificationController extends Controller
         } else {
             $user = User::where('email', $request->input('email'))->first();
         }
-        if (!$user) {
+
+        if (!$user) {
             if ($sessionMissing) {
                 return back()->withErrors(['email' => 'No account found for that email. Please check and try again, or go back to the login page.']);
             }
@@ -100,23 +102,36 @@ class OtpVerificationController extends Controller
             $user->otp_expires_at = null;
             $user->otp_attempts = 0;
             $user->otp_locked_until = null;
+
+            // A correct code proves the person can read this inbox. For a freshly
+            // registered employee that completes verification, so the account is
+            // activated here and can open the employee portal straight away.
+            if ($user->role === 'employee') {
+                if (!$user->email_verified_at) {
+                    $user->email_verified_at = now();
+                }
+                if (strtolower((string) $user->status) === 'pending') {
+                    $user->status = 'active';
+                }
+            }
+
             $user->save();
 
             // Clear the 2FA tracker session
-            session()->forget('2fa:user:id'); 
+            session()->forget('2fa:user:id');
 
             // Log in the user
-            Auth::login($user); 
-            
+            Auth::login($user);
+
             // Set session data needed by your custom middleware/routes
             $isAdmin = ($user->role === 'super_admin' || $user->role === 'admin');
-            
+
             session([
                 'user_role' => $user->role,
                 'is_admin' => $isAdmin,
                 // user_id and user_name can usually be accessed via Auth::user()
             ]);
-            
+
             // Role-based landing page. This used to be an if-chain that covered
             // super_admin, admin and attendance_checker and then fell through to
             // redirect('/') — which meant an employee with a CORRECT code was
@@ -147,7 +162,7 @@ class OtpVerificationController extends Controller
         $remaining = $maxAttempts - $user->otp_attempts;
         return back()->withErrors(['otp' => "The verification code is invalid or has expired. {$remaining} attempt(s) remaining before a temporary lock."]);
     }
-    
+
     /**
      * Handle the resend OTP request.
      */
@@ -156,9 +171,9 @@ class OtpVerificationController extends Controller
         if (!Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until'])) {
             return redirect()->route('index')->with('warning', 'OTP verification is unavailable. Please log in again.');
         }
- 
+
         $userId = session('2fa:user:id');
- 
+
         // Check if user is being tracked in session
         if (!$userId) {
             return redirect()->route('index')->with('error', 'Session expired. Please try to log in again.');
@@ -181,7 +196,7 @@ class OtpVerificationController extends Controller
         $user->otp_attempts = 0;
         $user->otp_locked_until = null;
         $user->save();
-        
+
         try {
             // 3. Send the NEW OTP via Email
             Mail::to($user->email)->send(new OtpMail($otp));

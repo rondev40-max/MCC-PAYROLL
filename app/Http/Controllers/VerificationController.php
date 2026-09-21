@@ -5,19 +5,27 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class VerificationController extends Controller
 {
     public function verify(Request $request, string $token)
     {
-        $user = User::where('verification_token', hash('sha256', $token))
-            ->where('verification_expires_at', '>', now())
-            ->first();
+        $query = User::where('verification_token', hash('sha256', $token));
+
+        // Only enforce expiry once the expiry column exists in this database.
+        if (Schema::hasColumn('users', 'verification_expires_at')) {
+            $query->where('verification_expires_at', '>', now());
+        }
+
+        $user = $query->first();
 
         if ($user && $user->role === 'employee') {
             $user->email_verified_at = now();
             $user->verification_token = null;
-            $user->verification_expires_at = null;
+            if (Schema::hasColumn('users', 'verification_expires_at')) {
+                $user->verification_expires_at = null;
+            }
             $user->status = 'active';
             $user->save();
 

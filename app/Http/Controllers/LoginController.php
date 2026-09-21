@@ -39,7 +39,7 @@ class LoginController extends Controller
         $credentials = $request->validate($rules, [
             'g-recaptcha-response.required' => 'Please complete the verification check and try again.',
         ]);
- 
+
         if ($credentials['user_type'] === 'admin') {
             $allowedDomains = ['mcc.edu.ph', 'mcclawis.edu.ph'];
             $domainPattern = '/@(' . implode('|', array_map('preg_quote', $allowedDomains)) . ')$/i';
@@ -47,8 +47,11 @@ class LoginController extends Controller
                 return back()->with('error', 'Admin login requires an @mcc.edu.ph or @mcclawis.edu.ph email address.')->withInput();
             }
         }
- 
-        $user = User::where('email', $credentials['email'])->first();
+
+        // Match the address case- and whitespace-insensitively. Registration stores it
+        // lowercased, and on some databases "Juan@Gmail.com" would not match "juan@gmail.com".
+        $loginEmail = strtolower(trim($credentials['email']));
+        $user = User::whereRaw('LOWER(TRIM(email)) = ?', [$loginEmail])->first();
 
         // 1. Initial Validation: User not found
         if (!$user) {
@@ -68,8 +71,8 @@ class LoginController extends Controller
         } catch (\Throwable $e) {
             Log::error('Login password verification failed unexpectedly', [
                 'user_id' => $user->id,
-                'email'   => $user->email,
-                'error'   => $e->getMessage(),
+                'email' => $user->email,
+                'error' => $e->getMessage(),
             ]);
             $passwordOk = false;
         }
@@ -89,22 +92,30 @@ class LoginController extends Controller
         } elseif ($credentials['user_type'] === 'employee' && $userRole === 'employee') {
             $allowed = true;
         }
- 
- 
+
+
         if (!$allowed) {
             // Gumamit ng session('error') para gumana ang SweetAlert sa Blade
             return back()->with('error', "Access denied. Your account role is '{$user->role}'. Please use the correct portal for your account type or contact your system administrator.")->withInput();
         }
 
-        // Self-service employee accounts begin in a pending state. Do not let
-        // a password alone activate an account; it must be tied to the roster
-        // and have completed the email-verification step first.
+        // Self-service employee accounts start as 'pending'. A correct password on a
+        // roster-linked account is allowed on to the emailed one-time code; entering
+        // that code is what verifies the inbox and activates the account (see
+        // OtpVerificationController). Suspended or disabled accounts stay blocked.
         if ($userRole === 'employee') {
-            if (!$user->email_verified_at) {
+            $otpReady = Schema::hasColumns('users', ['otp_code', 'otp_expires_at', 'otp_attempts', 'otp_locked_until']);
+
+            // With no OTP step there is no proof of inbox ownership except the
+            // emailed link, so the link is still required in that case.
+            if (!$user->email_verified_at && !$otpReady) {
                 return back()->with('error', 'Please verify your email address before signing in.')->withInput();
             }
 
-            if (($user->status ?? 'active') !== 'active') {
+            $status = strtolower((string) ($user->status ?? 'active'));
+            $awaitingFirstSignIn = !$user->email_verified_at && $status === 'pending';
+
+            if ($status !== 'active' && !$awaitingFirstSignIn) {
                 return back()->with('error', 'This account is not active. Please contact the administrator.')->withInput();
             }
 
@@ -133,10 +144,10 @@ class LoginController extends Controller
 
             // Set session data for attendance
             $request->session()->put([
-                'user_id'       => $user->id,
-                'user_name'     => $user->name,
-                'user_role'     => 'attendance_checker',
-                'user_course'   => $user->course ?? null,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_role' => 'attendance_checker',
+                'user_course' => $user->course ?? null,
                 'is_attendance' => true,
             ]);
 
@@ -172,32 +183,32 @@ class LoginController extends Controller
                 'user_role' => $user->role,
                 'is_admin' => in_array($user->role, ['admin', 'super_admin'], true),
             ]);
- 
+
             // Same mapping the OTP path uses — an employee landing on '/' here
             // would look identical to a failed login. See App\Support\RoleHome.
             return redirect()
                 ->route(RoleHome::routeFor($user->role))
                 ->with('success', RoleHome::messageFor($user->role));
         }
- 
+
         // Admin and employee accounts require a second factor before Auth::login()
         // is called. Generate a fresh OTP, reset any prior attempt/lock state so
         // this new code starts clean, and hand off to OtpVerificationController.
         $otp = random_int(100000, 999999);
- 
+
         $user->otp_code = $otp;
         $user->otp_expires_at = now()->addMinutes(5);
         $user->otp_attempts = 0;
         $user->otp_locked_until = null;
         $user->save();
- 
+
         try {
             Mail::to($user->email)->send(new OtpMail($otp));
         } catch (\Exception $e) {
             Log::error("OTP email failed to send for user ID: {$user->id}. Error: " . $e->getMessage());
             return back()->with('error', 'Could not send your verification code. Please try again in a moment.')->withInput();
         }
- 
+
         $request->session()->put('2fa:user:id', $user->id);
 
         // If the login attempt came from the admin portal, prefer showing a

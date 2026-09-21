@@ -17,8 +17,20 @@ class MobileAuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! PasswordHash::checkAndUpgrade($request->password, $user)) {
+        if (!$user || !PasswordHash::checkAndUpgrade($request->password, $user)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        // A password alone must not issue an API token for an account whose inbox has
+        // never been verified (for example a just-registered, still-pending employee).
+        // Otherwise anyone could register a roster email with their own password and
+        // read that employee's payslips. One web sign-in with the emailed code
+        // verifies the account.
+        $status = strtolower((string) ($user->status ?? 'active'));
+        if (!$user->email_verified_at || $status !== 'active') {
+            return response()->json([
+                'message' => 'Please sign in once on the web portal and enter the emailed code to activate your account.',
+            ], 403);
         }
 
         $token = $user->createToken('mobile-app')->plainTextToken;
