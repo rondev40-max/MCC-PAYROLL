@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Mail\UserVerificationEmail;
+use App\Models\AdminPersonnelTimesheet;
 use App\Models\Employee;
+use App\Models\FulltimeTimesheet;
+use App\Models\ParttimeTimesheet;
+use App\Models\StaffTimesheet;
+use App\Models\WatchmanTimesheet;
 use App\Models\User;
 use App\Rules\ReCaptcha;
 use Illuminate\Database\QueryException;
@@ -61,7 +66,7 @@ class RegisterController extends Controller
         ]);
 
         $email = strtolower(trim($data['email']));
-        $employee = Employee::whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
+        $employee = $this->findRosterEmployee($email);
 
         // An email outside the roster and an email that already has an account
         // get the same message, so the form does not say which of the two it was.
@@ -73,6 +78,8 @@ class RegisterController extends Controller
 
         $existingUser = User::whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
         if ($existingUser) {
+            Log::notice('Registration attempted for an email that already has an account', ['user_id' => $existingUser->id, 'ip' => $request->ip()]);
+
             // Only the legacy link flow needs a new link. In the normal flow the
             // person simply signs in and confirms the emailed one-time code.
             if (!$this->otpReady() && $existingUser->role === 'employee' && !$existingUser->email_verified_at) {
@@ -113,6 +120,66 @@ class RegisterController extends Controller
         return redirect()->route('employee.login.form')
             ->withInput(['email' => $email])
             ->with('success', 'Account created! Sign in with your email and password. We will email you a 6-digit code to finish signing in, and then you will be taken to your employee portal.');
+    }
+
+    /**
+     * Find the roster record for an email address.
+     *
+     * The admin "Master List" page is built from the timesheet tables (full-time,
+     * part-time, staff, admin personnel, watchman), and only some of the ways of
+     * adding someone also create a row in `employees`. Looking only at `employees`
+     * therefore rejected people who are plainly on the master list. So look there
+     * first, then in the master-list tables, and link (or create) the `employees`
+     * row the rest of the app expects.
+     */
+    private function findRosterEmployee(string $email): ?Employee
+    {
+        $employee = Employee::whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
+
+        return $employee ?? $this->employeeFromMasterList($email);
+    }
+
+    private function employeeFromMasterList(string $email): ?Employee
+    {
+        $sources = [
+            [FulltimeTimesheet::class, 'Full-time Instructor'],
+            [ParttimeTimesheet::class, 'Part-time Instructor'],
+            [StaffTimesheet::class, 'Staff'],
+            [AdminPersonnelTimesheet::class, 'Admin Personnel'],
+            [WatchmanTimesheet::class, 'Watchman'],
+        ];
+
+        foreach ($sources as [$model, $position]) {
+            if (!Schema::hasColumn((new $model)->getTable(), 'email')) {
+                continue;
+            }
+
+            $row = $model::whereRaw('LOWER(TRIM(email)) = ?', [$email])->orderBy('id')->first();
+            if (!$row) {
+                continue;
+            }
+
+            // Reuse the linked employee only when it is clearly the same person, so a
+            // stale or wrong employee_id on a timesheet row cannot attach someone else.
+            $linked = $row->employee_id ? Employee::find($row->employee_id) : null;
+            if ($linked && strcasecmp(trim((string) $linked->name), trim((string) $row->employee_name)) === 0) {
+                if (blank($linked->email)) {
+                    $linked->forceFill(['email' => $email])->save();
+                }
+
+                return $linked;
+            }
+
+            return Employee::create([
+                'name' => $row->employee_name,
+                'email' => $email,
+                'position' => $position,
+                'hourly_salary' => $row->rate_per_hour ?? 0,
+                'department_id' => null,
+            ]);
+        }
+
+        return null;
     }
 
     /** Send a fresh, single-use verification secret and retain only its hash. */

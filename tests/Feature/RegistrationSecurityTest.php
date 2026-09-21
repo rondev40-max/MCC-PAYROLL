@@ -54,6 +54,25 @@ it('only creates a pending employee account for an email in the roster', functio
     Mail::assertNotSent(UserVerificationEmail::class);
 });
 
+it('accepts an email that is only on the master list timesheets, not in the employees table', function () {
+    \App\Models\FulltimeTimesheet::create([
+        'employee_name' => 'Maria Santos',
+        'email' => ' Maria.Santos@Example.com ',
+        'designation' => 'Instructor',
+        'department' => 'BSIT',
+        'rate_per_hour' => 100,
+    ]);
+
+    $this->post(route('register.store'), registrationPayload())
+        ->assertRedirect(route('employee.login.form'))
+        ->assertSessionHas('success');
+
+    $employee = Employee::whereRaw('LOWER(TRIM(email)) = ?', ['maria.santos@example.com'])->firstOrFail();
+    $user = User::where('email', 'maria.santos@example.com')->firstOrFail();
+    expect($user->employee_id)->toBe($employee->id)
+        ->and($user->role)->toBe('employee');
+});
+
 it('does not create an account for an email outside the employee roster', function () {
     $this->post(route('register.store'), registrationPayload())
         ->assertRedirect(route('register.form'))
