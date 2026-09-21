@@ -424,25 +424,49 @@
     function calculateMetrics(entry) {
         const count = ['am_in', 'am_out', 'pm_in', 'pm_out'].filter(function (key) { return Boolean(entry[key]); }).length;
         const worked = timeSpan(entry.am_in, entry.am_out) + timeSpan(entry.pm_in, entry.pm_out);
-        const lateness = Math.max(0, toMinutes(entry.am_in) - toMinutes(official.amIn))
-            + Math.max(0, toMinutes(entry.pm_in) - toMinutes(official.pmIn));
-        const scheduledUndertime = lateness
-            + minutesBefore(entry.am_out, official.amOut)
-            + minutesBefore(entry.pm_out, official.pmOut);
-        const isPresent = ['present', 'late', 'half_day'].includes(entry.status) || count > 0;
+        const status = String(entry.status || '').toLowerCase();
+        const isPresent = ['present', 'late', 'half_day'].includes(status) || count > 0;
+        const isHalfDay = status === 'half_day';
+        const isAuthorizedAbsence = ['leave', 'holiday', 'official_business'].includes(status);
+
+        const amLateness = Math.max(0, toMinutes(entry.am_in) - toMinutes(official.amIn));
+        const pmLateness = Math.max(0, toMinutes(entry.pm_in) - toMinutes(official.pmIn));
+        const lateness = amLateness + pmLateness;
+
+        const amUndertime = (entry.am_in || entry.am_out)
+            ? (amLateness + minutesBefore(entry.am_out, official.amOut))
+            : 0;
+        const pmUndertime = (entry.pm_in || entry.pm_out)
+            ? (pmLateness + minutesBefore(entry.pm_out, official.pmOut))
+            : 0;
+
+        let undertime = 0;
+        if (isAuthorizedAbsence) {
+            undertime = 0;
+        } else if (isHalfDay) {
+            const scheduledHalfDayUndertime = (entry.am_in || entry.am_out) ? amUndertime : pmUndertime;
+            undertime = isPresent ? Math.max(0, 240 - worked, scheduledHalfDayUndertime) : 0;
+        } else {
+            const scheduledUndertime = lateness
+                + (entry.am_out ? minutesBefore(entry.am_out, official.amOut) : 0)
+                + (entry.pm_out ? minutesBefore(entry.pm_out, official.pmOut) : 0);
+            undertime = isPresent ? Math.max(0, 480 - worked, scheduledUndertime) : 0;
+        }
+
         const invalidOrder = invalidPair(entry.am_in, entry.am_out)
             || invalidPair(entry.pm_in, entry.pm_out);
         const completeHalfDay = validPair(entry.am_in, entry.am_out)
             || validPair(entry.pm_in, entry.pm_out);
+
         return {
             worked: worked,
             lateness: isPresent ? lateness : 0,
-            undertime: isPresent ? Math.max(0, 480 - worked, scheduledUndertime) : 0,
+            undertime: undertime,
             overtime: isPresent
                 ? Math.max(0, toMinutes(entry.am_out) - toMinutes(official.amOut))
                     + Math.max(0, toMinutes(entry.pm_out) - toMinutes(official.pmOut))
                 : 0,
-            incomplete: isPresent && (entry.status === 'half_day'
+            incomplete: isPresent && (isHalfDay
                 ? !completeHalfDay
                 : count < 4 || invalidOrder)
         };
@@ -505,9 +529,10 @@
             const entry = employee.attendance[date] || emptyEntry();
             const parsedDate = parseLocalDate(date);
             const isFuture = parsedDate > today;
+            const dayOfWeek = parsedDate.getDay();
             const row = document.createElement('tr');
             row.dataset.date = date;
-            row.classList.toggle('is-weekend', parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
+            row.classList.toggle('is-weekend', dayOfWeek === 0 || dayOfWeek === 6);
 
             const dateCell = document.createElement('td');
             dateCell.className = 'entry-date';
@@ -515,6 +540,13 @@
             const weekday = document.createElement('small');
             weekday.textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(parsedDate);
             dateCell.appendChild(weekday);
+            if (dayOfWeek === 6) {
+                const satTag = document.createElement('span');
+                satTag.className = 'weekend-tag';
+                satTag.textContent = 'Sat Schedule';
+                satTag.title = 'Saturday schedule applies if faculty/staff has weekend assignments';
+                dateCell.appendChild(satTag);
+            }
             row.appendChild(dateCell);
 
             const statusCell = document.createElement('td');
@@ -859,7 +891,7 @@
         const rows = [[
             'Employee ID', 'Employee name', 'Designation', 'Employment type', 'Date', 'Status', 'Remarks',
             'AM arrival', 'AM departure', 'PM arrival', 'PM departure', 'Hours worked',
-            'Lateness (minutes)', 'Undertime (minutes)', 'Overtime (minutes)'
+            'Lateness (minutes)', 'Undertime (total minutes)', 'Undertime (hours)', 'Undertime (mins)', 'Overtime (minutes)'
         ]];
         state.employees.forEach(function (employee) {
             state.cutoffDates.forEach(function (date) {
@@ -869,7 +901,7 @@
                     employee.id, employee.name, employee.designation, employee.type, date,
                     entry.status || (hasTimes(entry) ? 'present' : ''), entry.remarks, entry.am_in, entry.am_out,
                     entry.pm_in, entry.pm_out, (metrics.worked / 60).toFixed(2), metrics.lateness,
-                    metrics.undertime, metrics.overtime
+                    metrics.undertime, Math.floor(metrics.undertime / 60), metrics.undertime % 60, metrics.overtime
                 ]);
             });
         });

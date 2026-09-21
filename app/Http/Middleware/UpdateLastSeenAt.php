@@ -19,8 +19,15 @@ class UpdateLastSeenAt
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check()) {
-            $user = Auth::user();
+        $user = Auth::user();
+        if (!$user && $request->session()->get('is_attendance') === true) {
+            $userId = $request->session()->get('user_id');
+            if ($userId && Schema::hasTable('users')) {
+                $user = \App\Models\User::find($userId);
+            }
+        }
+
+        if ($user) {
             $now = Carbon::now();
 
             // ✅ Check if 'last_seen_at' column actually exists (prevents SQL errors)

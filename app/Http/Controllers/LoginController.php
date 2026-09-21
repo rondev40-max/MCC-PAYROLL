@@ -105,6 +105,9 @@ class LoginController extends Controller
         // is intentionally not gated by OTP here — it's a separate, lower-
         // privilege flow already covered by its own throttled routes.
         if ($user->role === 'attendance_checker') {
+            // Regenerate session ID on login to prevent session fixation
+            $request->session()->regenerate();
+
             // Set session data for attendance
             $request->session()->put([
                 'user_id'       => $user->id,
@@ -113,6 +116,21 @@ class LoginController extends Controller
                 'user_course'   => $user->course ?? null,
                 'is_attendance' => true,
             ]);
+
+            // Update user activity columns so checkers show accurately in User Management
+            $userUpdates = [];
+            if (Schema::hasColumn('users', 'last_login_at')) {
+                $userUpdates['last_login_at'] = now();
+            }
+            if (Schema::hasColumn('users', 'last_seen_at')) {
+                $userUpdates['last_seen_at'] = now();
+            }
+            if (Schema::hasColumn('users', 'last_login_ip')) {
+                $userUpdates['last_login_ip'] = $request->ip();
+            }
+            if (!empty($userUpdates)) {
+                $user->update($userUpdates);
+            }
 
             Log::info('Attendance user logged in', [
                 'user_id' => $user->id,

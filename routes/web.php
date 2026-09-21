@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\SalaryController;
 
 // Main Landing Page (Login Form)
 Route::get('/', [HomeController::class, 'index'])->name('index');
+Route::get('/login', fn () => redirect()->route('index'))->name('login');
 
 // Handle Login Submission
 Route::post('/', [LoginController::class, 'authenticate'])->name('login.submit');
@@ -164,6 +165,11 @@ Route::post('/fulltime/{id}/update-field', [FulltimeTimesheetController::class, 
     // New Routes for Holiday Management
     Route::resource('holidays', App\Http\Controllers\HolidayController::class);
 
+    // Department Attendance Overviews (BSIT, BSBA, BSHM, Education)
+    Route::get('/bsit', [BsitController::class, 'index'])->name('bsit.index');
+    Route::get('/bsba', [BsbaController::class, 'index'])->name('bsba.index');
+    Route::get('/bshm', [BshmController::class, 'index'])->name('bshm.index');
+    Route::get('/education', [EducationController::class, 'index'])->name('education.index');
 });
 // CSRF token refresh endpoint (prevents 419 on reCAPTCHA async submit)
 Route::get('/csrf-refresh', function () {
@@ -346,11 +352,7 @@ Route::prefix('attendance')->name('attendance.')->group(function () {
     Route::post('/reset-password', [AttendanceController::class, 'resetPassword'])->name('reset.submit')->middleware(app()->environment('production') ? 'throttle:5,1' : []);
 });
 
-// Department Attendance Checker Routes (Public or use different middleware)
-Route::get('/bsit', [BsitController::class, 'index'])->name('bsit.index');
-Route::get('/bsba', [BsbaController::class, 'index'])->name('bsba.index');
-Route::get('/bshm', [BshmController::class, 'index'])->name('bshm.index');
-Route::get('/education', [EducationController::class, 'index'])->name('education.index');
+
 
 Route::get('/terms', function () {
     return view('terms');

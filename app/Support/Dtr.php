@@ -302,22 +302,45 @@ final class Dtr
         $hasEntry = (bool) ($amIn || $amOut || $pmIn || $pmOut);
         $statusKey = strtolower(trim((string) $status));
         $present = $hasEntry || in_array($statusKey, ['present', 'late', 'half_day'], true);
-        $lateness = self::minutesAfter($amIn, self::AM_ARRIVAL)
-            + self::minutesAfter($pmIn, self::PM_ARRIVAL);
-        $scheduledUndertime = $lateness
-            + self::minutesBefore($amOut, self::AM_DEPARTURE)
-            + self::minutesBefore($pmOut, self::PM_DEPARTURE);
+        $isHalfDay = ($statusKey === 'half_day');
+        $isAuthorizedAbsence = in_array($statusKey, ['leave', 'holiday', 'official_business'], true);
+
+        $amLateness = self::minutesAfter($amIn, self::AM_ARRIVAL);
+        $pmLateness = self::minutesAfter($pmIn, self::PM_ARRIVAL);
+        $lateness = $amLateness + $pmLateness;
+
+        $amUndertime = ($amIn || $amOut)
+            ? ($amLateness + self::minutesBefore($amOut, self::AM_DEPARTURE))
+            : 0;
+        $pmUndertime = ($pmIn || $pmOut)
+            ? ($pmLateness + self::minutesBefore($pmOut, self::PM_DEPARTURE))
+            : 0;
+
+        if ($isAuthorizedAbsence) {
+            $undertime = 0;
+        } elseif ($isHalfDay) {
+            $requiredHalfDay = (int) (self::REQUIRED_MINUTES / 2);
+            $scheduledHalfDayUndertime = ($amIn || $amOut) ? $amUndertime : $pmUndertime;
+            $undertime = $present ? max(0, $requiredHalfDay - $worked, $scheduledHalfDayUndertime) : 0;
+        } else {
+            $scheduledUndertime = $lateness
+                + ($amOut ? self::minutesBefore($amOut, self::AM_DEPARTURE) : 0)
+                + ($pmOut ? self::minutesBefore($pmOut, self::PM_DEPARTURE) : 0);
+            $undertime = $present
+                ? max(0, self::REQUIRED_MINUTES - $worked, $scheduledUndertime)
+                : 0;
+        }
 
         return [
             'has_entry'   => $hasEntry,
             'present'     => $present,
             'worked'      => $worked,
-            'lateness'    => $lateness,
-            'undertime'   => $present
-                ? max(0, self::REQUIRED_MINUTES - $worked, $scheduledUndertime)
+            'lateness'    => $present ? $lateness : 0,
+            'undertime'   => $undertime,
+            'overtime'    => $present
+                ? self::minutesAfter($amOut, self::AM_DEPARTURE)
+                    + self::minutesAfter($pmOut, self::PM_DEPARTURE)
                 : 0,
-            'overtime'    => self::minutesAfter($amOut, self::AM_DEPARTURE)
-                + self::minutesAfter($pmOut, self::PM_DEPARTURE),
             'total_hours' => round($worked / 60, 2),
         ];
     }

@@ -55,6 +55,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 
+        $middleware->redirectGuestsTo('/');
+
         // ✅ Global middleware (replaces $middleware array)
         // ForceHttps runs first so nothing downstream processes a plaintext request.
         $middleware->append(ForceHttps::class);

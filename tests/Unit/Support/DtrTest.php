@@ -110,3 +110,24 @@ test('DTR metrics do not let overtime offset undertime', function () {
         ->present->toBeTrue()
         ->undertime->toBe(480);
 });
+
+test('DTR metrics calculate half-day undertime against half-day requirement', function () {
+    $cleanHalfDay = Dtr::metrics('08:00', '12:00', null, null, 'half_day');
+    $lateHalfDay = Dtr::metrics('08:15', '12:00', null, null, 'half_day');
+
+    expect($cleanHalfDay)
+        ->worked->toBe(240)
+        ->lateness->toBe(0)
+        ->undertime->toBe(0)
+        ->and($lateHalfDay)
+        ->worked->toBe(225)
+        ->lateness->toBe(15)
+        ->undertime->toBe(15);
+});
+
+test('DTR metrics exempt authorized absences from undertime penalties', function (string $status) {
+    $absence = Dtr::metrics(null, null, null, null, $status);
+
+    expect($absence['undertime'])->toBe(0);
+})->with(['leave', 'holiday', 'official_business']);
+
