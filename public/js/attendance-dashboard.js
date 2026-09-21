@@ -25,7 +25,12 @@
         selectedKeys: new Set(),
         editingKey: null,
         dialogDirty: false,
-        controller: null
+        controller: null,
+        pageSize: 8,
+        currentPage: 1,
+        sortColumn: 'name',
+        sortDirection: 'asc',
+        currentPageItems: []
     };
     const elements = {};
 
@@ -46,7 +51,8 @@
             'register-body', 'select-all', 'bulk-actions', 'selected-count', 'clear-selection',
             'delete-selected', 'summary-personnel', 'summary-records', 'summary-hours',
             'summary-review', 'dtr-dialog', 'dialog-employee', 'dialog-period', 'entry-body',
-            'close-dialog', 'cancel-dialog', 'save-entries', 'dialog-metrics', 'toast-region'
+            'close-dialog', 'cancel-dialog', 'save-entries', 'dialog-metrics', 'toast-region',
+            'page-length', 'table-pagination-bar', 'table-info', 'table-pagination'
         ].forEach(function (id) {
             elements[toCamel(id)] = document.getElementById(id);
         });
@@ -59,6 +65,7 @@
         elements.retryRegister.addEventListener('click', loadRegister);
         elements.exportAttendance.addEventListener('click', exportAttendance);
         elements.employeeSearch.addEventListener('input', applySearch);
+        if (elements.pageLength) elements.pageLength.addEventListener('change', handlePageLengthChange);
         elements.selectAll.addEventListener('change', toggleSelectAll);
         elements.clearSelection.addEventListener('click', clearSelection);
         elements.deleteSelected.addEventListener('click', deleteSelected);
@@ -70,6 +77,7 @@
             event.preventDefault();
             closeDialog();
         });
+        bindSortHeaders();
     }
 
     function toCamel(value) {
@@ -262,12 +270,105 @@
             return [employee.name, employee.designation, employee.type, employee.email, String(employee.id)]
                 .some(function (value) { return value.toLocaleLowerCase().includes(query); });
         });
+        state.currentPage = 1;
         renderRegister();
+    }
+
+    function handlePageLengthChange() {
+        const val = parseInt(elements.pageLength.value, 10);
+        state.pageSize = isNaN(val) ? 8 : val;
+        state.currentPage = 1;
+        renderRegister();
+    }
+
+    function bindSortHeaders() {
+        const headers = document.querySelectorAll('.data-table th.is-sortable');
+        headers.forEach(function (th) {
+            th.addEventListener('click', function () {
+                const col = th.dataset.sort;
+                if (!col) return;
+                if (state.sortColumn === col) {
+                    state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    state.sortColumn = col;
+                    state.sortDirection = 'asc';
+                }
+                updateSortHeaderIcons();
+                state.currentPage = 1;
+                renderRegister();
+            });
+            th.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    th.click();
+                }
+            });
+        });
+    }
+
+    function updateSortHeaderIcons() {
+        const headers = document.querySelectorAll('.data-table th.is-sortable');
+        headers.forEach(function (th) {
+            th.classList.remove('is-sorted-asc', 'is-sorted-desc');
+            if (th.dataset.sort === state.sortColumn) {
+                th.classList.add(state.sortDirection === 'asc' ? 'is-sorted-asc' : 'is-sorted-desc');
+                th.setAttribute('aria-sort', state.sortDirection === 'asc' ? 'ascending' : 'descending');
+            } else {
+                th.removeAttribute('aria-sort');
+            }
+        });
+    }
+
+    function sortEmployees(list) {
+        const col = state.sortColumn;
+        const dir = state.sortDirection === 'desc' ? -1 : 1;
+        return list.slice().sort(function (a, b) {
+            if (col === 'name') {
+                return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }) * dir;
+            }
+            if (col === 'type') {
+                return (a.type || '').localeCompare(b.type || '', undefined, { sensitivity: 'base' }) * dir;
+            }
+            const sA = summarizeEmployee(a);
+            const sB = summarizeEmployee(b);
+            let valA = 0, valB = 0;
+            if (col === 'days') {
+                valA = sA.days;
+                valB = sB.days;
+            } else if (col === 'hours') {
+                valA = sA.worked;
+                valB = sB.worked;
+            } else if (col === 'lateness') {
+                valA = sA.lateness;
+                valB = sB.lateness;
+            } else if (col === 'undertime') {
+                valA = sA.undertime;
+                valB = sB.undertime;
+            } else if (col === 'status') {
+                valA = sA.records === 0 ? 0 : (sA.review ? 1 : 2);
+                valB = sB.records === 0 ? 0 : (sB.review ? 1 : 2);
+            }
+            if (valA < valB) return -1 * dir;
+            if (valA > valB) return 1 * dir;
+            return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+        });
     }
 
     function renderRegister() {
         elements.registerBody.textContent = '';
-        state.filtered.forEach(function (employee) {
+        const sorted = sortEmployees(state.filtered);
+        const total = sorted.length;
+        const totalPages = state.pageSize > 0 ? Math.max(1, Math.ceil(total / state.pageSize)) : 1;
+
+        if (state.currentPage > totalPages) state.currentPage = totalPages;
+        if (state.currentPage < 1) state.currentPage = 1;
+
+        const startIdx = state.pageSize > 0 ? (state.currentPage - 1) * state.pageSize : 0;
+        const endIdx = state.pageSize > 0 ? Math.min(startIdx + state.pageSize, total) : total;
+        const pageItems = state.pageSize > 0 ? sorted.slice(startIdx, endIdx) : sorted;
+        state.currentPageItems = pageItems;
+
+        pageItems.forEach(function (employee) {
             elements.registerBody.appendChild(buildRegisterRow(employee));
         });
 
@@ -280,7 +381,103 @@
             row.appendChild(cell);
             elements.registerBody.appendChild(row);
         }
+
+        renderPagination(total, totalPages, startIdx, endIdx);
         updateSelection();
+    }
+
+    function renderPagination(total, totalPages, startIdx, endIdx) {
+        if (!elements.tablePaginationBar) return;
+
+        if (total === 0) {
+            elements.tablePaginationBar.hidden = true;
+            return;
+        }
+
+        elements.tablePaginationBar.hidden = false;
+
+        let info = 'Showing ' + (startIdx + 1) + ' to ' + endIdx + ' of ' + total + ' entries';
+        if (state.employees.length && total !== state.employees.length) {
+            info += ' (filtered from ' + state.employees.length + ' total entries)';
+        }
+        if (elements.tableInfo) {
+            elements.tableInfo.textContent = info;
+        }
+
+        if (!elements.tablePagination) return;
+        elements.tablePagination.textContent = '';
+
+        if (totalPages <= 1) {
+            return;
+        }
+
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.innerHTML = '<i class="bi bi-chevron-left" aria-hidden="true"></i>';
+        prevBtn.title = 'Previous page';
+        prevBtn.setAttribute('aria-label', 'Previous page');
+        prevBtn.disabled = state.currentPage <= 1;
+        prevBtn.addEventListener('click', function () {
+            if (state.currentPage > 1) {
+                state.currentPage--;
+                renderRegister();
+            }
+        });
+        elements.tablePagination.appendChild(prevBtn);
+
+        const pages = getPaginationPageNumbers(state.currentPage, totalPages);
+        pages.forEach(function (page) {
+            if (page === '...') {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'pagination-ellipsis';
+                ellipsis.textContent = '…';
+                elements.tablePagination.appendChild(ellipsis);
+            } else {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = String(page);
+                btn.setAttribute('aria-label', 'Page ' + page);
+                if (page === state.currentPage) {
+                    btn.className = 'is-active';
+                    btn.setAttribute('aria-current', 'page');
+                } else {
+                    btn.addEventListener('click', function () {
+                        state.currentPage = page;
+                        renderRegister();
+                    });
+                }
+                elements.tablePagination.appendChild(btn);
+            }
+        });
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.innerHTML = '<i class="bi bi-chevron-right" aria-hidden="true"></i>';
+        nextBtn.title = 'Next page';
+        nextBtn.setAttribute('aria-label', 'Next page');
+        nextBtn.disabled = state.currentPage >= totalPages;
+        nextBtn.addEventListener('click', function () {
+            if (state.currentPage < totalPages) {
+                state.currentPage++;
+                renderRegister();
+            }
+        });
+        elements.tablePagination.appendChild(nextBtn);
+    }
+
+    function getPaginationPageNumbers(current, total) {
+        if (total <= 7) {
+            const list = [];
+            for (let i = 1; i <= total; i++) list.push(i);
+            return list;
+        }
+        if (current <= 4) {
+            return [1, 2, 3, 4, 5, '...', total];
+        }
+        if (current >= total - 3) {
+            return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        }
+        return [1, '...', current - 1, current, current + 1, '...', total];
     }
 
     function buildRegisterRow(employee) {
@@ -819,19 +1016,32 @@
     }
 
     function toggleSelectAll() {
-        state.filtered.forEach(function (employee) {
-            if (elements.selectAll.checked) state.selectedKeys.add(employee.key);
-            else state.selectedKeys.delete(employee.key);
+        const pageItems = state.currentPageItems || [];
+        const allPageSelected = pageItems.length > 0 && pageItems.every(function (emp) {
+            return state.selectedKeys.has(emp.key);
+        });
+
+        pageItems.forEach(function (emp) {
+            if (allPageSelected) {
+                state.selectedKeys.delete(emp.key);
+            } else {
+                state.selectedKeys.add(emp.key);
+            }
         });
         renderRegister();
     }
 
     function updateSelection() {
-        const visibleKeys = state.filtered.map(function (employee) { return employee.key; });
-        const visibleSelected = visibleKeys.filter(function (key) { return state.selectedKeys.has(key); }).length;
-        elements.selectAll.checked = visibleKeys.length > 0 && visibleSelected === visibleKeys.length;
-        elements.selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visibleKeys.length;
-        elements.selectedCount.textContent = String(state.selectedKeys.size);
+        const pageItems = state.currentPageItems || [];
+        const pageKeys = pageItems.map(function (emp) { return emp.key; });
+        const visibleSelected = pageKeys.filter(function (key) { return state.selectedKeys.has(key); }).length;
+        if (elements.selectAll) {
+            elements.selectAll.checked = pageKeys.length > 0 && visibleSelected === pageKeys.length;
+            elements.selectAll.indeterminate = visibleSelected > 0 && visibleSelected < pageKeys.length;
+        }
+        if (elements.selectedCount) {
+            elements.selectedCount.textContent = String(state.selectedKeys.size);
+        }
         setPanelVisible(elements.bulkActions, state.selectedKeys.size > 0);
     }
 

@@ -84,11 +84,24 @@
                     Export CSV
                 </button>
             </div>
-            <label class="search-field" for="employee-search">
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <span class="visually-hidden">Search personnel</span>
-                <input id="employee-search" type="search" placeholder="Search personnel" autocomplete="off">
-            </label>
+            <div class="toolbar-group toolbar-group--right">
+                <div class="table-length" id="table-length-wrap">
+                    <label for="page-length">Show</label>
+                    <select id="page-length" class="table-length-select" aria-label="Entries per page">
+                        <option value="8" selected>8</option>
+                        <option value="16">16</option>
+                        <option value="24">24</option>
+                        <option value="32">32</option>
+                        <option value="-1">All</option>
+                    </select>
+                    <span>entries</span>
+                </div>
+                <label class="search-field" for="employee-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span class="visually-hidden">Search personnel</span>
+                    <input id="employee-search" type="search" placeholder="Search personnel" autocomplete="off">
+                </label>
+            </div>
         </div>
 
         <div class="policy-bar">
@@ -128,19 +141,27 @@
             <table class="data-table" id="register-table">
                 <thead>
                     <tr>
-                        <th class="cell-check"><input type="checkbox" id="select-all" aria-label="Select all personnel"></th>
-                        <th class="cell-employee">Personnel</th>
-                        <th class="cell-type">Employment</th>
-                        <th class="cell-number">Days</th>
-                        <th class="cell-number">Hours</th>
-                        <th class="cell-number">Late</th>
-                        <th class="cell-number">Undertime</th>
-                        <th class="cell-status">Record status</th>
+                        <th class="cell-check"><input type="checkbox" id="select-all" aria-label="Select all personnel on this page"></th>
+                        <th class="cell-employee is-sortable is-sorted-asc" data-sort="name" role="button" tabindex="0" title="Sort by Name">Personnel</th>
+                        <th class="cell-type is-sortable" data-sort="type" role="button" tabindex="0" title="Sort by Employment Type">Employment</th>
+                        <th class="cell-number is-sortable" data-sort="days" role="button" tabindex="0" title="Sort by Days Worked">Days</th>
+                        <th class="cell-number is-sortable" data-sort="hours" role="button" tabindex="0" title="Sort by Hours Rendered">Hours</th>
+                        <th class="cell-number is-sortable" data-sort="lateness" role="button" tabindex="0" title="Sort by Lateness">Late</th>
+                        <th class="cell-number is-sortable" data-sort="undertime" role="button" tabindex="0" title="Sort by Undertime">Undertime</th>
+                        <th class="cell-status is-sortable" data-sort="status" role="button" tabindex="0" title="Sort by Record Status">Record status</th>
                         <th class="cell-actions"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody id="register-body"></tbody>
             </table>
+        </div>
+
+        <div class="table-footer-bar no-print" id="table-pagination-bar" hidden>
+            <div class="table-info" id="table-info">
+                Showing 0 to 0 of 0 entries
+            </div>
+            <nav class="table-pagination" id="table-pagination" aria-label="Table pagination">
+            </nav>
         </div>
 
         <div class="bulk-bar no-print" id="bulk-actions" hidden>

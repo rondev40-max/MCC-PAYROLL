@@ -405,6 +405,21 @@ test('the register hands its route config to the browser intact', function () {
     }
 });
 
+test('the attendance register renders DataTables pagination controls with default page size of 8', function () {
+    $html = $this
+        ->withSession(attendancePortalSession())
+        ->get(route('attendance.dashboard'))
+        ->getContent();
+
+    expect($html)->toContain('id="page-length"')
+        ->and($html)->toContain('value="8" selected')
+        ->and($html)->toContain('id="table-pagination-bar"')
+        ->and($html)->toContain('id="table-info"')
+        ->and($html)->toContain('id="table-pagination"')
+        ->and($html)->toContain('data-sort="name"')
+        ->and($html)->toContain('data-sort="days"');
+});
+
 /*
  * The register load failed in production with nothing but "could not be
  * loaded". Two causes were found and are pinned here.
