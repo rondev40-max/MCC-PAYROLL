@@ -850,7 +850,13 @@
           <li>
             <hr class="dropdown-divider my-1">
           </li>
-          <li><a class="dropdown-item" href="{{ route('admin.attendance-payroll.index') }}"><i class="bi bi-clock"></i>Attendance Payroll</a></li>
+          <li><a class="dropdown-item d-flex align-items-center justify-content-between gap-2" href="{{ route('admin.attendance-payroll.index') }}">
+            <span><i class="bi bi-clock-history"></i> Attendance Payroll</span>
+            @php $_pendDash = \App\Models\AttendanceSession::whereIn('status', ['open','needs_review'])->count(); @endphp
+            @if($_pendDash > 0)
+              <span class="badge bg-warning text-dark" style="font-size:.65rem;">{{ $_pendDash }}</span>
+            @endif
+          </a></li>
           <li><a class="dropdown-item" href="{{ route('admin.employee.timesheets.submissions') }}"><i
                 class="bi bi-clock-history"></i>Submitted Timesheets</a></li>
         </ul>
