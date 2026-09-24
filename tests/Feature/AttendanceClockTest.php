@@ -218,3 +218,62 @@ it('does not display another employees punches or allow their review', function 
     $this->post(route('admin.attendance-payroll.review', $session), ['decision' => 'void', 'note' => 'Unauthorized change']);
     expect($session->fresh()->status)->toBe('needs_review');
 });
+
+it('auto-closes forgotten open sessions via artisan command', function () {
+    $openSession = AttendanceSession::create([
+        'employee_id'   => $this->employee->id,
+        'user_id'       => $this->user->id,
+        'work_date'     => now()->subDays(2)->toDateString(),
+        'clocked_in_at' => now()->subDays(2)->setTime(8, 0),
+        'status'        => 'open',
+    ]);
+
+    $this->artisan('attendance:auto-close')
+        ->expectsOutputToContain('Successfully auto-closed 1 forgotten open attendance session(s).')
+        ->assertSuccessful();
+
+    $fresh = $openSession->fresh();
+    expect($fresh->status)->toBe('needs_review')
+        ->and($fresh->auto_closed)->toBeTrue()
+        ->and($fresh->worked_seconds)->toBe(8 * 3600)
+        ->and($fresh->clocked_out_at)->not->toBeNull();
+});
+
+it('auto-heals previous shift forgotten open session when clocking in today', function () {
+    $oldSession = AttendanceSession::create([
+        'employee_id'   => $this->employee->id,
+        'user_id'       => $this->user->id,
+        'work_date'     => now()->subDay()->toDateString(),
+        'clocked_in_at' => now()->subDay()->setTime(8, 0),
+        'status'        => 'open',
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('employee.attendance.punch'), [
+        'action'          => 'in',
+        'last_session_id' => $oldSession->id,
+    ]);
+
+    $response->assertRedirect(route('employee.dashboard', ['tab' => 'attendance']));
+
+    $oldFresh = $oldSession->fresh();
+    expect($oldFresh->status)->toBe('needs_review')
+        ->and($oldFresh->auto_closed)->toBeTrue();
+
+    $newSession = AttendanceSession::where('employee_id', $this->employee->id)->latest('id')->first();
+    expect($newSession->id)->not->toBe($oldSession->id)
+        ->and($newSession->status)->toBe('open')
+        ->and($newSession->work_date->toDateString())->toBe(now()->toDateString());
+});
+
+it('records client IP and user agent on punch-in', function () {
+    $this->actingAs($this->user)
+        ->withServerVariables(['REMOTE_ADDR' => '192.168.10.50', 'HTTP_USER_AGENT' => 'CampusBrowser/1.0'])
+        ->post(route('employee.attendance.punch'), [
+            'action'          => 'in',
+            'last_session_id' => 0,
+        ]);
+
+    $session = AttendanceSession::where('employee_id', $this->employee->id)->latest('id')->first();
+    expect($session->ip_address)->toBe('192.168.10.50');
+});
+

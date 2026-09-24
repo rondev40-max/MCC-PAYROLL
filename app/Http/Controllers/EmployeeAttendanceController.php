@@ -32,13 +32,30 @@ class EmployeeAttendanceController extends Controller
             $now = now();
             if ($data['action'] === 'in') {
                 if ($open) {
-                    throw ValidationException::withMessages(['attendance' => 'You are already clocked in.']);
+                    $hoursOpen = $open->clocked_in_at->diffInHours($now);
+                    $isPastDay = $open->work_date->lt($now->toDateString());
+                    if ($isPastDay || $hoursOpen >= config('attendance.auto_close_after_hours', 14)) {
+                        // Automatically heal forgotten punch from previous shift so employee can clock in today
+                        $creditHours = (float) config('attendance.auto_close_credit_hours', 8);
+                        $open->update([
+                            'clocked_out_at' => $open->clocked_in_at->copy()->addHours($creditHours),
+                            'worked_seconds' => (int) ($creditHours * 3600),
+                            'status'         => 'needs_review',
+                            'auto_closed'    => true,
+                            'review_note'    => 'Auto-closed by system: employee started a new shift without clocking out.',
+                        ]);
+                        $open = null;
+                    } else {
+                        throw ValidationException::withMessages(['attendance' => 'You are already clocked in.']);
+                    }
                 }
                 AttendanceSession::create([
-                    'employee_id' => $employee->id,
-                    'user_id' => $request->user()->id,
-                    'work_date' => $now->toDateString(),
-                    'clocked_in_at' => $now,
+                    'employee_id'    => $employee->id,
+                    'user_id'        => $request->user()->id,
+                    'ip_address'     => config('attendance.track_client_ip', true) ? $request->ip() : null,
+                    'user_agent'     => config('attendance.track_client_ip', true) ? substr((string) $request->userAgent(), 0, 255) : null,
+                    'work_date'      => $now->toDateString(),
+                    'clocked_in_at'  => $now,
                 ]);
             } else {
                 if (! $open || $now->lessThanOrEqualTo($open->clocked_in_at)) {
@@ -48,7 +65,7 @@ class EmployeeAttendanceController extends Controller
                 $open->update([
                     'clocked_out_at' => $now,
                     'worked_seconds' => $seconds,
-                    'status' => $seconds > config('attendance.max_session_hours') * 3600 ? 'needs_review' : 'complete',
+                    'status'         => $seconds > config('attendance.max_session_hours') * 3600 ? 'needs_review' : 'complete',
                 ]);
             }
         }, 3);

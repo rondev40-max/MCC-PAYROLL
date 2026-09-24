@@ -294,10 +294,18 @@
                         @endif
                         {{ ucfirst(str_replace('_', ' ', $session->status)) }}
                       </span>
+                      @if($session->auto_closed)
+                        <span class="badge bg-warning text-dark ms-1" style="font-size:.68rem;" title="Shift automatically closed by system"><i class="bi bi-robot me-1"></i>Auto-Closed</span>
+                      @endif
+                      @if($session->ip_address)
+                        <span class="badge bg-light text-secondary border ms-1" style="font-size:.65rem;" title="Clock-in IP: {{ $session->ip_address }}"><i class="bi bi-geo-alt"></i> {{ $session->ip_address }}</span>
+                      @endif
                       @if($session->review_note)
                         <div style="font-size:.72rem;color:#8494a9;margin-top:.2rem;">
                           {{ $session->review_note }}
-                          <span style="opacity:.6;">(reviewer #{{ $session->reviewed_by }})</span>
+                          @if($session->reviewed_by)
+                            <span style="opacity:.6;">(reviewer #{{ $session->reviewed_by }})</span>
+                          @endif
                         </div>
                       @endif
                       @if(in_array($session->status, ['open', 'needs_review']))

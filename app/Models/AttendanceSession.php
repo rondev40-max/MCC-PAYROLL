@@ -13,7 +13,18 @@ class AttendanceSession extends Model
         'clocked_in_at' => 'datetime',
         'clocked_out_at' => 'datetime',
         'worked_seconds' => 'integer',
+        'auto_closed' => 'boolean',
     ];
+
+    public function isOpen(): bool
+    {
+        return $this->status === 'open';
+    }
+
+    public function isNeedsReview(): bool
+    {
+        return $this->status === 'needs_review';
+    }
 
     public function employee()
     {
