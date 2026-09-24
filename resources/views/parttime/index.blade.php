@@ -562,6 +562,7 @@
 <body>
   <div class="container-fluid">
     <div class="timesheet-card">
+      @include('partials.attendance-payroll-notice')
 
       <!-- ===================== PRINT HEADER ===================== -->
       <div class="print-header d-none">

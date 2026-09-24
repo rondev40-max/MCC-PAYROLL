@@ -39,6 +39,7 @@ class PayslipHistory extends Model
         'rate_unit',
         'source_type',
         'source_id',
+        'attendance_snapshot',
     ];
 
     protected $dates = [
@@ -51,6 +52,7 @@ class PayslipHistory extends Model
     // nullable, and 'float' would turn a NULL "never recorded" into 0.0, which
     // reads as "nothing was deducted". decimal:2 preserves the null.
     protected $casts = [
+        'attendance_snapshot' => 'array',
         'sent_at' => 'datetime',
         'total_honorarium' => 'float',
         'rate' => 'float',

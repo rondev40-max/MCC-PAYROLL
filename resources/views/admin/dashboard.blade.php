@@ -850,6 +850,7 @@
           <li>
             <hr class="dropdown-divider my-1">
           </li>
+          <li><a class="dropdown-item" href="{{ route('admin.attendance-payroll.index') }}"><i class="bi bi-clock"></i>Attendance Payroll</a></li>
           <li><a class="dropdown-item" href="{{ route('admin.employee.timesheets.submissions') }}"><i
                 class="bi bi-clock-history"></i>Submitted Timesheets</a></li>
         </ul>

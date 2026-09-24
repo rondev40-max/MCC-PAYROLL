@@ -392,7 +392,7 @@ class AdminController extends Controller
 
     $request->validate([
         'start_date' => 'required|date',
-        'end_date' => 'required|date',
+        'end_date' => 'required|date|after_or_equal:start_date',
     ]);
 
         $startDate = Carbon::parse($request->start_date);
@@ -720,6 +720,27 @@ class AdminController extends Controller
             }
         }
 
+        // Other daily-rate categories use the same attendance conversion.
+        foreach (['Watchman' => WatchmanTimesheet::class, 'Admin Personnel' => AdminPersonnelTimesheet::class] as $type => $model) {
+            $rows = $model::where('year', $staffYear)->whereIn('period', $staffPeriods)
+                ->where(fn ($q) => $q->where('month', $staffMonth)->orWhere('month', 'LIKE', $staffMonthName.'%'))
+                ->latest('id')->get();
+            foreach ($rows as $row) {
+                if (!$row->email || $recipients->has($row->email)) continue;
+                $recipients->put($row->email, [
+                    'employeeName' => $row->employee_name,
+                    'designation' => $row->designation,
+                    'department' => $row->department,
+                    'payPeriod' => $staffMonthName.' '.$row->period.', '.$staffYear,
+                    'totalDaysOrHours' => (float) $row->total_days.' days',
+                    'rate' => (float) $row->rate_per_day,
+                    'totalHonorarium' => (float) $row->total_honorarium,
+                    'type' => $type,
+                    'timesheet' => $row,
+                ]);
+            }
+        }
+
         if ($utilityRecordsWithoutEmail->isNotEmpty()) {
             $infoMessages[] = "{$utilityRecordsWithoutEmail->count()} Utility employee(s) without email will be recorded in history only (no email sent).";
         }
@@ -727,6 +748,10 @@ class AdminController extends Controller
         if ($recipients->isEmpty() && $utilityRecordsWithoutEmail->isEmpty()) {
             return back()->with('error', 'No employees found in the selected date range to process payslips.');
         }
+
+        // Resolve all attendance errors before any email or payroll history is written.
+        $recipients = $recipients->map(fn ($payload) => \App\Support\AttendancePayroll::apply($payload, $startDate, $endDate));
+        $utilityRecordsWithoutEmail = $utilityRecordsWithoutEmail->map(fn ($payload) => \App\Support\AttendancePayroll::apply($payload, $startDate, $endDate));
 
         $sent = 0; $failed = 0; $recorded = 0; $errors = [];
 
@@ -747,12 +772,13 @@ class AdminController extends Controller
                 'total_honorarium'    => $gross,
                 'designation'         => $payload['designation'] ?? 'N/A',
                 'rate'                => $rate,
-                'rate_unit'           => in_array($payload['type'], ['Staff', 'Utility'], true) ? 'day' : 'hour',
+                'rate_unit'           => in_array($payload['type'], \App\Support\AttendancePayroll::DAILY_TYPES, true) ? 'day' : 'hour',
                 'pay_period'          => $payload['payPeriod'],
                 'total_hours_or_days' => $units,
                 'days'                => $units,
                 'source_type'         => $payload['type'],
                 'source_id'           => $timesheet->id ?? null,
+                'attendance_snapshot' => $payload['attendance_snapshot'] ?? null,
                 'sent_at'             => now(),
             ], WageLiquidation::fromTimesheet($timesheet, $gross));
         };
@@ -762,10 +788,10 @@ class AdminController extends Controller
             $rateValue = (float) $payload['rate'];
             $daysHoursValue = (float) filter_var($payload['totalDaysOrHours'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             $totalHonorariumClean = (float) $payload['totalHonorarium'];
-            $rateUnit = in_array($payload['type'], ['Staff', 'Utility']) ? '/day' : '/hour';
+            $rateUnit = in_array($payload['type'], \App\Support\AttendancePayroll::DAILY_TYPES, true) ? '/day' : '/hour';
             
             // Format the display values for the email
-            $displayDaysHours = $daysHoursValue . (in_array($payload['type'], ['Staff', 'Utility']) ? ' days' : ' hours');
+            $displayDaysHours = $daysHoursValue . (in_array($payload['type'], \App\Support\AttendancePayroll::DAILY_TYPES, true) ? ' days' : ' hours');
             
             try {
                 Mail::to($email)->send(new PayslipMail(

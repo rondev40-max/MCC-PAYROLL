@@ -76,6 +76,9 @@ class EmployeeController extends Controller
 
     protected function getAttendances($employeeId)
     {
+        if (!$employeeId) {
+            return collect();
+        }
         $attendances = Attendance::where('employee_id', $employeeId)
             ->orderByDesc('date')
             ->get();
@@ -146,6 +149,24 @@ class EmployeeController extends Controller
         // $employeeId falls back to users.id — see resolveEmployeeRecord().
         $employee    = $this->resolveEmployeeRecord($user);
         $displayName = $this->displayName($user, $employee);
+        $clockSessions = $employee
+            ? \App\Models\AttendanceSession::where('employee_id', $employee->id)->latest('id')->get()
+            : collect();
+        $openClockSession = $clockSessions->firstWhere('status', 'open');
+        $webDays = $clockSessions->groupBy(fn ($s) => $s->work_date->toDateString())->map(function ($sessions, $date) {
+            $valid = $sessions->where('status', '!=', 'void');
+            return (object) [
+                'date' => $date,
+                'time_in' => $valid->min('clocked_in_at'),
+                'time_out' => $valid->contains('status', 'open') ? null : $valid->max('clocked_out_at'),
+                'hours_rendered' => $valid->where('status', 'complete')->sum('worked_seconds') / 3600,
+                'status' => $valid->contains('status', 'open') || $valid->contains('status', 'needs_review') ? 'pending' : ($valid->isEmpty() ? 'void' : 'present'),
+            ];
+        });
+        $attendances = collect($attendances)->keyBy(fn ($a) => Carbon::parse($a->date)->toDateString())
+            ->merge($webDays)->sortKeysDesc()->values();
+        $stats = $this->buildStats($attendances);
+        $clockSessions = $clockSessions->take(60);
 
         // The Timesheets tab has always rendered `$timesheets ?? []`, but this
         // action never passed it — so the tab read "No timesheets submitted yet"
@@ -166,7 +187,7 @@ class EmployeeController extends Controller
         return view('employee.dashboard-v2', compact(
             'user', 'employee', 'displayName', 'stats', 'announcements', 'readAnnouncementIds',
             'payslips', 'attendances', 'timesheets', 'activeTab',
-            'payslipUnlocked', 'payslipUnlockedFor', 'maskedEmail'
+            'payslipUnlocked', 'payslipUnlockedFor', 'maskedEmail', 'clockSessions', 'openClockSession'
         ));
     }
 

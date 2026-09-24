@@ -189,17 +189,18 @@
                     @if(isset($timesheet))
                         @php
                             $grossPay = (float)($timesheet->total_honorarium ?? 0);
-                            if ($grossPay <= 0 && isset($timesheet->total_hour) && isset($timesheet->rate_per_hour)) {
+                            if (!isset($timesheet->attendance_hours_by_date) && $grossPay <= 0 && isset($timesheet->total_hour) && isset($timesheet->rate_per_hour)) {
                                 $grossPay = (float)($timesheet->total_hour ?? 0) * (float)($timesheet->rate_per_hour ?? 0) - (float)($timesheet->deduction ?? 0);
                             }
-                            $wtax = (float)($timesheet->withholding_tax ?? 0);
-                            $gsis = (float)($timesheet->gsis ?? 0);
-                            $philhealth = (float)($timesheet->philhealth ?? 0);
-                            $pagibig = (float)($timesheet->pag_ibig ?? 0);
-                            $sss = (float)($timesheet->sss ?? 0);
-                            $otherDed = (float)($timesheet->deduction ?? 0);
-                            $totalDed = $wtax + $gsis + $philhealth + $pagibig + $sss + $otherDed;
-                            $netPay = $grossPay - $totalDed;
+                            $breakdown = \App\Support\WageLiquidation::fromTimesheet($timesheet, $grossPay);
+                            $wtax = $breakdown['withholding_tax'];
+                            $gsis = $breakdown['gsis'];
+                            $philhealth = $breakdown['philhealth'];
+                            $pagibig = $breakdown['pag_ibig'];
+                            $sss = $breakdown['sss'];
+                            $otherDed = $breakdown['other_deductions'];
+                            $totalDed = $breakdown['total_deductions'];
+                            $netPay = $breakdown['net_pay'];
                         @endphp
                         <tr>
                             <td><strong>Gross Pay</strong></td>
@@ -283,7 +284,9 @@
                                 }
 
                                 $hours = 0;
-                                if (isset($timesheet)) {
+                                if (isset($timesheet->attendance_hours_by_date)) {
+                                    $hours = $timesheet->attendance_hours_by_date[$currentDate] ?? 0;
+                                } elseif (isset($timesheet)) {
                                     $field = strtolower($weekday) . '_hours'; // mon_hours, tue_hours etc.
                                     if (isset($timesheet->$field)) {
                                         $hours = $timesheet->$field;
@@ -291,7 +294,7 @@
                                 }
                             @endphp
                             <td class="{{ $columnClasses }}">
-                                {{ $isHoliday ? 'H' : ($isSunday ? 'S' : ($hours > 0 ? $hours : '0')) }}
+                                {{ isset($timesheet->attendance_hours_by_date) ? $hours : ($isHoliday ? 'H' : ($isSunday ? 'S' : ($hours > 0 ? $hours : '0'))) }}
                             </td>
                         @endforeach
                     </tr>

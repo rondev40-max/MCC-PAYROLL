@@ -184,6 +184,10 @@ Route::middleware(['auth.admin'])->prefix('admin')->name('admin.')->group(functi
     // Admin dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
+    Route::get('/attendance-payroll', [\App\Http\Controllers\Admin\AttendancePayrollController::class, 'index'])->middleware('no-store')->name('attendance-payroll.index');
+    Route::post('/attendance-payroll/{employee}/enable', [\App\Http\Controllers\Admin\AttendancePayrollController::class, 'enable'])->name('attendance-payroll.enable');
+    Route::post('/attendance-payroll/sessions/{session}/review', [\App\Http\Controllers\Admin\AttendancePayrollController::class, 'review'])->name('attendance-payroll.review');
+
     // Employee timesheet submissions (Submitted by employee portal)
     Route::get('/employee-timesheets/submissions', [\App\Http\Controllers\Admin\EmployeeTimesheetSubmissionController::class, 'index'])
         ->name('employee.timesheets.submissions');
@@ -259,7 +263,7 @@ Route::middleware(['auth.admin'])->prefix('admin')->name('admin.')->group(functi
 
 Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('employee')->name('employee.')->group(function () {
 
-    Route::get('/dashboard', [EmployeeController::class, 'portalDashboard'])->name('dashboard');
+    Route::get('/dashboard', [EmployeeController::class, 'portalDashboard'])->middleware('no-store')->name('dashboard');
 
     Route::get('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'showEmployeeForm'])
         ->name('evaluation.form');   // full name: employee.evaluation.form
@@ -296,6 +300,7 @@ Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('emp
 
     // Attendance
     Route::get('/attendance', [EmployeeController::class, 'portalAttendance'])->name('attendance');
+    Route::post('/attendance/punch', [\App\Http\Controllers\EmployeeAttendanceController::class, 'store'])->middleware('throttle:12,1')->name('attendance.punch');
 
     // Timesheets
     Route::get('/timesheets', [EmployeeController::class, 'portalTimesheets'])->name('timesheets');

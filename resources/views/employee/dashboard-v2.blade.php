@@ -1465,6 +1465,10 @@
         </div>
       @endif
 
+      @if($errors->any())
+        <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
+      @endif
+
       {{-- The "verify your email" notice used to live here, outside every tab,
            so it followed the employee around the whole portal. It only has
            consequences for payslip delivery, so it now sits in the Payslips
@@ -1760,6 +1764,7 @@
            PANEL: ATTENDANCE
       ════════════════════════════════ -->
       <div class="tab-panel" id="panel-attendance">
+        @include('employee.attendance-clock')
         <div class="ph">
           <div>
             <div class="ph-title">Attendance Records</div>
