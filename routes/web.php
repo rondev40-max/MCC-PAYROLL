@@ -188,18 +188,10 @@ Route::middleware(['auth.admin'])->prefix('admin')->name('admin.')->group(functi
     Route::post('/attendance-payroll/{employee}/enable', [\App\Http\Controllers\Admin\AttendancePayrollController::class, 'enable'])->name('attendance-payroll.enable');
     Route::post('/attendance-payroll/sessions/{session}/review', [\App\Http\Controllers\Admin\AttendancePayrollController::class, 'review'])->name('attendance-payroll.review');
 
-    // Employee timesheet submissions (Submitted by employee portal)
-    Route::get('/employee-timesheets/submissions', [\App\Http\Controllers\Admin\EmployeeTimesheetSubmissionController::class, 'index'])
-        ->name('employee.timesheets.submissions');
-
-    Route::get('/employee-timesheets/submissions/print', [\App\Http\Controllers\Admin\EmployeeTimesheetSubmissionController::class, 'print'])
-        ->name('employee-timesheets.submissions.print');
-
-    Route::post('/employee-timesheets/submissions/{submission}/approve', [\App\Http\Controllers\Admin\EmployeeTimesheetSubmissionController::class, 'approve'])
-        ->name('employee-timesheets.submissions.approve');
-
-    Route::post('/employee-timesheets/submissions/{submission}/reject', [\App\Http\Controllers\Admin\EmployeeTimesheetSubmissionController::class, 'reject'])
-        ->name('employee-timesheets.submissions.reject');
+    // Legacy redirect: manual timesheet submissions replaced by automated Attendance Payroll
+    Route::get('/employee-timesheets/submissions', function () {
+        return redirect()->route('admin.attendance-payroll.index');
+    })->name('employee.timesheets.submissions');
 
 
     // Activity Log
@@ -302,9 +294,8 @@ Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('emp
     Route::get('/attendance', [EmployeeController::class, 'portalAttendance'])->name('attendance');
     Route::post('/attendance/punch', [\App\Http\Controllers\EmployeeAttendanceController::class, 'store'])->middleware('throttle:12,1')->name('attendance.punch');
 
-    // Timesheets
+    // Timesheets legacy redirect to attendance
     Route::get('/timesheets', [EmployeeController::class, 'portalTimesheets'])->name('timesheets');
-    Route::post('/timesheets', [EmployeeController::class, 'portalStoreTimesheet'])->name('timesheets.store');
 
     // Announcements
     Route::get('/announcements', [EmployeeController::class, 'portalAnnouncements'])->name('announcements');

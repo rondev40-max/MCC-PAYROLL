@@ -1355,9 +1355,6 @@
       <button class="sb-link" data-tab="attendance" id="nav-attendance">
         <i class="bi bi-calendar-check-fill"></i> Attendance
       </button>
-      <button class="sb-link" data-tab="timesheets" id="nav-timesheets">
-        <i class="bi bi-clock-history"></i> Timesheets
-      </button>
 
       <div class="nav-label">Payroll</div>
       <button class="sb-link" data-tab="payslips" id="nav-payslips">
@@ -1503,7 +1500,7 @@
               Welcome back, {{ $displayName }}
             </h2>
             <p class="welcome-sub">
-              Your attendance log, timesheets and e-payslips, all in one place.
+              Your attendance log and e-payslips, all in one place.
             </p>
           </div>
 
@@ -1846,61 +1843,6 @@
         </div>
       </div>
 
-
-      <!-- ════════════════════════════════
-           PANEL: TIMESHEETS
-      ════════════════════════════════ -->
-      <div class="tab-panel" id="panel-timesheets">
-        <div class="ph">
-          <div>
-            <div class="ph-title">Timesheets</div>
-            <div class="ph-sub">Submit and track your daily timesheet entries</div>
-          </div>
-          <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#timesheetModal">
-            <i class="bi bi-plus-circle-fill"></i> Submit Timesheet
-          </button>
-        </div>
-
-        <div class="card">
-          <div class="card-hd">
-            <div class="card-title">
-              <div class="ct-icon" style="background:rgba(124,58,237,.1);color:#7c3aed;">
-                <i class="bi bi-list-check"></i>
-              </div>
-              Timesheet History
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr><th>Date</th><th>Time In</th><th>Time Out</th><th>Type</th><th>Hours</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                @forelse($timesheets ?? [] as $ts)
-                <tr>
-                  <td style="font-weight:700;">{{ \Carbon\Carbon::parse($ts->date)->format('M d, Y') }}</td>
-                  <td>{{ $ts->time_in  ? \Carbon\Carbon::parse($ts->time_in)->format('h:i A')  : '—' }}</td>
-                  <td>{{ $ts->time_out ? \Carbon\Carbon::parse($ts->time_out)->format('h:i A') : '—' }}</td>
-                  <td style="font-size:.76rem;">{{ $ts->work_type ?? 'Regular' }}</td>
-                  <td style="font-weight:600;">{{ round($ts->hours ?? 0, 2) }}h</td>
-                  <td>
-                    @php $tss = strtolower($ts->status ?? 'submitted'); @endphp
-                    <span class="badge badge-{{ $tss }}">{{ ucfirst($tss) }}</span>
-                  </td>
-                </tr>
-                @empty
-                <tr><td colspan="6">
-                  <div class="empty-state" style="padding:2rem;">
-                    <i class="bi bi-clock-history"></i>
-                    <p>No timesheets submitted yet.</p>
-                  </div>
-                </td></tr>
-                @endforelse
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
 
       <!-- ════════════════════════════════
@@ -2271,68 +2213,6 @@
 </div><!-- /.app-shell -->
 
 
-<!-- ════════════════════════════
-     TIMESHEET MODAL
-════════════════════════════ -->
-<div class="modal fade" id="timesheetModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0" style="border-radius:var(--r-lg);overflow:hidden;">
-      <div class="modal-header border-0" style="background:linear-gradient(135deg,#071022,#1843c0 60%,#0ea5e9 120%);padding:1.1rem 1.4rem;">
-        <div style="font-family:'Sora',sans-serif;font-weight:800;color:#fff;font-size:.9rem;display:flex;align-items:center;gap:8px;">
-          <i class="bi bi-clock-history"></i> Submit Timesheet
-        </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form action="{{ route('employee.timesheets.store') }}" method="POST">
-        @csrf
-        <div class="modal-body" style="padding:1.3rem;">
-          <div class="mb-3">
-            <label class="f-label">Date <span style="color:var(--danger);">*</span></label>
-            <input type="date" name="date" class="f-input" value="{{ date('Y-m-d') }}" required>
-          </div>
-          <div class="row g-2 mb-3">
-            <div class="col-6">
-              <label class="f-label">Time In <span style="color:var(--danger);">*</span></label>
-              <input type="time" name="time_in" class="f-input" required>
-            </div>
-            <div class="col-6">
-              <label class="f-label">Time Out</label>
-              <input type="time" name="time_out" class="f-input">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="f-label">Work Type <span style="color:var(--danger);">*</span></label>
-            <select name="work_type" class="f-input" required>
-              <option value="">Select type…</option>
-              <option value="Regular">Regular / Teaching</option>
-              <option value="Overtime">Overtime</option>
-              <option value="Meeting">Meeting / Training</option>
-              <option value="Fieldwork">Field Work</option>
-              <option value="WFH">Work From Home</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="f-label">Task / Activity</label>
-            <textarea name="task" class="f-input" rows="3" placeholder="Describe tasks completed…" style="resize:vertical;"></textarea>
-          </div>
-          <div class="mb-1">
-            <label class="f-label">Remarks</label>
-            <textarea name="remarks" class="f-input" rows="2" placeholder="Optional notes…" style="resize:vertical;"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer" style="border-top:1px solid var(--border);padding:.75rem 1.3rem;">
-          <button type="button" class="btn-outline" data-bs-dismiss="modal">
-            <i class="bi bi-x"></i> Cancel
-          </button>
-          <button type="submit" class="btn-primary">
-            <i class="bi bi-send-fill"></i> Submit
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 
 <!-- ════════════════════════════
      PAYSLIP UNLOCK MODAL — step-up email verification
@@ -2449,7 +2329,6 @@ document.getElementById('themeToggle')?.addEventListener('click', () => {
 const TAB_META = {
   overview:      { title: 'Overview',           breadcrumb: 'Dashboard'     },
   attendance:    { title: 'Attendance Records',  breadcrumb: 'Attendance'    },
-  timesheets:    { title: 'Timesheets',          breadcrumb: 'Timesheets'    },
   payslips:      { title: 'My Payslips',         breadcrumb: 'Payslips'      },
   announcements: { title: 'Announcements',       breadcrumb: 'Announcements' },
   profile:       { title: 'My Profile',          breadcrumb: 'Profile'       },
@@ -3123,7 +3002,6 @@ function showHelp() {
     html: `<div style="text-align:left;font-size:.84rem;line-height:1.8;">
       <p><strong>Overview</strong> — Snapshot of your attendance, hours, calendar, and latest payslip.</p>
       <p><strong>Attendance</strong> — Full monthly records with time-in, time-out, and status.</p>
-      <p><strong>Timesheets</strong> — Submit daily entries for admin review and approval.</p>
       <p><strong>Payslips</strong> — View and download released payslips from administration.</p>
       <p><strong>Announcements</strong> — Notices and updates from HR and management.</p>
       <p><strong>Profile</strong> — View your employment and contact details.</p>

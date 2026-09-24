@@ -388,9 +388,6 @@
       <a class="sb-link" href="{{ route('employee.attendance') }}">
         <i class="bi bi-calendar-check-fill"></i> Attendance
       </a>
-      <a class="sb-link" href="{{ route('employee.timesheets') }}">
-        <i class="bi bi-clock-history"></i> Timesheets
-      </a>
       <div class="nav-label">Payroll</div>
       <a class="sb-link" href="{{ route('employee.payslips') }}">
         <i class="bi bi-receipt-cutoff"></i> Payslips

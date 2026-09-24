@@ -787,7 +787,7 @@
       <div class="hero-content">
         <span class="hero-kicker">Madridejos Community College</span>
         <h1 class="hero-title">Payroll & Attendance Portal</h1>
-        <p class="hero-desc">View your payslips, check your attendance record, and submit timesheets &mdash; all in one place.</p>
+        <p class="hero-desc">View your payslips, clock in and out, and check your attendance record &mdash; all in one place.</p>
 
         {{-- The CSS for .hero-actions existed from the start, but the markup
              never did: the hero had no way in, so every visitor had to scroll

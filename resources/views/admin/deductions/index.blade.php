@@ -304,14 +304,20 @@
       <div class="nav-label">Records</div>
 
       <div class="dropdown">
-        <button class="sidebar-btn dropdown-toggle {{ request()->routeIs('admin.history', 'admin.payroll.history', 'admin.employee.timesheets.submissions') ? 'active' : '' }}" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <button class="sidebar-btn dropdown-toggle {{ request()->routeIs('admin.history', 'admin.payroll.history', 'admin.attendance-payroll.*') ? 'active' : '' }}" type="button" data-bs-toggle="dropdown" aria-expanded="false">
           <i class="bi bi-clipboard-data"></i><span>History Records</span>
         </button>
         <ul class="dropdown-menu">
           <li><a class="dropdown-item" href="{{ route('admin.history') }}"><i class="bi bi-calendar-check"></i>History Log</a></li>
           <li><a class="dropdown-item" href="{{ route('admin.payroll.history') }}"><i class="bi bi-scissors"></i>Payroll History</a></li>
           <li><hr class="dropdown-divider my-1"></li>
-          <li><a class="dropdown-item" href="{{ route('admin.employee.timesheets.submissions') }}"><i class="bi bi-clock-history"></i>Submitted Timesheets</a></li>
+          <li><a class="dropdown-item d-flex align-items-center justify-content-between gap-2" href="{{ route('admin.attendance-payroll.index') }}">
+            <span><i class="bi bi-clock-history"></i> Attendance Payroll</span>
+            @php $_pendDed = \App\Models\AttendanceSession::whereIn('status', ['open','needs_review'])->count(); @endphp
+            @if($_pendDed > 0)
+              <span class="badge bg-warning text-dark" style="font-size:.65rem;">{{ $_pendDed }}</span>
+            @endif
+          </a></li>
         </ul>
       </div>
 

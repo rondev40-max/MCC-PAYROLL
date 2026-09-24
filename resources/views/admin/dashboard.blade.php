@@ -838,7 +838,7 @@
 
       <div class="dropdown">
         <button
-          class="sidebar-btn dropdown-toggle {{ request()->routeIs('admin.history', 'admin.payroll.history', 'admin.employee.timesheets.submissions') ? 'active' : '' }}"
+          class="sidebar-btn dropdown-toggle {{ request()->routeIs('admin.history', 'admin.payroll.history', 'admin.attendance-payroll.*') ? 'active' : '' }}"
           type="button" data-bs-toggle="dropdown" aria-expanded="false">
           <i class="bi bi-clipboard-data"></i><span>History Records</span>
         </button>
@@ -857,8 +857,6 @@
               <span class="badge bg-warning text-dark" style="font-size:.65rem;">{{ $_pendDash }}</span>
             @endif
           </a></li>
-          <li><a class="dropdown-item" href="{{ route('admin.employee.timesheets.submissions') }}"><i
-                class="bi bi-clock-history"></i>Submitted Timesheets</a></li>
         </ul>
       </div>
 

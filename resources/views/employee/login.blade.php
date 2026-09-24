@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Login — MCC Payroll</title>
-    <meta name="description" content="Sign in to the MCC Employee Portal to view payslips, attendance, and timesheets.">
+    <meta name="description" content="Sign in to the MCC Employee Portal to view payslips and attendance.">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

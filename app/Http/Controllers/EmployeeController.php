@@ -9,7 +9,6 @@ use App\Models\Announcement;
 use App\Models\AnnouncementRead;
 use App\Models\Attendance;
 use App\Models\PayslipHistory;
-use App\Models\EmployeeTimesheet;
 use App\Models\LeaveRequest;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -131,7 +130,7 @@ class EmployeeController extends Controller
     // -----------------------------------------------------------------------
 
     /** Tabs the single-page portal knows how to open. */
-    private const PORTAL_TABS = ['overview', 'attendance', 'timesheets', 'payslips', 'announcements', 'profile'];
+    private const PORTAL_TABS = ['overview', 'attendance', 'payslips', 'announcements', 'profile'];
 
     public function portalDashboard(Request $request)
     {
@@ -168,13 +167,6 @@ class EmployeeController extends Controller
         $stats = $this->buildStats($attendances);
         $clockSessions = $clockSessions->take(60);
 
-        // The Timesheets tab has always rendered `$timesheets ?? []`, but this
-        // action never passed it — so the tab read "No timesheets submitted yet"
-        // no matter how many the employee had filed.
-        $timesheets = EmployeeTimesheet::where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)->orWhere('email', $user->email);
-        })->orderByDesc('date')->take(50)->get();
-
         // Which tab to open on load. Whitelisted so a crafted ?tab= cannot be
         // reflected into the page.
         $requestedTab = (string) $request->query('tab', 'overview');
@@ -186,7 +178,7 @@ class EmployeeController extends Controller
 
         return view('employee.dashboard-v2', compact(
             'user', 'employee', 'displayName', 'stats', 'announcements', 'readAnnouncementIds',
-            'payslips', 'attendances', 'timesheets', 'activeTab',
+            'payslips', 'attendances', 'activeTab',
             'payslipUnlocked', 'payslipUnlockedFor', 'maskedEmail', 'clockSessions', 'openClockSession'
         ));
     }
@@ -256,49 +248,10 @@ class EmployeeController extends Controller
         return redirect()->route('employee.dashboard', ['tab' => 'attendance']);
     }
 
-    /** @see portalPayslips() for why this redirects rather than renders. */
+    /** Replaced by automated Attendance Time Clock; redirects to attendance. */
     public function portalTimesheets(Request $request)
     {
-        return redirect()->route('employee.dashboard', ['tab' => 'timesheets']);
-    }
-
-    public function portalStoreTimesheet(Request $request)
-    {
-        $user = Auth::user();
-        $data = $request->validate([
-            'date'      => 'required|date|date_format:Y-m-d|before_or_equal:today',
-            'time_in'   => 'nullable|date_format:H:i',
-            'time_out'  => 'nullable|date_format:H:i',
-            'work_type' => ['required', Rule::in(['Regular','Overtime','Meeting','Fieldwork','WFH'])],
-            'task'      => 'nullable|string|max:1000',
-            'remarks'   => 'nullable|string|max:1000',
-        ]);
-
-        $employeeId = $this->resolveEmployeeId($user);
-        $hours = 0;
-
-        if (!empty($data['time_in']) && !empty($data['time_out'])) {
-            $ti = Carbon::createFromFormat('H:i', $data['time_in']);
-            $to = Carbon::createFromFormat('H:i', $data['time_out']);
-            $hours = max(0, round($ti->floatDiffInHours($to), 2));
-        }
-
-        EmployeeTimesheet::create([
-            'user_id'       => $user->id,
-            'employee_id'   => $employeeId,
-            'employee_name' => $user->name,
-            'email'         => $user->email,
-            'date'          => $data['date'],
-            'time_in'       => $data['time_in']  ?? null,
-            'time_out'      => $data['time_out'] ?? null,
-            'work_type'     => $data['work_type'],
-            'task'          => $data['task']     ?? null,
-            'remarks'       => $data['remarks']  ?? null,
-            'hours'         => $hours,
-            'status'        => 'Submitted',
-        ]);
-
-        return back()->with('success', 'Timesheet submitted!');
+        return redirect()->route('employee.dashboard', ['tab' => 'attendance']);
     }
 
     /** @see portalPayslips() for why this redirects rather than renders. */
