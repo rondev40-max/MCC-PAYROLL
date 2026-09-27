@@ -1,3 +1,6 @@
+{{-- Head partial for pages that @include('layouts.sidebar'): put this before </head> --}}
+{{-- and give <body> the "has-fixed-sidebar" class so content clears the fixed sidebar. --}}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --sidebar-w:    220px;
@@ -25,6 +28,9 @@
     z-index: 1030;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.07) transparent;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1.5;
+    text-align: left;
   }
 
   .sidebar-header {
@@ -126,13 +132,14 @@
 
   .sidebar .nav-link.active i { opacity: 1; }
 
-  /* Sidebar dropdown */
+  /* Sidebar dropdown — light card, matching the admin dashboard's sidebar */
   .sidebar .dropdown-menu {
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 24px rgba(15,23,42,0.10);
     padding: .35rem;
-    background: #1e293b;
+    background: #fff;
+    color: #0f172a;
     z-index: 1050;
   }
 
@@ -142,7 +149,7 @@
     font-size: .8rem;
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 500;
-    color: rgba(255,255,255,0.85);
+    color: #0f172a;
     display: flex;
     align-items: center;
     gap: 7px;
@@ -150,14 +157,20 @@
   }
 
   .sidebar .dropdown-item:hover {
-    background: rgba(255,255,255,0.08);
-    color: #fff;
+    background: #eff6ff;
+    color: #2563eb;
   }
 
   .sidebar-footer {
     padding: .65rem;
     border-top: 1px solid rgba(255,255,255,0.05);
     flex-shrink: 0;
+  }
+
+  /* ─── Page Offset ───────────────────────────────── */
+  /* !important because host pages reset body padding in their own styles. */
+  body.has-fixed-sidebar {
+    padding-left: var(--sidebar-w) !important;
   }
 
   /* ─── Content Wrapper Shift ────────────────────── */
@@ -170,5 +183,13 @@
     display: block !important;
   }
 
-  .night-mode .sidebar .dropdown-menu { background: #060a14; }
+  .night-mode .sidebar .dropdown-menu { background: #1a2133; border-color: #cbd5e1; color: #e2e8f0; }
+  .night-mode .sidebar .dropdown-item { color: #e2e8f0; }
+  .night-mode .sidebar .dropdown-item:hover { background: rgba(37,99,235,0.15); }
+
+  @media print {
+    .sidebar { display: none !important; }
+    body.has-fixed-sidebar { padding-left: 0 !important; }
+    .sidebar-shift { margin-left: 0; width: 100%; }
+  }
 </style>

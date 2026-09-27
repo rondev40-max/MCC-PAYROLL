@@ -236,8 +236,10 @@
     }
 
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
   <div class="main-content">
     
     <div class="header-section">

@@ -130,3 +130,43 @@
         </form>
       </div>
     </aside>
+
+@once
+  <script>
+    // "Send Payslips (All)" for pages that don't ship the dashboard's #payslipDateModal.
+    document.addEventListener('DOMContentLoaded', function () {
+      const btn = document.getElementById('sendPayslipsBtn');
+      if (!btn || document.getElementById('payslipDateModal') || typeof Swal === 'undefined') return;
+
+      btn.addEventListener('click', function () {
+        Swal.fire({
+          title: 'Select Payslip Date Range',
+          html:
+            '<label for="swalPayslipStart" class="form-label d-block text-start mt-2 mb-1">Start Date</label>' +
+            '<input type="date" id="swalPayslipStart" class="form-control">' +
+            '<label for="swalPayslipEnd" class="form-label d-block text-start mt-3 mb-1">End Date</label>' +
+            '<input type="date" id="swalPayslipEnd" class="form-control">',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, send now',
+          confirmButtonColor: '#2563eb',
+          cancelButtonColor: '#64748b',
+          preConfirm: function () {
+            const start = document.getElementById('swalPayslipStart').value;
+            const end = document.getElementById('swalPayslipEnd').value;
+            if (!start || !end) {
+              Swal.showValidationMessage('Please select both dates.');
+              return false;
+            }
+            return { start: start, end: end };
+          }
+        }).then(function (r) {
+          if (!r.isConfirmed) return;
+          document.getElementById('payslipStartDateHidden').value = r.value.start;
+          document.getElementById('payslipEndDateHidden').value = r.value.end;
+          Swal.fire({ title: 'Sending…', html: 'Please wait.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          document.getElementById('sendPayslipsForm').submit();
+        });
+      });
+    });
+  </script>
+@endonce

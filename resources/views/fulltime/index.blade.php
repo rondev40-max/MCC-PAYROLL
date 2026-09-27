@@ -556,8 +556,10 @@
       }
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
   <div class="container-fluid">
     <div class="timesheet-card">
       @include('partials.attendance-payroll-notice')

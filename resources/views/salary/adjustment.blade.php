@@ -61,60 +61,6 @@
     .app { min-height: 100vh; }
 
     /* ═══════════════════════════════════════════
-       SIDEBAR (kept for layout compatibility)
-       ═══════════════════════════════════════════ */
-    .sidebar {
-      background: linear-gradient(180deg, var(--brand), var(--brand-600));
-      color: #fff;
-      width: 260px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      height: 100vh;
-      padding: 1.5rem 1rem;
-      box-shadow: 4px 0 20px rgba(0,0,0,.08);
-      z-index: 1030;
-      overflow-y: auto;
-    }
-    .sidebar .nav-link {
-      color: rgba(255,255,255,.85);
-      border-radius: var(--radius);
-      padding: .6rem .9rem;
-      font-weight: 500;
-      transition: all var(--transition);
-    }
-    .sidebar .nav-link:hover,
-    .sidebar .nav-link.active {
-      background: #fff;
-      color: var(--brand-600);
-    }
-    .sidebar .section-title {
-      font-size: .75rem;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      opacity: .7;
-      margin: 1rem .5rem .4rem;
-    }
-    .sidebar-btn {
-      background-color: var(--brand);
-      color: #fff;
-      text-align: left;
-      margin-bottom: .5rem;
-      border: none;
-      width: 100%;
-      padding: .6rem .9rem;
-      border-radius: var(--radius);
-      font-weight: 500;
-      transition: all var(--transition);
-    }
-    .sidebar-btn:hover,
-    .sidebar-btn:focus {
-      background: #fff;
-      color: var(--brand);
-    }
-
-    /* ═══════════════════════════════════════════
        TOPBAR
        ═══════════════════════════════════════════ */
     .content { flex: 1; }
@@ -461,8 +407,10 @@
       }
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
       <div class="app d-flex">
     <div class="content w-100">
       <div class="topbar d-flex align-items-center justify-content-between no-print">

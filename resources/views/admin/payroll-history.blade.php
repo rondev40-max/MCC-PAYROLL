@@ -211,8 +211,10 @@
         padding: 4px 8px;
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
 <div class="container-fluid mt-4">
     {{-- Messages --}}
     @if (session('success'))

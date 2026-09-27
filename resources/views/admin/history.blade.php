@@ -244,8 +244,10 @@
       opacity: 0.8;
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
   <div class="container-fluid px-4 py-4 max-w-7xl mx-auto" style="max-width: 1400px;">
     
     <!-- Header -->

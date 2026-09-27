@@ -439,8 +439,10 @@
       .page-footer { display: none; }
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
 
   <div class="page-header">
     <div class="header-content">

@@ -233,8 +233,10 @@
       }
     }
   </style>
+  @include('layouts.sidebar-styles')
 </head>
-<body>
+<body class="has-fixed-sidebar">
+  @include('layouts.sidebar')
   <div class="main-content">
     <!-- Print Header (hidden on screen, visible on print) -->
     <div class="print-header" style="display: none;">
