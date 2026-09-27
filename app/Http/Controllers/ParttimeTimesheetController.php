@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\ParttimeTimesheet;
 use App\Models\Department;
 use App\Models\Holiday;
+use App\Support\Departments;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
@@ -16,10 +17,13 @@ class ParttimeTimesheetController extends Controller
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
         $period = $request->get('period', 'auto'); // 'auto', '1-15', '16-end'
+        $department = Departments::canonical($request->get('department')); // null = all departments
+        $departmentOptions = Departments::NAMES;
 
         // For part-time, we show all records regardless of their internal date for simplicity in the view.
-        // Filtering can be added if needed.
-        $timesheets = ParttimeTimesheet::all();
+        $timesheets = ParttimeTimesheet::query()
+            ->when($department, fn ($q) => $q->whereIn('department', Departments::codesFor($department)))
+            ->get();
 
         // Generate days for the selected month
         $baseDate = Carbon::create($year, $month, 1);
@@ -75,7 +79,7 @@ class ParttimeTimesheetController extends Controller
             }
         }
 
-        return view('parttime.index', compact('timesheets', 'days', 'month', 'year', 'period', 'startDay', 'holidays'));
+        return view('parttime.index', compact('timesheets', 'days', 'month', 'year', 'period', 'startDay', 'holidays', 'department', 'departmentOptions'));
     }
 
     // ---
@@ -536,7 +540,10 @@ class ParttimeTimesheetController extends Controller
         $endDate = $baseDate->copy()->day($endDay);
         $periodDisplay = $startDate->format('F j') . ' - ' . $endDate->format('j, Y');
     
-        $timesheets = ParttimeTimesheet::all();
+        $department = Departments::canonical($request->get('department')); // null = all departments
+        $timesheets = ParttimeTimesheet::query()
+            ->when($department, fn ($q) => $q->whereIn('department', Departments::codesFor($department)))
+            ->get();
         $holidays = Holiday::whereYear('date', $year)
                             ->whereMonth('date', $month)
                             ->pluck('date')
@@ -557,6 +564,7 @@ class ParttimeTimesheetController extends Controller
             'days'       => $days,
             'holidays'   => $holidays,
             'period'     => $periodDisplay,
+            'departmentLabel' => $department ? Departments::NAMES[$department] : null,
         ]);
     }
 }

@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\FulltimeTimesheet;
 use App\Models\Department;
-use App\Models\Holiday; 
+use App\Models\Holiday;
+use App\Support\Departments;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
@@ -16,10 +17,14 @@ class FulltimeTimesheetController extends Controller
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
         $period = $request->get('period', 'auto'); // 'auto', '1-15', '16-end'
+        $department = Departments::canonical($request->get('department')); // null = all departments
+        $departmentOptions = Departments::NAMES;
 
         // NOTE: Sa index, kinukuha mo ang ALL timesheets. Pwede mo rin i-filter ito by period/month/year.
         // Pero para mas madaling i-manage sa index view (kung may filtering doon), hayaan muna natin ang FulltimeTimesheet::all();
-        $timesheets = FulltimeTimesheet::all(); 
+        $timesheets = FulltimeTimesheet::query()
+            ->when($department, fn ($q) => $q->whereIn('department', Departments::codesFor($department)))
+            ->get();
 
         // Generate days for the selected month
         $baseDate = \Carbon\Carbon::create($year, $month, 1);
@@ -71,7 +76,7 @@ class FulltimeTimesheetController extends Controller
         }
 
         // ✅ Ipinasa ang 'holidays' array sa view
-        return view('fulltime.index', compact('timesheets', 'days', 'month', 'year', 'startDay', 'period', 'holidays'));
+        return view('fulltime.index', compact('timesheets', 'days', 'month', 'year', 'startDay', 'period', 'holidays', 'department', 'departmentOptions'));
     }
 
     public function create()
@@ -513,7 +518,10 @@ class FulltimeTimesheetController extends Controller
         $periodDisplay = $startDate->format('F j') . ' - ' . $endDate->format('j, Y');
 
         // 2. FETCH DATA (TIMESHEETS & HOLIDAYS)
-        $timesheets = FulltimeTimesheet::all(); 
+        $department = Departments::canonical($request->get('department')); // null = all departments
+        $timesheets = FulltimeTimesheet::query()
+            ->when($department, fn ($q) => $q->whereIn('department', Departments::codesFor($department)))
+            ->get();
         
         $holidays = Holiday::whereYear('date', $year)
                             ->whereMonth('date', $month)
@@ -543,6 +551,7 @@ class FulltimeTimesheetController extends Controller
             'days'       => $days,
             'holidays'   => $holidays,
             'period'     => $periodDisplay, // Ang string para sa header
+            'departmentLabel' => $department ? Departments::NAMES[$department] : null,
         ]);
     }
 }

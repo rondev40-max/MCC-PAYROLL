@@ -274,6 +274,9 @@
         <div class="meta-info">
             <span><strong>Generated:</strong> {{ date('F j, Y \a\t g:i A') }}</span>
             <span><strong>Period:</strong> {{ strtoupper($period ?? 'Loading Period...') }}</span>
+            @if (!empty($departmentLabel))
+                <span><strong>Department:</strong> {{ strtoupper($departmentLabel) }}</span>
+            @endif
         </div>
     </div>
 

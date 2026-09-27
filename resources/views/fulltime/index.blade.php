@@ -627,6 +627,16 @@
             </select>
           </div>
           
+          <div class="filter-group">
+            <label for="department">Department</label>
+            <select name="department" id="department" class="filter-select">
+              <option value="">All Departments</option>
+              @foreach ($departmentOptions as $code => $name)
+                <option value="{{ $code }}" {{ $department === $code ? 'selected' : '' }}>{{ $name }}</option>
+              @endforeach
+            </select>
+          </div>
+
           <button type="submit" class="btn btn-primary btn-update">Update</button>
         </form>
 
@@ -781,7 +791,7 @@
                 <div class="empty-wrapper">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
                   <h5>No Timesheet Records Found</h5>
-                  <p class="mb-3">There are no fulltime timesheet entries to display.</p>
+                  <p class="mb-3">There are no fulltime timesheet entries{{ $department ? ' for ' . $departmentOptions[$department] : '' }} to display.</p>
                   <a href="{{ route('fulltime.create') }}" class="btn btn-primary btn-action-primary">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Add First Timesheet
@@ -833,7 +843,7 @@
                 const month = urlParams.get('month') || {{ $month }}; 
                 const year = urlParams.get('year') || {{ $year }};     
                 const period = urlParams.get('period') || '{{ $period }}'; 
-                const printUrl = `{{ route('fulltime.print') }}?month=${month}&year=${year}&period=${period}`;
+                const printUrl = `{{ route('fulltime.print') }}?month=${month}&year=${year}&period=${period}&department={{ $department }}`;
                 window.open(printUrl, '_blank');
             }
         });
