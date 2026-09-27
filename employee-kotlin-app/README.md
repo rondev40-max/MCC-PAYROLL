@@ -98,12 +98,25 @@ A 401 anywhere clears the session and returns the user to sign-in.
   they are lost you can never ship an update to an installed app — Android
   refuses an APK signed by a different key, and every user would have to
   uninstall and reinstall, losing their session. Copy both somewhere safe now.
-  The certificate currently in use:
+  The certificate currently in use (created 2026-09-28 for version 1.0.1):
 
   ```
   CN=MCC Payroll, OU=MIS, O=Madridejos Community College, L=Madridejos, ST=Cebu, C=PH
-  SHA-256  b2:37:59:9c:35:23:37:e2:8e:ad:fc:bb:5f:07:2c:b5:1c:d6:28:95:36:41:d6:a5:7e:db:8e:21:85:e8:46:e7
+  SHA-256  ed:c5:8a:0e:ed:3c:6f:0e:95:93:e9:90:93:1f:22:e1:df:5c:72:a9:52:76:21:04:2c:1c:dd:6d:f6:d1:12:a1
   ```
+
+  This already happened once. Version 1.0.0 was signed with a key
+  (`SHA-256 b2:37:59:9c:…:e8:46:e7`) that was never backed up and was lost
+  when the project moved machines, so 1.0.1 had to be signed with a new
+  one. Anyone who installed 1.0.0 has to uninstall it before 1.0.1 will
+  install — the download dialog on the landing page says so.
+- **Keep material3 and the Compose core libraries from the same BOM
+  generation.** compose-bom 2024.01.00 mixed material3 1.1.2 with
+  animation-core 1.6.0; R8 then stripped a compatibility overload material3
+  needed, and every release APK crashed on launch with
+  `NoSuchMethodError: ... KeyframesSpec$KeyframeEntity`. Debug builds skip
+  R8, so this only ever shows in a release build — install the release APK on
+  a device or emulator before publishing it.
 
   A release build now *fails* if the key is missing, rather than quietly
   emitting an unsigned APK that no device will install — see

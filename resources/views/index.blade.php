@@ -1041,6 +1041,8 @@
         Download APK Directly
       </a>
       <p class="modal-note">Available for Android. Ensure external package installations are enabled in your security settings.</p>
+      {{-- Version 1.0.1 is signed with a new key, so Android refuses to install it over 1.0.0 ("App not installed"). --}}
+      <p class="modal-note" style="margin-top: 8px;">Installed an earlier version? Uninstall it first, then install this one (version 1.0.1).</p>
     </div>
   </div>
 

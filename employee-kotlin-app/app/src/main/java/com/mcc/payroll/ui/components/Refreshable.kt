@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
  * This is the missing half.
  *
  * Material 2's modifier rather than Material 3's PullToRefreshBox: this project
- * is pinned to compose-bom 2024.01.00, which resolves material3 to 1.1.2, and
+ * is pinned to compose-bom 2024.06.00, which resolves material3 to 1.2.1, and
  * PullToRefreshBox does not exist until 1.3.
  */
 @OptIn(ExperimentalMaterialApi::class)

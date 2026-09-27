@@ -46,8 +46,8 @@ android {
         applicationId = "com.mcc.payroll"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -132,12 +132,18 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
 
-    implementation(platform("androidx.compose:compose-bom:2024.01.00"))
+    // Not 2024.01.00: that BOM paired material3 1.1.2 with animation-core 1.6.0.
+    // material3 1.1.2 calls KeyframesSpecConfig.at() through the hidden
+    // compatibility overload 1.6.0 keeps for it, R8 stripped that overload, and
+    // every release APK crashed on its first spinner with "NoSuchMethodError:
+    // No virtual method at(...)KeyframeEntity". Keep material3 and the core
+    // Compose libraries from the same BOM generation.
+    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    // Pull-to-refresh only. Material3 1.1.2 (compose-bom 2024.01.00) has no
+    // Pull-to-refresh only. Material3 1.2.1 (compose-bom 2024.06.00) has no
     // PullToRefreshBox — that lands in 1.3 — and the Material 2 modifier
     // composes fine inside Material 3 surfaces.
     implementation("androidx.compose.material:material")
@@ -146,8 +152,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // 2.11 ships the R8 keep rules that suspend functions returning Response<T>
+    // need under full-mode shrinking; 2.9 did not, which breaks release calls.
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
@@ -157,7 +165,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.01.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

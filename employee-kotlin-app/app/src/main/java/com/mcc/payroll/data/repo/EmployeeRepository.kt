@@ -97,10 +97,12 @@ class EmployeeRepository(
         val serverMessage: String? = parsed?.takeIf { it.isNotBlank() }
 
         val message: String = when {
+            // Laravel's 5xx body is just {"message": "Server Error"}, which tells
+            // the employee nothing they can act on.
+            response.code() >= 500 -> "The payroll server is having a problem right now. Please try again later."
             serverMessage != null -> serverMessage
             response.code() == 401 -> "Your email or password is incorrect."
             response.code() == 419 || response.code() == 403 -> "Your session expired. Please sign in again."
-            response.code() >= 500 -> "The server had a problem. Please try again shortly."
             else -> "Request failed (HTTP ${response.code()})."
         }
 

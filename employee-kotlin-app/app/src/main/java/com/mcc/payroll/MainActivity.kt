@@ -13,9 +13,7 @@ import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.CircularProgressIndicator
-// Divider, not HorizontalDivider: compose-bom 2024.01.00 pins material3 1.1.2,
-// and HorizontalDivider only arrives in 1.2.0.
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -125,7 +123,7 @@ fun MccPayrollApp() {
         bottomBar = {
             if (showBottomBar) {
                 Column {
-                    Divider(color = MaterialTheme.colorScheme.outline)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                     BottomBar(navController, currentRoute)
                 }
             }

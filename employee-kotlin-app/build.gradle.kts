@@ -11,7 +11,7 @@
 // app/build.gradle.kts). Changing one without the other fails the build with a
 // version-mismatch error.
 plugins {
-    id("com.android.application") version "8.2.2" apply false
+    id("com.android.application") version "8.6.1" apply false
     id("org.jetbrains.kotlin.android") version "1.9.22" apply false
 }
 
