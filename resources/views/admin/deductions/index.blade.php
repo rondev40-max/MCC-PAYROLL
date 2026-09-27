@@ -68,11 +68,11 @@
 
     /* ─── Sidebar ───────────────────────────── */
     .sidebar {
-      width: var(--sidebar-w); flex-shrink: 0; background: var(--sidebar-bg);
+      width: var(--sidebar-w); background: var(--sidebar-bg);
       height: 100vh; display: flex; flex-direction: column;
       overflow-y: auto; overflow-x: hidden;
       scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent;
-      z-index: 1030; position: relative;
+      z-index: 1030; position: fixed; inset: 0 auto 0 0;
     }
     .sidebar-header { padding: 1.1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
     .sidebar-logo { display: flex; align-items: center; gap: 10px; }
@@ -100,19 +100,16 @@
     .night-mode .sidebar .dropdown-menu { background: #1a2133; border-color: var(--border-2); }
     .night-mode .sidebar .dropdown-item { color: var(--text); }
     .night-mode .sidebar .dropdown-item:hover { background: rgba(37,99,235,0.15); }
-    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1025; }
-    .sidebar-overlay.show { display: block; }
 
+    /* Keep the sidebar stationary at every viewport size. */
     @media (max-width: 991px) {
-      .sidebar { position: fixed; transform: translateX(-100%); left: 0; top: 0; transition: transform .25s ease-in-out; }
-      .sidebar.open { transform: translateX(0); box-shadow: 4px 0 30px rgba(0,0,0,.4); }
       body { overflow: visible; height: auto; }
       .app { height: auto; min-height: 100vh; }
       .content { height: auto !important; overflow: visible !important; }
     }
 
     /* ─── Content ───────────────────────────── */
-    .content { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .content { flex: 1; min-width: 0; width: calc(100% - var(--sidebar-w)); margin-left: var(--sidebar-w); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     .topbar {
       height: var(--topbar-h); background: var(--card); border-bottom: 1px solid var(--border);
@@ -253,8 +250,6 @@
 <body>
 
 <div class="app">
-  <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
-
   {{-- ══════ SIDEBAR ══════ --}}
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -369,9 +364,6 @@
   <div class="content">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="btn btn-sm btn-outline-secondary d-lg-none" id="mobileMenuBtn" style="border-radius:var(--r-sm); padding:.3rem .5rem;">
-          <i class="bi bi-list" style="font-size:1.2rem;"></i>
-        </button>
         <h5 class="d-none d-md-block">Tax & Gov't Deductions</h5>
       </div>
       <button class="theme-btn" id="nightModeToggle"><i class="bi bi-moon-stars" id="nightModeIcon"></i></button>
@@ -598,16 +590,6 @@
     localStorage.setItem('night-mode', isNight);
     document.getElementById('nightModeIcon').className = isNight ? 'bi bi-sun' : 'bi bi-moon-stars';
   });
-
-  // ── Mobile sidebar ──────────────────────────────
-  document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('overlay').classList.toggle('show');
-  });
-  function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('overlay').classList.remove('show');
-  }
 
   // ── Segmented rate-type control ──────────────────
   function syncRateType() {

@@ -20,28 +20,9 @@
     }
     body{ background:var(--muted); color:var(--text); }
     .app{ min-height:100vh; }
-    .sidebar{
-      background: linear-gradient(180deg, var(--brand), var(--brand-600));
-      color:#fff; width:260px; position:sticky; top:0; height:100vh; padding:1.25rem 1rem;
-      box-shadow: 0 10px 25px rgba(52,152,219,.25);
-    }
-    .sidebar .nav-link{
-      color:#e3f2fd; border-radius:.75rem; padding:.6rem .8rem; font-weight:500;
-    }
-    .sidebar .nav-link:hover, .sidebar .nav-link.active{
-      background:#fff; color:var(--brand-600);
-    }
-    .sidebar .section-title{ font-size:.8rem; text-transform:uppercase; opacity:.85; margin:.9rem .5rem .3rem; }
     .content{ flex:1; }
     .topbar{ background:var(--card); border-bottom:1px solid #f0f0f0; padding:.75rem 1rem; position:sticky; top:0; z-index:1020; }
     .card-soft{ background:var(--card); border:1px solid #f0f0f0; border-radius:1rem; box-shadow:0 8px 20px rgba(0,0,0,.03); }
-
-    .sidebar-btn {
-      background-color: #3498db; color: white; text-align: left; margin-bottom: 5px; border: none; width: 100%; padding: 8px 12px; border-radius: 5px; transition: 0.3s;
-    }
-    .sidebar-btn:hover, .sidebar-btn:focus, .sidebar-btn.active {
-      background-color: white; color: #3498db; border: 1px solid #3498db;
-    }
 
     .form-control:focus {
         border-color: #86b7fe;
@@ -138,15 +119,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Mobile sidebar toggle
-      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const sidebar = document.getElementById('sidebar');
-      if (mobileMenuBtn && sidebar) {
-        mobileMenuBtn.addEventListener('click', function () {
-          sidebar.classList.toggle('show');
-        });
-      }
-
       const role = document.getElementById('role');
       const courseGroup = document.getElementById('courseGroup');
       const course = document.getElementById('course');

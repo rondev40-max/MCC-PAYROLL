@@ -32,29 +32,11 @@
         }
         body{ background:var(--muted); color:var(--text); transition:background .3s, color .3s; }
         .app{ min-height:100vh; }
-        .sidebar{
-            background: linear-gradient(180deg, var(--brand), var(--brand-600));
-            color:#fff; width:260px; position:sticky; top:0; height:100vh; padding:1.25rem 1rem;
-            box-shadow: 0 10px 25px rgba(52,152,219,.25);
-        }
-        .sidebar .nav-link{
-            color:#e3f2fd; border-radius:.75rem; padding:.6rem .8rem; font-weight:500;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active{
-            background:#fff; color:var(--brand-600);
-        }
-        .sidebar .section-title{ font-size:.8rem; text-transform:uppercase; opacity:.85; margin:.9rem .5rem .3rem; }
         .content{ flex:1; }
         .topbar{ background:var(--card); border-bottom:1px solid #f0f0f0; padding:.75rem 1rem; position:sticky; top:0; z-index:1020; }
         .logout-icon{ font-size:1.4rem; color:var(--brand); }
         .logout-icon:hover{ color:#85c1e9; }
         .card-soft{ background:var(--card); border:1px solid #f0f0f0; border-radius:1rem; box-shadow:0 8px 20px rgba(0,0,0,.03); }
-
-        @media (max-width: 992px){
-            .sidebar{ position:fixed; transform:translateX(-100%); transition:.25s; z-index:1030; }
-            .sidebar.show{ transform:none; }
-            .content{ margin-left:0!important; }
-        }
 
         /* Page-specific styles - Hindi ko ginalaw */
         .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
@@ -126,9 +108,6 @@
             {{-- TOPBAR - Hindi ko ginalaw --}}
             <div class="topbar d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-outline-primary d-lg-none me-3" id="mobileMenuBtn" aria-label="Open menu">
-                        <i class="bi bi-list"></i>
-                    </button>
                     <h5 class="mb-0">User & Access Management</h5>
                 </div>
                 

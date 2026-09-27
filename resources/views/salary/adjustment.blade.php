@@ -67,11 +67,15 @@
       background: linear-gradient(180deg, var(--brand), var(--brand-600));
       color: #fff;
       width: 260px;
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      bottom: 0;
       height: 100vh;
       padding: 1.5rem 1rem;
       box-shadow: 4px 0 20px rgba(0,0,0,.08);
+      z-index: 1030;
+      overflow-y: auto;
     }
     .sidebar .nav-link {
       color: rgba(255,255,255,.85);
@@ -108,7 +112,6 @@
     .sidebar-btn:focus {
       background: #fff;
       color: var(--brand);
-      transform: translateY(-1px);
     }
 
     /* ═══════════════════════════════════════════

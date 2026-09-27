@@ -23,7 +23,6 @@
     position: fixed;
     left: 0; top: 0; bottom: 0;
     z-index: 1030;
-    transition: transform .3s;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.07) transparent;
   }
@@ -114,6 +113,7 @@
   .sidebar-btn:hover {
     background: var(--sidebar-hover);
     color: #fff;
+    /* transform removed — no lift action on nav items */
   }
 
   .sidebar .nav-link:hover i,
@@ -160,15 +160,6 @@
     flex-shrink: 0;
   }
 
-  /* ─── Responsive Sidebar ─────────────────────────── */
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1025;
-  }
-
   /* ─── Content Wrapper Shift ────────────────────── */
   .sidebar-shift {
     margin-left: var(--sidebar-w);
@@ -177,22 +168,6 @@
     flex-shrink: 0;
     width: calc(100% - var(--sidebar-w));
     display: block !important;
-    transition: margin-left .25s ease-in-out;
-  }
-
-  @media (max-width: 991.98px) {
-    .sidebar {
-      transform: translateX(-100%);
-    }
-    .sidebar.open {
-      transform: translateX(0);
-    }
-    .sidebar-overlay.show {
-      display: block;
-    }
-    .sidebar-shift {
-      margin-left: 0 !important;
-    }
   }
 
   .night-mode .sidebar .dropdown-menu { background: #060a14; }

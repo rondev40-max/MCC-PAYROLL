@@ -1,11 +1,8 @@
 {{-- resources/views/layouts/sidebar.blade.php --}}
-{{-- This is a PARTIAL: only the overlay + <aside> nav markup. --}}
+{{-- This is a PARTIAL: only the fixed <aside> nav markup. --}}
 {{-- Do NOT put <!DOCTYPE>, <head>, <body>, or @yield('content') in this file --}}
 {{-- it gets @include()'d inside other full pages, and a second full <html> --}}
 {{-- document nested inside another one is what was breaking every page. --}}
-
-    <!-- Sidebar Overlay for Mobile -->
-    <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
 
     <!-- ══════════ SIDEBAR ══════════ -->
     <aside class="sidebar" id="sidebar">
