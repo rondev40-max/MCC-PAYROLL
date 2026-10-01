@@ -80,11 +80,9 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/')->with('logout_success', 'You have been logged out successfully.');
     })->name('logout');
 
-    // ✅ EVALUATION FORM - ALL Authenticated Users
-    // NOTE: employee evaluation lives under /employee, not under the generic authenticated group.
-    // Keeping /evaluation route could break admin/employee navigation consistency.
-    // Route::get('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'showEmployeeForm'])->name('evaluation.form');
-    Route::post('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'storeEvaluation'])->name('evaluation.store');
+    // The evaluation form is employee-only and lives under /employee (see the
+    // employee portal group below). There is deliberately no generic
+    // /evaluation route: admins and attendance checkers can't submit one.
 });
 
 // --- ADMIN-ONLY DATA ROUTES ---
@@ -239,7 +237,7 @@ Route::middleware(['auth.admin'])->prefix('admin')->name('admin.')->group(functi
     Route::patch('/deductions/{setting}/toggle', [\App\Http\Controllers\Admin\DeductionsController::class, 'toggle'])
         ->name('deductions.toggle');
 
-    // ✅ Evaluation Results - ADMIN ONLY
+    // ✅ Evaluation Results - ADMIN ONLY (read-only: admins view results, they don't fill the form)
     Route::get('/evaluation/results', [\App\Http\Controllers\Admin\EvaluationController::class, 'evaluationResults'])->name('evaluation.results');
 
     Route::get('/payroll-history', [AdminController::class, 'payrollHistory'])->name('payroll.history');
@@ -257,11 +255,12 @@ Route::middleware(['auth', 'role:employee', 'log.employee.portal'])->prefix('emp
 
     Route::get('/dashboard', [EmployeeController::class, 'portalDashboard'])->middleware('no-store')->name('dashboard');
 
+    // Evaluation form — the only place an evaluation can be submitted.
     Route::get('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'showEmployeeForm'])
         ->name('evaluation.form');   // full name: employee.evaluation.form
- 
+
     Route::post('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'storeEvaluation'])
-        ->name('evaluation.store'); 
+        ->name('evaluation.store');  // full name: employee.evaluation.store
 
     // Payslip step-up verification. Opening a payslip needs a code emailed to
     // the address on the account — see App\Support\PayslipGate.
@@ -334,6 +333,7 @@ Route::middleware(['auth.attendance'])->prefix('attendance')->name('attendance.'
         Route::get('/api/attendance-data/{course}', [AttendanceController::class, 'getAttendanceData']);
         Route::post('/api/save-attendance', [AttendanceController::class, 'saveAttendance']);
         Route::post('/api/save-attendance-history', [AttendanceController::class, 'saveAttendanceHistory']);
+        Route::post('/api/mark-present', [AttendanceController::class, 'markPresent']);
         Route::post('/api/bulk-delete-attendance', [AttendanceController::class, 'bulkDeleteAttendance']);
     });
 });

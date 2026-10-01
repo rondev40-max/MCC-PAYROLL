@@ -83,6 +83,15 @@
                     <i class="bi bi-download" aria-hidden="true"></i>
                     Export CSV
                 </button>
+                <div class="mark-present" role="group" aria-label="Mark everyone present for one day">
+                    <label class="visually-hidden" for="mark-present-date">Day to mark present</label>
+                    <input class="mark-present__date" type="date" id="mark-present-date">
+                    <button class="btn btn--primary" type="button" id="mark-present"
+                        title="Fill 8:00–12:00 and 1:00–5:00 for everyone with no entry on this day">
+                        <i class="bi bi-check2-all" aria-hidden="true"></i>
+                        Mark all present
+                    </button>
+                </div>
             </div>
             <div class="toolbar-group toolbar-group--right">
                 <div class="table-length" id="table-length-wrap">
@@ -106,7 +115,8 @@
 
         <div class="policy-bar">
             <i class="bi bi-clock-history" aria-hidden="true"></i>
-            <span><strong>Prescribed schedule:</strong> 8:00 AM-12:00 PM and 1:00 PM-5:00 PM. Worked time excludes the noon break.</span>
+            <span><strong>Prescribed schedule:</strong> 8:00 AM-12:00 PM and 1:00 PM-5:00 PM. Worked time excludes the noon break.
+                Use <strong>Mark all present</strong> for the day, then edit only the people who were late, absent or on leave.</span>
         </div>
 
         <div id="register-loading" class="loading-state" role="status">
@@ -212,6 +222,11 @@
             <footer class="dialog-footer">
                 <div class="dialog-footer__metrics" id="dialog-metrics">0 days | 0.00 hours</div>
                 <div class="dialog-footer__actions">
+                    <button class="btn btn--secondary" type="button" id="fill-official"
+                        title="Fill 8:00–12:00 and 1:00–5:00 on every empty weekday up to today">
+                        <i class="bi bi-magic" aria-hidden="true"></i>
+                        Fill official hours
+                    </button>
                     <button class="btn btn--secondary" type="button" id="cancel-dialog">Cancel</button>
                     <button class="btn btn--primary" type="button" id="save-entries">
                         <i class="bi bi-floppy" aria-hidden="true"></i>
@@ -237,11 +252,14 @@
     // Passing one variable gives the directive nothing it can miscount.
     $attendancePortalConfig = [
         'course' => $course,
+        // Y-m-d => name. Official hours are never filled in on these.
+        'holidays' => (object) ($holidays ?? []),
         'routes' => [
             'attendanceData' => url('/attendance/api/attendance-data'),
             'saveAttendance' => url('/attendance/api/save-attendance'),
             'saveHistory'    => url('/attendance/api/save-attendance-history'),
             'bulkDelete'     => url('/attendance/api/bulk-delete-attendance'),
+            'markPresent'    => url('/attendance/api/mark-present'),
             'login'          => route('attendance.attendlog.form'),
             'dtrBase'        => url('/attendance/dtr'),
         ],

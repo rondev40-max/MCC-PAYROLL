@@ -5,6 +5,8 @@
     const routes = config.routes || {};
     const course = String(config.course || '').toUpperCase();
     const official = { amIn: '08:00', amOut: '12:00', pmIn: '13:00', pmOut: '17:00' };
+    // Y-m-d => holiday name. Official hours are never filled in on these.
+    const holidays = config.holidays || {};
     const allowedStatuses = ['', 'present', 'absent', 'late', 'half_day', 'leave', 'holiday', 'official_business'];
     const statusLabels = {
         '': 'No entry',
@@ -52,7 +54,8 @@
             'delete-selected', 'summary-personnel', 'summary-records', 'summary-hours',
             'summary-review', 'dtr-dialog', 'dialog-employee', 'dialog-period', 'entry-body',
             'close-dialog', 'cancel-dialog', 'save-entries', 'dialog-metrics', 'toast-region',
-            'page-length', 'table-pagination-bar', 'table-info', 'table-pagination'
+            'page-length', 'table-pagination-bar', 'table-info', 'table-pagination',
+            'mark-present', 'mark-present-date', 'fill-official'
         ].forEach(function (id) {
             elements[toCamel(id)] = document.getElementById(id);
         });
@@ -72,6 +75,8 @@
         elements.closeDialog.addEventListener('click', closeDialog);
         elements.cancelDialog.addEventListener('click', closeDialog);
         elements.saveEntries.addEventListener('click', saveEntries);
+        if (elements.markPresent) elements.markPresent.addEventListener('click', markAllPresent);
+        if (elements.fillOfficial) elements.fillOfficial.addEventListener('click', fillOfficialHours);
         elements.dtrDialog.addEventListener('click', closeOnBackdrop);
         elements.dtrDialog.addEventListener('cancel', function (event) {
             event.preventDefault();
@@ -116,6 +121,28 @@
 
         const current = startOfCurrentCutoff(new Date());
         elements.currentCutoff.disabled = formatLocalDate(start) === formatLocalDate(current);
+        updateMarkPresentRange(start, end);
+    }
+
+    /**
+     * Keep the "Mark all present" day inside the cutoff being viewed and never
+     * after today — a day that has not happened cannot be marked.
+     */
+    function updateMarkPresentRange(start, end) {
+        if (!elements.markPresentDate) return;
+        const today = formatLocalDate(new Date());
+        const first = formatLocalDate(start);
+        const last = formatLocalDate(end) < today ? formatLocalDate(end) : today;
+        const usable = first <= last;
+
+        elements.markPresentDate.min = first;
+        elements.markPresentDate.max = usable ? last : first;
+        elements.markPresentDate.value = usable ? last : '';
+        elements.markPresentDate.disabled = !usable;
+        elements.markPresent.disabled = !usable;
+        elements.markPresent.title = usable
+            ? 'Fill 8:00–12:00 and 1:00–5:00 for everyone with no entry on this day'
+            : 'This cutoff has not started yet';
     }
 
     function previousCutoff() {
@@ -744,6 +771,13 @@
                 satTag.title = 'Saturday schedule applies if faculty/staff has weekend assignments';
                 dateCell.appendChild(satTag);
             }
+            if (holidays[date]) {
+                const holidayTag = document.createElement('span');
+                holidayTag.className = 'weekend-tag';
+                holidayTag.textContent = 'Holiday';
+                holidayTag.title = holidays[date];
+                dateCell.appendChild(holidayTag);
+            }
             row.appendChild(dateCell);
 
             const statusCell = document.createElement('td');
@@ -948,6 +982,106 @@
         } finally {
             setButtonBusy(elements.saveEntries, false);
         }
+    }
+
+    /**
+     * Mark the chosen day present (official hours) for everyone who has no
+     * entry that day. The server does the writing so the whole department is
+     * saved in one step; existing entries are never changed.
+     */
+    async function markAllPresent() {
+        const date = elements.markPresentDate.value;
+        if (!date || !state.cutoffDates.includes(date)) {
+            showToast('Choose a day inside this cutoff.', 'warning');
+            elements.markPresentDate.focus();
+            return;
+        }
+
+        const parsed = parseLocalDate(date);
+        const label = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).format(parsed);
+        if (parsed.getDay() === 0) {
+            showToast('Sunday is not a working day. Enter anyone who worked one by one.', 'warning');
+            return;
+        }
+        if (holidays[date]) {
+            showToast(label + ' is a holiday (' + holidays[date] + '). Enter anyone who worked one by one.', 'warning');
+            return;
+        }
+
+        const pending = state.employees.filter(function (employee) {
+            return !isPartTime(employee) && !hasRecord(employee.attendance[date] || emptyEntry());
+        }).length;
+        if (pending === 0) {
+            showToast('Everyone already has an entry for ' + label + '.', 'success');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            'Mark ' + pending + ' ' + (pending === 1 ? 'person' : 'people') + ' present on ' + label
+            + ' (8:00–12:00 and 1:00–5:00)?\n\n'
+            + 'Anyone who already has an entry for that day is not changed. '
+            + 'Part-time instructors are skipped — enter them one by one.\n\n'
+            + 'Afterwards, edit only the people who were late, absent or on leave.'
+        );
+        if (!confirmed) return;
+
+        setButtonBusy(elements.markPresent, true, 'Marking');
+        try {
+            const response = await postJson(routes.markPresent, { course: course, date: date });
+            if (response.status === 401) {
+                window.location.assign(routes.login);
+                return;
+            }
+            const result = await parseJsonResponse(response);
+            if (!response.ok || result.success === false) {
+                throw new Error(result.message || result.error || 'The day could not be marked.');
+            }
+            showToast(result.message || 'Day marked present.', 'success');
+            await loadRegister();
+        } catch (error) {
+            showToast(error.message || 'The day could not be marked.', 'error');
+        } finally {
+            setButtonBusy(elements.markPresent, false);
+        }
+    }
+
+    /**
+     * In the editor: put the official hours on every empty weekday up to
+     * today. Nothing is saved until the checker reviews and presses Save.
+     */
+    function fillOfficialHours() {
+        let filled = 0;
+        elements.entryBody.querySelectorAll('tr').forEach(function (row) {
+            const date = row.dataset.date;
+            const dayOfWeek = parseLocalDate(date).getDay();
+            const firstTime = row.querySelector('input[type="time"]');
+            const isFuture = firstTime && firstTime.dataset.future === '1';
+            if (isFuture || dayOfWeek === 0 || dayOfWeek === 6 || holidays[date]) return;
+            if (hasRecord(entryFromRow(row))) return;
+
+            row.querySelector('[data-field="status"]').value = 'present';
+            setRowMode(row);
+            row.querySelector('[data-field="am_in"]').value = official.amIn;
+            row.querySelector('[data-field="am_out"]').value = official.amOut;
+            row.querySelector('[data-field="pm_in"]').value = official.pmIn;
+            row.querySelector('[data-field="pm_out"]').value = official.pmOut;
+            updateEntryRow(row);
+            filled += 1;
+        });
+
+        if (!filled) {
+            showToast('Every weekday up to today already has an entry.', 'success');
+            return;
+        }
+        state.dialogDirty = true;
+        updateDialogMetrics();
+        showToast('Filled ' + filled + ' weekday' + (filled === 1 ? '' : 's')
+            + ' with official hours. Change any late or absent days, then press Save entries.', 'success');
+    }
+
+    function isPartTime(employee) {
+        const key = String(employee.type || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        return key === 'PT' || key === 'PARTTIME' || key === 'PARTTIMER';
     }
 
     function buildPayload(employee, attendance) {

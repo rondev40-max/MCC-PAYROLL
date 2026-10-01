@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Setting;
+use App\Support\CheckerDtrPayroll;
 use Spatie\Activitylog\Models\Activity;
 
 class SettingsController extends Controller
@@ -45,7 +46,7 @@ class SettingsController extends Controller
                 $group = 'attendance';
             } elseif (in_array($key, ['enable_login_otp', 'bcc_admin_on_payslips'])) {
                 $group = 'security';
-            } elseif (in_array($key, ['currency_symbol', 'default_cutoff_period'])) {
+            } elseif (in_array($key, ['currency_symbol', 'default_cutoff_period', CheckerDtrPayroll::SETTING])) {
                 $group = 'payroll';
             }
 
@@ -53,11 +54,15 @@ class SettingsController extends Controller
         }
 
         // Handle checkboxes/boolean toggles that are missing if unchecked
-        $checkboxes = ['restrict_by_ip', 'enable_login_otp', 'bcc_admin_on_payslips'];
-        foreach ($checkboxes as $checkbox) {
+        $checkboxes = [
+            'restrict_by_ip'              => 'attendance',
+            'enable_login_otp'            => 'security',
+            'bcc_admin_on_payslips'       => 'security',
+            CheckerDtrPayroll::SETTING    => 'payroll',
+        ];
+        foreach ($checkboxes as $checkbox => $group) {
             if (!isset($request->settings[$checkbox])) {
                 // If it is missing from the payload, it was unchecked. Save as '0'
-                $group = in_array($checkbox, ['restrict_by_ip']) ? 'attendance' : 'security';
                 Setting::set($checkbox, '0', $group);
             }
         }

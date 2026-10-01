@@ -18,8 +18,11 @@ use App\Models\WatchmanTimesheet;
 use App\Models\AdminPersonnelTimesheet;
 use App\Models\PayslipHistory;
 use App\Models\Department;
+use App\Support\CheckerDtrPayroll;
 use App\Support\DepartmentAnalytics;
 use App\Support\WageLiquidation;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 use Spatie\Activitylog\Models\Activity;
 use Carbon\Carbon; 
@@ -390,10 +393,16 @@ class AdminController extends Controller
 {
     set_time_limit(300);
 
-    $request->validate([
+    // Validated by hand rather than with $request->validate(): the admin
+    // dashboard, where this button lives, only renders session flashes, so a
+    // thrown validation error made Send Payslips look like it did nothing.
+    $validator = Validator::make($request->all(), [
         'start_date' => 'required|date',
         'end_date' => 'required|date|after_or_equal:start_date',
     ]);
+    if ($validator->fails()) {
+        return back()->withErrors($validator)->with('error', $validator->errors()->first());
+    }
 
         $startDate = Carbon::parse($request->start_date);
         $endDate = Carbon::parse($request->end_date);
@@ -750,8 +759,22 @@ class AdminController extends Controller
         }
 
         // Resolve all attendance errors before any email or payroll history is written.
-        $recipients = $recipients->map(fn ($payload) => \App\Support\AttendancePayroll::apply($payload, $startDate, $endDate));
-        $utilityRecordsWithoutEmail = $utilityRecordsWithoutEmail->map(fn ($payload) => \App\Support\AttendancePayroll::apply($payload, $startDate, $endDate));
+        try {
+            $recipients = $recipients->map(fn ($payload) => \App\Support\AttendancePayroll::apply($payload, $startDate, $endDate));
+            $utilityRecordsWithoutEmail = $utilityRecordsWithoutEmail->map(fn ($payload) => \App\Support\AttendancePayroll::apply($payload, $startDate, $endDate));
+
+            // Employees not on web Time In / Time Out payroll are priced from
+            // the attendance checker's DTR when System Settings says so.
+            [$recipients, $utilityRecordsWithoutEmail] = CheckerDtrPayroll::applyAll(
+                [$recipients, $utilityRecordsWithoutEmail],
+                $startDate,
+                $endDate
+            );
+        } catch (ValidationException $e) {
+            return back()
+                ->withErrors($e->errors())
+                ->with('error', collect($e->errors())->flatten()->first());
+        }
 
         $sent = 0; $failed = 0; $recorded = 0; $errors = [];
 

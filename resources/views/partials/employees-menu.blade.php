@@ -1,7 +1,7 @@
 {{-- resources/views/partials/employees-menu.blade.php --}}
 {{-- Single source of truth for the sidebar "Employees" dropdown. --}}
 {{-- Every admin sidebar (layouts/admin, layouts/sidebar, and the inline copies --}}
-{{-- in admin/dashboard, admin/deductions/index, evaluation/evaluation) includes --}}
+{{-- in admin/dashboard, admin/deductions/index) includes --}}
 {{-- this partial, so the six categories can never drift out of sync again. --}}
 {{-- Add a new employee category HERE and it shows up everywhere. --}}
 

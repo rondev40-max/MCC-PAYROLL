@@ -483,8 +483,37 @@ class AttendanceController extends Controller
         }
 
         return view('attendance.dashboard', [
-            'course' => $this->getUserCourse(),
+            'course'   => $this->getUserCourse(),
+            // Date => name, so the register can leave holidays alone when it
+            // fills in official hours. A year either side covers any cutoff a
+            // checker realistically pages to.
+            'holidays' => $this->holidayNames(now()->subYear()->startOfYear(), now()->addYear()->endOfYear()),
         ]);
+    }
+
+    /** @return array<string, string> Y-m-d => holiday name */
+    private function holidayNames(Carbon $from, Carbon $to): array
+    {
+        try {
+            if (!Schema::hasTable('holidays')) {
+                return [];
+            }
+
+            // whereDate, not whereBetween: a date stored with a time part
+            // ("2026-09-21 00:00:00") sorts after "2026-09-21", so a one-day
+            // range would miss it on SQLite.
+            return DB::table('holidays')
+                ->whereDate('date', '>=', $from->toDateString())
+                ->whereDate('date', '<=', $to->toDateString())
+                ->orderBy('date')
+                ->get(['date', 'name'])
+                ->mapWithKeys(fn ($holiday) => [
+                    Carbon::parse($holiday->date)->toDateString() => (string) ($holiday->name ?: 'Holiday'),
+                ])
+                ->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -1740,6 +1769,175 @@ class AttendanceController extends Controller
     public function saveAttendanceHistory(Request $request): JsonResponse
     {
         return $this->saveAttendance($request);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // API: MARK ALL PRESENT
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Record the official hours for one day for everyone in the checker's
+     * department who has nothing entered for that day yet.
+     *
+     * Most days nearly everyone comes on time, and the register used to need
+     * four time entries and a status per person per day regardless. Now the
+     * checker marks the day once and only edits the exceptions — late,
+     * absent, leave. Entries that already exist are never touched, so pressing
+     * it twice, or after correcting someone, cannot undo anything.
+     *
+     * Part-time instructors are skipped: they come for their classes, not for
+     * an 8-to-5 day, so official hours would record time they never worked.
+     */
+    public function markPresent(Request $request): JsonResponse
+    {
+        if (!$this->isAuthenticated()) {
+            return $this->unauthenticatedResponse();
+        }
+
+        $validated = $request->validate([
+            'course' => 'required|string|max:50',
+            'date'   => 'required|date_format:Y-m-d',
+        ]);
+
+        $course = strtoupper(trim($validated['course']));
+        if (!$this->authorizeCourseAccess($course)) {
+            return $this->unauthorizedCourseResponse();
+        }
+
+        $date = Carbon::createFromFormat('Y-m-d', $validated['date'])->startOfDay();
+        if ($date->format('Y-m-d') !== $validated['date']) {
+            return response()->json(['success' => false, 'message' => 'Choose a valid date.'], 422);
+        }
+        if ($date->isFuture()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only mark days that have already started.',
+            ], 422);
+        }
+        if ($date->isSunday()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sunday is not a working day. Enter anyone who worked one by one.',
+            ], 422);
+        }
+
+        $holiday = $this->holidayNames($date, $date)[$date->toDateString()] ?? null;
+        if ($holiday !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $date->format('M j') . " is a holiday ({$holiday}). Enter anyone who worked one by one.",
+            ], 422);
+        }
+
+        $punches = [
+            'am_in'  => Dtr::AM_ARRIVAL,
+            'am_out' => Dtr::AM_DEPARTURE,
+            'pm_in'  => Dtr::PM_ARRIVAL,
+            'pm_out' => Dtr::PM_DEPARTURE,
+        ];
+        $metrics = Dtr::metrics($punches['am_in'], $punches['am_out'], $punches['pm_in'], $punches['pm_out'], 'present');
+        $dateString = $date->toDateString();
+        $userId = $this->getUserId();
+        $marked = 0;
+        $kept = 0;
+        $skippedPartTime = 0;
+
+        try {
+            DB::transaction(function () use (
+                $course, $dateString, $userId, $punches, $metrics, &$marked, &$kept, &$skippedPartTime
+            ) {
+                foreach ($this->attendanceRoster($course) as $employee) {
+                    $identity = $this->employeeIdentity($employee['id'], $employee['employee_type'] ?? null);
+                    if (!$identity) {
+                        continue;
+                    }
+
+                    if ($identity['code'] === 'PT') {
+                        $skippedPartTime++;
+                        continue;
+                    }
+
+                    $exists = $this->attendanceIdentityQuery($identity['id'], $course, $identity['type'])
+                        ->whereDate('date', $dateString)
+                        ->exists();
+                    if ($exists) {
+                        $kept++;
+                        continue;
+                    }
+
+                    $this->upsertAttendanceDay($identity['id'], $course, $identity['type'], $dateString, [
+                        'user_id'           => $userId,
+                        'time_in'           => $punches['am_in'],
+                        'time_out'          => $punches['pm_out'],
+                        'am_in_time'        => $punches['am_in'],
+                        'am_out_time'       => $punches['am_out'],
+                        'pm_in_time'        => $punches['pm_in'],
+                        'pm_out_time'       => $punches['pm_out'],
+                        'hours_rendered'    => $metrics['total_hours'],
+                        'lateness_minutes'  => $metrics['lateness'],
+                        'undertime_minutes' => $metrics['undertime'],
+                        'overtime_minutes'  => $metrics['overtime'],
+                        'total_hours'       => $metrics['total_hours'],
+                        'status'            => 'present',
+                        'remarks'           => null,
+                        'employee_name'     => $employee['employee_name'],
+                        'employee_type'     => $identity['type'],
+                        'updated_at'        => now(),
+                    ]);
+                    $this->syncHistoryDay(
+                        $identity['id'],
+                        $course,
+                        $identity['type'],
+                        $dateString,
+                        $userId,
+                        $employee['employee_name'],
+                        $employee['email'] ?? null,
+                        $employee['designation'] ?? null,
+                        $punches,
+                        $metrics,
+                        'present',
+                        null
+                    );
+                    $marked++;
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('markPresent failed: ' . $e->getMessage(), ['course' => $course, 'date' => $dateString]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Nothing was saved. Please try again.',
+            ], 500);
+        }
+
+        Log::info('Marked department present', [
+            'course'    => $course,
+            'date'      => $dateString,
+            'marked'    => $marked,
+            'kept'      => $kept,
+            'part_time' => $skippedPartTime,
+            'user_id'   => $userId,
+        ]);
+
+        $message = $marked === 0
+            ? 'Everyone already has an entry for ' . $date->format('M j') . '. Nothing was changed.'
+            : "Marked {$marked} " . ($marked === 1 ? 'person' : 'people') . ' present on ' . $date->format('M j') . '.';
+        if ($kept > 0 && $marked > 0) {
+            $message .= $kept === 1
+                ? ' 1 person who already had an entry was left unchanged.'
+                : " {$kept} people who already had entries were left unchanged.";
+        }
+        if ($skippedPartTime > 0) {
+            $message .= ' Part-time instructors are entered one by one.';
+        }
+
+        return response()->json([
+            'success'   => true,
+            'message'   => $message,
+            'marked'    => $marked,
+            'kept'      => $kept,
+            'part_time' => $skippedPartTime,
+        ]);
     }
 
     // ──────────────────────────────────────────────────────────────────────────

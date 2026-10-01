@@ -350,6 +350,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     font-size: 13px;
 }
 .search-field input:focus { border-color: var(--blue); outline: 3px solid rgba(36,87,167,.12); }
+.mark-present { display: inline-flex; align-items: center; gap: 6px; }
+.mark-present__date {
+    height: 38px;
+    padding: 6px 10px;
+    border: 1px solid #cbd3d8;
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--ink);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+.mark-present__date:focus { border-color: var(--blue); outline: 3px solid rgba(36,87,167,.12); }
+.mark-present__date:disabled { cursor: not-allowed; opacity: .55; }
 .policy-bar {
     padding: 9px 16px;
     display: flex;
@@ -642,6 +655,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     .summary-item__value { font-size: 18px; }
     .toolbar-group, .search-field { width: 100%; }
     .toolbar-group .btn { flex: 1; }
+    .mark-present { width: 100%; }
+    .mark-present__date { flex: 1; min-width: 0; }
     .policy-bar { align-items: flex-start; }
     .bulk-bar, .dialog-footer { align-items: stretch; flex-direction: column; }
     .dialog-footer__actions .btn { flex: 1; }

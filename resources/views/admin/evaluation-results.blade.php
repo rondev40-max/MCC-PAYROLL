@@ -301,14 +301,13 @@
         <a href="{{ route('admin.evaluation.results') }}?export=csv" class="btn-export">
           <i class="bi bi-download"></i> Export CSV
         </a>
-        <a href="{{ route('employee.evaluation.form') }}" class="btn-export-outline">
-          <i class="bi bi-pencil-square"></i> Fill Form
-        </a>
+        {{-- No "Fill Form" here on purpose: admins view results only; employees submit evaluations. --}}
         <a href="{{ route('logout') }}" class="btn btn-sm btn-outline-danger d-none d-md-inline-flex align-items-center gap-1"
            style="border-radius:8px;font-size:.78rem;font-weight:600;"
            onclick="event.preventDefault();document.getElementById('logout-form-eval').submit();">
           <i class="bi bi-box-arrow-right"></i> Logout
         </a>
+        <form id="logout-form-eval" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
       </div>
     </header>
 

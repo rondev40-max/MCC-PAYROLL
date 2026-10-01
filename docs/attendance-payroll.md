@@ -21,6 +21,26 @@ Deploy the code and run `php artisan migrate` before opening the employee portal
 - Released payslips store a snapshot of the sessions and daily hours used. Later attendance changes do not rewrite those payslips.
 - This implementation does not calculate overtime premiums, holiday premiums, paid leave, shift-based lateness, or statutory contribution rates. Rates and deductions still come from the payroll setup. Hourly duty, including extended hours, uses the configured base rate; daily units cap at one regular day.
 
+## Paying from the attendance checker's DTR
+
+An alternative to web Time In / Time Out that needs no employee phones: the department's attendance checker keeps the register, and payroll reads it. Turn it on in **System Settings → Payroll → Pay from the attendance checker's DTR**. It is off by default.
+
+Daily use by the checker:
+
+1. Open the register, keep today's date, press **Mark all present**. Everyone in the department with no entry for that day gets 8:00–12:00 and 1:00–5:00. Existing entries are never changed, and part-time instructors are skipped. Sundays, holidays and future days are refused.
+2. Edit only the exceptions: late arrivals, early departures, absences, leave, official business.
+3. **Fill official hours** in an employee's editor fills that person's empty weekdays up to today. Nothing is saved until **Save entries**.
+
+What Send Payslips does when the setting is on (`App\Support\CheckerDtrPayroll`):
+
+- Covers full-time instructors (hourly rate), staff and utility workers (daily rate). Part-time instructors are paid for their teaching load from their timesheet; watchmen and admin personnel have no register. Anyone already on web Time In / Time Out payroll stays on it.
+- A day is worth 480 minutes minus DTR undertime (late arrival and early departure). Half day: 240 minus undertime. Official business: a full day. Absent, leave and holiday: unpaid, matching the timesheets, which leave holidays out. Time before 8:00 or after 5:00 is not paid.
+- Full-time: paid minutes ÷ 60 × hourly rate. Staff and utility: paid minutes ÷ 480 × daily rate. Rates and deductions still come from the timesheet; the stored timesheet is not changed.
+- Needs one whole cutoff (1–15 or 16–end). Every Monday–Friday that is not a holiday must have an entry, and no entry may be half-filled. Otherwise nothing is sent and the error lists each employee and date to finish.
+- The payslip history keeps the day-by-day DTR used (`attendance_snapshot.source = checker_dtr`), and the payslip email's day grid shows the paid hours per date.
+
+The register identifies a person by the timesheet's master-list `employee_id` when set, otherwise by the timesheet row id, plus department and employee type. Link timesheets to the master list so a person keeps one register across cutoffs.
+
 ## Recommended next steps
 
 Define shift schedules and break rules per employee group; add employee correction requests with supervisor approval; add overtime/leave approvals; then add a payroll batch lock and missed-punch reminders. An optional campus network or location check can supplement server timestamps if on-site attendance is required.

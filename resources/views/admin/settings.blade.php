@@ -409,6 +409,23 @@
                 </select>
               </div>
             </div>
+
+            <div class="col-12 mt-2">
+              <div class="switch-card">
+                <div class="switch-card-info">
+                  <div class="switch-card-title">Pay from the attendance checker's DTR</div>
+                  <div class="switch-card-desc">
+                    Send Payslips computes the days and hours of full-time instructors, staff and utility workers from the attendance
+                    checker's register (8:00–12:00, 1:00–5:00) instead of their timesheet schedule. Late and undertime are deducted;
+                    absent, leave and holiday days are unpaid; official business is paid. Every weekday of the cut-off must be encoded first.
+                    Part-time instructors, watchmen and admin personnel still use their timesheets.
+                  </div>
+                </div>
+                <div class="form-check form-switch m-0 p-0">
+                  <input class="form-check-input" type="checkbox" name="settings[{{ \App\Support\CheckerDtrPayroll::SETTING }}]" id="payroll_uses_checker_dtr" value="1" {{ \App\Support\CheckerDtrPayroll::enabled() ? 'checked' : '' }}>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
