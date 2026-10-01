@@ -813,8 +813,8 @@
 
       const dt = new DataTable(tableEl, {
         order: [[1, 'asc']],
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
+        pageLength: 8,   // every list in the system pages by 8
+        lengthMenu: [8, 16, 24, 32, { label: 'All', value: -1 }],
         autoWidth: false,
         responsive: { details: false },   // the details modal shows every field instead
         columnDefs: [

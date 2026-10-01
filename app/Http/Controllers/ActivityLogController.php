@@ -18,7 +18,7 @@ class ActivityLogController extends Controller
             ->join('users', 'activity_logs.user_id', '=', 'users.id')
             ->select('users.name', 'users.email', 'users.role', 'activity_logs.*')
             ->orderBy('activity_logs.created_at', 'desc')
-            ->paginate(25); // Mag-paginate para hindi bumagal kung marami na ang logs
+            ->paginate(8); // Mag-paginate para hindi bumagal kung marami na ang logs
 
         return view('admin.activity-log', compact('activityLogs'));
     }

@@ -109,7 +109,7 @@ class AdminController extends Controller
     {
         $activities = Activity::with('causer')
             ->latest()
-            ->paginate(25);
+            ->paginate(8);
 
         return view('admin.activity-log', ['activities' => $activities]);
     }
@@ -126,7 +126,7 @@ class AdminController extends Controller
                 $query->where('email', 'like', '%' . $request->email . '%');
             }
 
-            $histories = $query->paginate(20)->appends($request->query());
+            $histories = $query->paginate(8)->appends($request->query());
 
             return view('admin.history', [
                 'histories' => $histories,
@@ -212,7 +212,7 @@ class AdminController extends Controller
                 $query->where('email', 'like', '%' . $request->email . '%');
             }
 
-            $histories = $query->paginate(20)->appends($request->query());
+            $histories = $query->paginate(8)->appends($request->query());
 
             return view('admin.trash', [
                 'histories' => $histories,
@@ -274,7 +274,7 @@ class AdminController extends Controller
 
         // Totals over everything the filter matches, before pagination.
         // The view summed $record->total_honorarium as it rendered rows and
-        // labelled the result "GRAND TOTAL HONORARIUM" — but only 15 records
+        // labelled the result "GRAND TOTAL HONORARIUM" — but only one page of records
         // are on a page, so the figure was a page subtotal presented as the
         // payroll total, and it changed every time you clicked to page 2.
         $totals = (clone $recordsQuery)
@@ -288,7 +288,7 @@ class AdminController extends Controller
 
         $records = $recordsQuery
             ->orderBy('sent_at', 'desc')
-            ->paginate(15);
+            ->paginate(8);
 
         $holidays = \App\Models\Holiday::pluck('date')->map(fn($date) => Carbon::parse($date)->format('Y-m-d'))->toArray();
 

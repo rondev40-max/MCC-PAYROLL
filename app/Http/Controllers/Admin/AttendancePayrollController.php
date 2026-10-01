@@ -19,7 +19,7 @@ class AttendancePayrollController extends Controller
         $data = $request->validate(['start_date' => 'nullable|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date']);
         $start = $data['start_date'] ?? now()->day(now()->day <= 15 ? 1 : 16)->toDateString();
         $end = $data['end_date'] ?? (Carbon::parse($start)->day <= 15 ? Carbon::parse($start)->day(15) : Carbon::parse($start)->endOfMonth())->toDateString();
-        $employees = Employee::orderBy('name')->paginate(25)->withQueryString();
+        $employees = Employee::orderBy('name')->paginate(8)->withQueryString();
         $summaries = $employees->mapWithKeys(fn ($employee) => [$employee->id => AttendancePayroll::summary($employee, $start, $end)]);
         $previews = $employees->mapWithKeys(fn ($employee) => [$employee->id => AttendancePayroll::preview($employee, $start, $end)]);
 

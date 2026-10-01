@@ -111,7 +111,7 @@ class AttendanceHistoryController extends Controller
         $this->applyDateFilter($query, $dateRange, $startDate);
 
         if ($dateRange === 'day') {
-            $records = $query->orderBy('employee_name')->paginate(25);
+            $records = $query->orderBy('employee_name')->paginate(8);
         } else {
             $records = $query
                 ->groupBy('email', 'employee_name', 'department')
@@ -123,7 +123,7 @@ class AttendanceHistoryController extends Controller
                     DB::raw('COUNT(*) as total_days'),
                 ])
                 ->orderBy('employee_name')
-                ->paginate(25);
+                ->paginate(8);
         }
 
         $departments = Department::pluck('name');
